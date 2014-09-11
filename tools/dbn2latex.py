@@ -14,7 +14,7 @@ import testgraphs
 reload(testgraphs)
 from testgraphs import *
 
-colors = zickle.load('../data/colors.zkl') # load the colors
+colors = zickle.load('data/colors.zkl') # load the colors
 
 def graph2dict(g):
     D = {}
@@ -276,7 +276,7 @@ def gsingle(g,scale=0.7,R=1,gap=0.5,mtype="lahid",layout=None):
 
 def g_single(G,u,scale=0.7,R=1,gap=0.5,mtype="lahid",layout=None):
     g = undersample(G,u)
-    return g_single(g,scale=scale,R=R,gap=gap,mtype=mtype,layout=layout)
+    return gsingle(g,scale=scale,R=R,gap=gap,mtype=mtype,layout=layout)
 
 def unfoldplot(G,steps=7,repeats=5,gap=0.5,R=1,hg=0.1,wgap=0.7,name='AAA',stl=''):
     u = 0    
