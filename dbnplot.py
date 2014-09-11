@@ -34,7 +34,7 @@ x = np.int(np.ceil(len(l)/float(y)))
 
 
 # output file
-foo = open('figure/test.tex', 'wb')
+foo = open('figures/shipfig_figure.tex', 'wb')
 sys.stdout = foo
 
 # generation of the output
@@ -47,6 +47,6 @@ sys.stdout = sys.__stdout__              # remember to reset sys.stdout!
 foo.flush()
 foo.close()
 PPP = os.getcwd()
-os.chdir('figure')
+os.chdir('figures')
 os.system('pdflatex --shell-escape shipfig.tex 2>&1 > /dev/null')
 os.chdir(PPP)
