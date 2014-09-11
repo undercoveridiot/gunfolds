@@ -59,3 +59,4 @@ target/
 # latex
 *.pdf
 *.aux
+shipfig_figure.tex
