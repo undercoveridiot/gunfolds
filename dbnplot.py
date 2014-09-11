@@ -1,3 +1,6 @@
+# This is a use-case of the tools in the tools directory. The example defines a graph and shows how to generate a figure that shows the graph at different undersampling rates. Running the file in python (python dbnplot.py) generates a figure in figures folder: shipfig.pdf
+
+
 # system packages
 import os, sys
 import numpy as np
@@ -5,17 +8,9 @@ from random import random
 import pickle as pkl
 sys.path.append('tools')
 
-# local pakcages
+# local packages
 import dbn2latex as d2l
     
-g = {
-    '1': {'2': {(0, 1)}, '5': {(0, 1)}},
-    '2': {'3': {(0, 1)}},
-    '3': {'4': {(0, 1)}},
-    '4': {'1': {(0, 1)}},
-    '5': {'6': {(0, 1)}},
-    '6': {'1': {(0, 1)}},
-}
 
 g = {
     '1': {'2': {(0, 1)}, '3': {(0, 1)}},
