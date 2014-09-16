@@ -19,7 +19,7 @@ colors = zickle.load('data/colors.zkl') # load the colors
 def graph2dict(g):
     D = {}
     for v in range(0,len(g.vs)):
-        D[g.vs[v]["label"]] = {} 
+        D[g.vs[v]["label"]] = {}
         for u in g.neighbors(v,mode="OUT"):
             D[g.vs[v]["label"]][g.vs[u]["label"]] = set([(0,1)])
     return D
@@ -31,7 +31,7 @@ def paintSCC(g, cm):
     for i in range(0,len(scc)):
         for v in scc[i]:
             g.vs[g.vs['label'].index(v)]["color"] = cm[i]
-fstr = "%.5f" # precision to use 
+fstr = "%.5f" # precision to use
 def dict2graph(D):
     A = scipy.zeros([len(D),len(D)])
     nodes = []
@@ -58,13 +58,13 @@ def unroll(G,steps):
     N.update({v+str(steps):set() for v in G})
     return N
 
-def unroll_undersample(G,steps): 
+def unroll_undersample(G,steps):
     # does not provide isochronal bidirectional edges
     N = {}
     steps += 2
     U = unroll(G,steps)
     nodes = G.keys()
-    for v in G:        
+    for v in G:
         N.update({v:set([nodes[k] for k in scipy.where([ecj.reachable(v+'0',U,u+str(steps-1)) for u in G])[0]])})
     return N
 
@@ -107,7 +107,7 @@ def dbnprint(G,s,mname='generic',w_gap=0.5, h_gap=0.5,type="obs",stl=''):
 from scipy import array,cos,sin,deg2rad,rad2deg
 import math
 
-def getangle(A,B): 
+def getangle(A,B):
     """
     When A and  B are two angles around the clock  returns an angle of
     the line that is connecting them.
@@ -125,13 +125,13 @@ def cdbnprint(G,mtype="obs",bend=5,curve=5,R=1):
     output = StringIO.StringIO()
     BE = set()
     n = len(G)
-    nodes = G.keys(); nodes.sort()   
- 
+    nodes = G.keys(); nodes.sort()
+
     g = dict2graph(ecj.cloneBfree(G))
     paintSCC(g,colors)
 
 
-    for i in range(0,n):          
+    for i in range(0,n):
         node = g.vs[i]['label']
         rc = g.vs[i]["color"]
         print >>output, "{ \\definecolor{mycolor}{RGB}{"\
@@ -193,7 +193,7 @@ def gprint(G,mtype="obs",bend=5,curve=5,R=1,layout=None, scale=5):
         g = dict2graph(ecj.cloneBfree(G))
         cc = array(layout.coords)
     paintSCC(g,colors)
-    for i in range(0,n):          
+    for i in range(0,n):
         node = g.vs[i]['label']
         rc = g.vs[i]["color"]
         print >>output, "{ \\definecolor{mycolor}{RGB}{"\
@@ -214,7 +214,7 @@ def gprint(G,mtype="obs",bend=5,curve=5,R=1,layout=None, scale=5):
                         a+') -- ('+b+');'
             if G[a][b].intersection([(edge_type['directed'],1)]):
                 if a == b:
-                    dff = cc[g.vs['label'].index(a)] - scipy.mean(cc,0)        
+                    dff = cc[g.vs['label'].index(a)] - scipy.mean(cc,0)
                     ang = scipy.arctan2(dff[1],dff[0])
                     ang_a = scipy.rad2deg(ang)
                     print >>output,"\\path[overlay,draw,pil] ("+a+")" +\
@@ -259,14 +259,13 @@ def cdbnsingle(g,scale=0.7,R=1,gap=0.5,mtype="lahid"):
     print >>output,"};"
     return output
 
-def cdbn_single(G,u,scale=0.7,R=1,gap=0.5,mtype="lahid"):    
-    cdbnsingle(undersample(G,u),scale=scale,R=R,gap=gap,mtype=mtype)
-    return output
+def cdbn_single(G,u,scale=0.7,R=1,gap=0.5,mtype="lahid"):
+    return cdbnsingle(undersample(G,u),scale=scale,R=R,gap=gap,mtype=mtype)
 
 def gsingle(g,scale=0.7,R=1,gap=0.5,mtype="lahid",layout=None):
     output = StringIO.StringIO()
     print >>output,"\\node[scale="+str(scale)+"](){"
-    print >>output,"\\begin{tikzpicture}"    
+    print >>output,"\\begin{tikzpicture}"
     s = gprint(g,mtype=mtype,bend=25,curve=6,R=R,layout=layout)
     print >>output,s.getvalue()
     s.close()
@@ -279,7 +278,7 @@ def g_single(G,u,scale=0.7,R=1,gap=0.5,mtype="lahid",layout=None):
     return gsingle(g,scale=scale,R=R,gap=gap,mtype=mtype,layout=layout)
 
 def unfoldplot(G,steps=7,repeats=5,gap=0.5,R=1,hg=0.1,wgap=0.7,name='AAA',stl=''):
-    u = 0    
+    u = 0
     dbnprint(undersample(G,u), repeats, w_gap=wgap,
              h_gap=hg, mname=name+str(u), type='hid', stl=stl)
     print "\\node[left="+str(gap)+"cm of "+name+str(u)+",scale=0.7] (C) {"
@@ -360,7 +359,7 @@ def gmatrix_list(l,m,n,R=1,mname='g',w_gap=0.5,h_gap=0.5,stl='',shift=0):
             s=gsingle(l[u],R=R,mtype="hid")
             S.append(s.getvalue())
             s.close()
-        print " ","& ".join(S)+"\\\\"    
+        print " ","& ".join(S)+"\\\\"
     matrix_end()
 
 def matrix_list(l,m,n,R=1,mname='g',w_gap=0.5,h_gap=0.5,stl='',shift=0):
@@ -376,7 +375,7 @@ def matrix_list(l,m,n,R=1,mname='g',w_gap=0.5,h_gap=0.5,stl='',shift=0):
             s=cdbnsingle(l[u],R=R,mtype="hid")
             S.append(s.getvalue())
             s.close()
-        print " ","& ".join(S)+"\\\\"    
+        print " ","& ".join(S)+"\\\\"
     matrix_end()
 
 class WritableObject:
