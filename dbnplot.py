@@ -13,12 +13,12 @@ import dbn2latex as d2l
     
 
 g = {
-    '1': {'2': {(0, 1)}, '3': {(0, 1)}},
-    '2': {'5': {(0, 1)}},
+    '1': {'2': {(0, 1)},},
+    '2': {'3': {(0, 1)}},
     '3': {'4': {(0, 1)}},
-    '4': {'6': {(0, 1)}},
+    '4': {'5': {(0, 1)}},
     '5': {'6': {(0, 1)}},
-    '6': {'1': {(0, 1)}, '3': {(0, 1)}},
+    '6': {'1': {(0, 1)}, '6': {(0, 1)}},
 }
 
 # fname = 'list.pkl'
@@ -35,9 +35,9 @@ foo = open('figures/shipfig_figure.tex', 'wb')
 sys.stdout = foo
 
 # generation of the output
-ww = 1
-d2l.gmatrix_fold(g,1,ww,R=2, w_gap=1, h_gap=2, mname='TT1')
-#d2l.matrix_list(l,y,x,R=2,w_gap=2,h_gap=2)
+ww = 6
+d2l.gmatrix_fold(g,ww,1,R=2.5, w_gap=1, h_gap=2, mname='TT1')
+d2l.matrix_fold(g,ww,1,R=2, w_gap=1, h_gap=2, stl=', below=5cm of TT1.west,anchor=west')
 
 
 sys.stdout = sys.__stdout__              # remember to reset sys.stdout!
