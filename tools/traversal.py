@@ -63,7 +63,6 @@ def deledges(g,e,p,e1,e2):
 
 def rotate(l): return l[1:] + l[:1]
 
-@memo
 def nodesearch(g, g2, edges, s):
     for i in range(len(edges)):
         e = edges.pop()
