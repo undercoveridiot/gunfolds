@@ -4,16 +4,16 @@ from bfutils import increment_u, g2num, num2CG
 #import ipdb
 
 def compare(g2star,g2):
-    gse = set(edgelist(g2star))
-    return gse.issubset(edgelist(g2))
-    # for n in g2star:
-    #     for h in g2star[n]:
-    #         try:
-    #             if g2[n][h] != g2star[n][h]:
-    #                 return False
-    #         except KeyError:
-    #                 return False
-    # return True
+    #gse = set(edgelist(g2star))
+    #return gse.issubset(edgelist(g2))
+    for n in g2star:
+        for h in g2star[n]:
+            try:
+                if not (0,1) in g2[n][h]:
+                    return False
+            except KeyError:
+                    return False
+    return True
 
 def edgelist(g):
     l = []
@@ -64,21 +64,17 @@ def deledges(g,e,p,e1,e2):
 def rotate(l): return l[1:] + l[:1]
 
 def nodesearch(g, g2, edges, s):
-    for i in range(len(edges)):
+    if edges:
         e = edges.pop()
-        #print edges, ' : ', e
         for n in g:
-            num = g2num(g)
             e1, e2 = add2edges(g, e, n)
             if compare(increment_u(g,g), g2):
-                if edges:
-                    nodesearch(g,g2,edges,s)
-                else:
-                    s.add(g2num(g))                
-                    #ipdb.set_trace()
-            g  = num2CG(num,len(g))
-            #deledges(g,e,n,e1,e2)
+                nodesearch(g,g2,edges,s)
+            deledges(g,e,n,e1,e2)
         edges.insert(0,e)
+    else:
+        s.add(g2num(g))                
+
 
 def edgesearch(g, g2, edges, s):
     print ''.join(['-' for x in edges])

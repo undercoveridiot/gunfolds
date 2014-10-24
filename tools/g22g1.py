@@ -84,12 +84,8 @@ def try_next_single_edge(g_se, g_one_star_se, stack_se):
         j = stack_se.pop()
         i = stack_se.pop()
         for k in g_one_star_se:
-            boolean_first_edge_has_value = False
-            boolean_second_edge_has_value = False
-            if k in g_one_star_se[i]:
-                boolean_first_edge_has_value = True
-            if j in g_one_star_se[k]:
-                boolean_second_edge_has_value = True
+            boolean_first_edge_has_value  = k in g_one_star_se[i]
+            boolean_second_edge_has_value = j in g_one_star_se[k]
             g_one_star_se[i][k] = 1
             g_one_star_se[k][j] = 1
             g_two_star_se = find_next_graph(g_one_star_se)
