@@ -187,13 +187,28 @@ def savegraphs(l,fname):
     zkl.save(l,fname)
 
 def jason2graph(g):
+    r = {}
     d = {1: set([(0,1)]),
          2: set([(2,0)]),
          3: set([(0,1),(2,0)]) }
     for head in g:
+        r[head] = {}
         for tail in g[head]:
-            g[head][tail] = d[g[head][tail]]
-    return g
+            r[head][tail] = d[g[head][tail]]
+    return r
+
+def graph2jason(g):
+    r = {}
+    for head in g:
+        r[head] = {}
+        for tail in g[head]:
+            if g[head][tail] == set([(0,1)]):
+                r[head][tail] = 1
+            elif g[head][tail] == set([(2,0)]):
+                r[head][tail] = 2
+            elif g[head][tail] == set([(0,1),(2,0)]):
+                r[head][tail] = 3
+    return r
 
 def ring(n):
     g = {}
