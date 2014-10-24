@@ -2,6 +2,7 @@ import scipy
 from itertools import combinations
 #from progressbar import ProgressBar, Percentage
 from multiprocessing import Pool,Array,Process,Manager
+from numpy.random import randint
 import zickle as zkl
 
 #local
@@ -184,3 +185,26 @@ def loadgraphs(fname):
 
 def savegraphs(l,fname):
     zkl.save(l,fname)
+
+def jason2graph(g):
+    d = {1: set([(0,1)]),
+         2: set([(2,0)]),
+         3: set([(0,1),(2,0)]) }
+    for head in g:
+        for tail in g[head]:
+            g[head][tail] = d[g[head][tail]]
+    return g
+
+def ring(n):
+    g = {}
+    for i in range(1,n):
+        g[str(i)] = {str(i+1): set([(0,1)])}
+    g[str(n)] = {'1': set([(0,1)])}
+    return g
+
+def ringarcs(g,n):
+    for edge in randint(len(g), size=(n, 2)):
+        g[str(edge[0]+1)][str(edge[1]+1)] = set([(0,1)])
+    return g
+def ringmore(n,m):
+    return ringarcs(ring(n),m)
