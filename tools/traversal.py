@@ -40,50 +40,6 @@ def edgelist(g):
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
-def add2edges0(g,e,p):
-    '''
-    break edge e[0] -> e[1] into two pieces 
-    e[0] -> p and p -> e[1]
-    and add them to g
-    '''
-    try:
-        e1 = g[e[0]][p]
-    except KeyError:
-        e1 = False
-    try:
-        e2 = g[p][e[1]]
-    except KeyError:
-        e2 = False
-    try:
-        g[e[0]][p].add((0,1))
-    except KeyError:
-        g[e[0]][p] = set([(0,1)])
-    try:
-        g[p][e[1]].add((0,1))
-    except KeyError:
-        g[p][e[1]] = set([(0,1)])
-    return e1, e2
-
-def deledges0(g,e,p,e1,e2):
-    '''
-    restore the graph as it was before adding e[0]->p and p->e[1]
-    '''
-    if e[0] == e[1] == p:
-        if e1:
-            g[e[0]][p] = e1
-        else:
-            del g[e[0]][p]
-    else:
-        if e1:
-            g[e[0]][p] = e1
-        else:
-            del g[e[0]][p]
-        if e2:
-            g[p][e[1]] = e2
-        else:
-            del g[p][e[1]]
-
-
 def add2edges(g,e,p):
     '''
     break edge e[0] -> e[1] into two pieces 
