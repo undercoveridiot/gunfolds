@@ -65,10 +65,10 @@ def density(g): return len(edgelist(g))/np.double(len(g)**2)
 def signature(g, edges):
     n = map(lambda x: ''.join(x), edgelist(g))
     n.sort()
-    n = ''.join(n)
+    n = ','.join(n)
     l = map(lambda x: ''.join(x), edges)
     l.sort()
-    e = ''.join(l)
+    e = ','.join(l)
     return (n,e)
 
 def memo(func):
