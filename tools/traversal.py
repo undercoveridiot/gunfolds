@@ -61,9 +61,11 @@ def deledges(g,e,p,e1,e2):
 
 def rotate(l): return l[1:] + l[:1] # rotate a list
 def density(g): return len(edgelist(g))/np.double(len(g)**2)
+
 def signature(g, edges):
-    #n = g2num(g)
-    n = ''.join(map(lambda x: ''.join(x), edgelist(g)))
+    n = map(lambda x: ''.join(x), edgelist(g))
+    n.sort()
+    n = ''.join(n)
     l = map(lambda x: ''.join(x), edges)
     l.sort()
     e = ''.join(l)
@@ -90,7 +92,6 @@ def nodesearch(g, g2, edges, s):
                 if r: s.add(g2num(r))
             deledges(g,e,n,e1,e2)
         edges.append(e)
-        return False
     else:
         return g
 
