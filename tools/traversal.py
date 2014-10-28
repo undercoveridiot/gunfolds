@@ -123,9 +123,4 @@ def eqc(g2):
     g = cloneempty(g2)
     s = set()
     nodesearch(g,g2,edges,s)
-    # prune those that are not consistent with the bidirected edge structure
-    # now we  filter out those  g1's that are compatible  via directed
-    # edges but not via bidirected
-    #f = lambda x: increment_u(num2CG(x,n),num2CG(x,n))
-    #l = [e for e in s if f(e) == g2]
     return s
