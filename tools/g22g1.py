@@ -2,7 +2,6 @@ import sys
 sys.path.append('./tools/')
 from bfutils import increment_u
 
-
 def find_next_graph(graph_g):
     next_graph = {}
     for i in graph_g:next_graph[i] = {}
