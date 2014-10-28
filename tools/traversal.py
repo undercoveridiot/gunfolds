@@ -1,8 +1,10 @@
 import sys
 sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
 from bfutils import increment_u, g2num, num2CG
+from functools import wraps
 import numpy as np
 import ipdb
+import itertools
 
 def increment(g):
     '''
@@ -13,6 +15,11 @@ def increment(g):
     for n in g:
         for h in g[n]:
             r[n] = {e:set([(0,1)]) for e in g[h]}
+        for pair in itertools.permutations(g[n],2):
+            try:
+                r[pair[0]][pair[1]].add((2,0))
+            except KeyError:
+                r[pair[0]][pair[1]] = set([(2,0)])
     return r
 
 def isedgesubset(g2star,g2):
@@ -62,6 +69,12 @@ def deledges(g,e,p,e1,e2):
 def rotate(l): return l[1:] + l[:1] # rotate a list
 def density(g): return len(edgelist(g))/np.double(len(g)**2)
 
+def gsig(g):
+    n = map(lambda x: ''.join(x), edgelist(g))
+    n.sort()
+    n = ','.join(n)
+    return n
+
 def signature(g, edges):
     n = map(lambda x: ''.join(x), edgelist(g))
     n.sort()
@@ -81,24 +94,25 @@ def memo(func):
         return cache[s]               # Return the cached solution
     return wrap
 
-@memo # memoize the search
-def nodesearch(g, g2, edges, s):
-    if edges:
-        e = edges.pop()
-        for n in g:
-            e1, e2 = add2edges(g,e,n)
-            if isedgesubset(increment(g), g2):
-                r = nodesearch(g,g2,edges,s)
-                if r: s.add(g2num(r))
-            deledges(g,e,n,e1,e2)
-        edges.append(e)
-    else:
-        return g
-
 def eqc(g2):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
+    @memo # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            e = edges.pop()
+            for n in g:
+                e1, e2 = add2edges(g,e,n)
+                if isedgesubset(increment(g), g2):
+                    r = nodesearch(g,g2,edges,s)
+                    #if r: s.add(g2num(r))
+                    if r and increment_u(r,r)==g2:
+                        s.add(g2num(r))
+                deledges(g,e,n,e1,e2)
+            edges.append(e)
+        else:
+            return g
     # find all directed g1's not conflicting with g2
     n = len(g2)
     edges = edgelist(g2)
@@ -108,6 +122,6 @@ def eqc(g2):
     # prune those that are not consistent with the bidirected edge structure
     # now we  filter out those  g1's that are compatible  via directed
     # edges but not via bidirected
-    f = lambda x: increment_u(num2CG(x,n),num2CG(x,n))
-    l = [e for e in s if f(e) == g2]
-    return l
+    #f = lambda x: increment_u(num2CG(x,n),num2CG(x,n))
+    #l = [e for e in s if f(e) == g2]
+    return s
