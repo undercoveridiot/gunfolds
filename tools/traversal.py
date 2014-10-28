@@ -14,11 +14,15 @@ def increment(g):
     r = {n:{} for n in g}
     for n in g:
         for h in g[n]:
-            r[n] = {e:set([(0,1)]) for e in g[h]}
+            for e in g[h]:
+                if e in r[n]:
+                    r[n][e].add((0,1))
+                else:
+                    r[n][e] = set([(0,1)])
         for pair in itertools.permutations(g[n],2):
-            try:
+            if pair[1] in r[pair[0]]:
                 r[pair[0]][pair[1]].add((2,0))
-            except KeyError:
+            else:
                 r[pair[0]][pair[1]] = set([(2,0)])
     return r
 
@@ -28,11 +32,11 @@ def isedgesubset(g2star,g2):
     '''
     for n in g2star:
         for h in g2star[n]:
-            try:
+            if h in g2[n]:
                 #if not (0,1) in g2[n][h]:
                 if not g2star[n][h].issubset(g2[n][h]):
                     return False
-            except KeyError:
+            else:
                     return False
     return True
 
@@ -102,12 +106,12 @@ def eqc(g2):
     def nodesearch(g, g2, edges, s):
         if edges:
             e = edges.pop()
-            for n in g:
+            for n in g2:
                 e1, e2 = add2edges(g,e,n)
                 if isedgesubset(increment(g), g2):
                     r = nodesearch(g,g2,edges,s)
                     #if r: s.add(g2num(r))
-                    if r and increment_u(r,r)==g2:
+                    if r and increment(r)==g2:
                         s.add(g2num(r))
                 deledges(g,e,n,e1,e2)
             edges.append(e)
