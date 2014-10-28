@@ -3,7 +3,7 @@ sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
 from bfutils import increment_u, g2num, num2CG
 from functools import wraps
 import numpy as np
-import ipdb
+#import ipdb
 import itertools
 
 def increment(g):
