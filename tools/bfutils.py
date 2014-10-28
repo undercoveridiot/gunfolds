@@ -9,6 +9,7 @@ import ecj
 import zickle as zkl
 from comparison import num2CG
 
+
 def directed_inc(G,D):
     G_un = {}
     # directed edges
@@ -217,8 +218,19 @@ def ring(n):
     g[str(n)] = {'1': set([(0,1)])}
     return g
 
+def upairs(n,k):
+    '''
+    n unique nonsequential pairs
+    '''
+    s = set()
+    for p in randint(n, size=(3*k, 2)):
+        if p[1]-p[0] == 1: continue
+        s.add(tuple(p))
+    l = [e for e in s]
+    return l[:k]
+
 def ringarcs(g,n):
-    for edge in randint(len(g), size=(n, 2)):
+    for edge in upairs(len(g),n):
         g[str(edge[0]+1)][str(edge[1]+1)] = set([(0,1)])
     return g
 def ringmore(n,m):
