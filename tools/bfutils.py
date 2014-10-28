@@ -3,10 +3,10 @@ from itertools import combinations
 #from progressbar import ProgressBar, Percentage
 from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
-import zickle as zkl
 
 #local
 import ecj
+import zickle as zkl
 from comparison import num2CG
 
 def directed_inc(G,D):
