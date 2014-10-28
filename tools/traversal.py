@@ -110,7 +110,6 @@ def eqc(g2):
                 e1, e2 = add2edges(g,e,n)
                 if isedgesubset(increment(g), g2):
                     r = nodesearch(g,g2,edges,s)
-                    #if r: s.add(g2num(r))
                     if r and increment(r)==g2:
                         s.add(g2num(r))
                 deledges(g,e,n,e1,e2)
