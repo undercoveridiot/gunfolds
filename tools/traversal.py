@@ -73,20 +73,22 @@ def deledges(g,e,p,e1,e2):
 def rotate(l): return l[1:] + l[:1] # rotate a list
 def density(g): return len(edgelist(g))/np.double(len(g)**2)
 
-def gsig(g):
-    n = map(lambda x: ''.join(x), edgelist(g))
+def esig(l):
+    '''
+    turns edge list into a hash string
+    '''
+    n = map(lambda x: '.'.join(x), l)
     n.sort()
     n = ','.join(n)
     return n
 
-def signature(g, edges):
-    n = map(lambda x: ''.join(x), edgelist(g))
-    n.sort()
-    n = ','.join(n)
-    l = map(lambda x: ''.join(x), edges)
-    l.sort()
-    e = ','.join(l)
-    return (n,e)
+def gsig(g):
+    '''
+    turns input graph g into a hash string using edges
+    '''
+    return esig(edgelist(g))
+
+def signature(g, edges): return (gsig(g),esig(edges))
 
 def memo(func):
     cache = {}                        # Stored subproblem solutions
