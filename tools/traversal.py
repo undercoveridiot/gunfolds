@@ -15,10 +15,8 @@ def increment(g):
     for n in g:
         for h in g[n]:
             for e in g[h]:
-                if e in r[n]:
-                    r[n][e].add((0,1))
-                else:
-                    r[n][e] = set([(0,1)])
+                r[n][e] = set([(0,1)])
+    for n in g:
         for pair in itertools.permutations(g[n],2):
             if pair[1] in r[pair[0]]:
                 r[pair[0]][pair[1]].add((2,0))
