@@ -4,7 +4,48 @@ from bfutils import increment_u, g2num, num2CG
 from functools import wraps
 import numpy as np
 #import ipdb
-import itertools
+import ecj
+import itertools, copy
+
+def pincrement(g,g2,n1,n2,n3):
+    r = copy.deepcopy(g2)
+    rg= ecj.tr(g)
+    for k in rg[n1]:
+        if n2 in r[k]: 
+            r[k][n2].add((0,1))
+        else:
+            r[k][n2] = set([(0,1)])        
+    for k in g[n2]:
+        if k in r[n1]: 
+            r[n1][k].add((0,1))
+        else:
+            r[n1][k] = set([(0,1)])
+    for k in g[n3]:
+        if k in r[n2]: 
+            r[n2][k].add((0,1))
+        else:
+            r[n2][k] = set([(0,1)])
+    for k in g[n1]:
+        if k != n2:
+            if k in r[n2]:
+                r[n2][k].add((2,0))
+            else:
+                r[n2][k] = set([(2,0)])
+            if n2 in r[k]:
+                r[k][n2].add((2,0))
+            else:
+                r[k][n2] = set([(2,0)])
+    for k in g[n2]:
+        if k != n3:
+            if k in r[n3]:
+                r[n3][k].add((2,0))
+            else:
+                r[n3][k] = set([(2,0)])
+            if n3 in r[k]:
+                r[k][n3].add((2,0))
+            else:
+                r[k][n3] = set([(2,0)])
+    return r
 
 def increment(g):
     '''
