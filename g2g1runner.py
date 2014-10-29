@@ -36,7 +36,8 @@ def wrapper(fold, n=10, k=10):
         break
     return {'gt':g,'eq':s,'ms':endTime-startTime}
 
-for nodes in [10, 15, 20, 30, 60]:
+for nodes in [13, 17, 25, 50]:
+#for nodes in [10, 15, 20, 30, 60]:
     z = {}
     for dens in [0.11, 0.15, 0.2, 0.25, 0.3]:
         e = dens2edgenum(dens, n=nodes)
