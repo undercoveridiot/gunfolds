@@ -235,3 +235,5 @@ def ringarcs(g,n):
     return g
 def ringmore(n,m):
     return ringarcs(ring(n),m)
+
+def dens2edgenum(d, n=10): return int(d*n**2)-n
