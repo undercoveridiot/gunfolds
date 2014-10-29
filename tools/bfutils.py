@@ -236,4 +236,6 @@ def ringarcs(g,n):
 def ringmore(n,m):
     return ringarcs(ring(n),m)
 
+# talking about extra edges on top of the ring
 def dens2edgenum(d, n=10): return int(d*n**2)-n
+def edgenum2dens(e, n=10): return int((e+n)/n**2)
