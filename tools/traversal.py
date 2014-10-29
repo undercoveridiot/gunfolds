@@ -143,18 +143,21 @@ def eqc(g2):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
+    c = {}
+
     @memo # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             e = edges.pop()
             #gg = increment(g)
             for n in g2:
+                if (n,e) in c: continue
                 e1, e2 = add2edges(g,e,n)
                 #if isedgesubset(pincrement(g,gg,e[0],n,e[1]), g2):
                 if isedgesubset(increment(g), g2):
                     r = nodesearch(g,g2,edges,s)
                     if r and increment(r)==g2:
-                        s.add(g2num(r))
+                        s.add(g2num(r))                    
                 deledges(g,e,n,e1,e2)
             edges.append(e)
         else:
@@ -163,6 +166,14 @@ def eqc(g2):
     n = len(g2)
     edges = edgelist(g2)
     g = cloneempty(g2)
+
+    for e in edges:
+        for n in g2:        
+            e1, e2 = add2edges(g,e,n)
+            if not isedgesubset(increment(g), g2):
+                c[(n,e)] = False
+            deledges(g,e,n,e1,e2)
+
     s = set()
     nodesearch(g,g2,edges,s)
     return s
