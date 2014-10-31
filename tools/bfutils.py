@@ -3,6 +3,7 @@ from itertools import combinations
 #from progressbar import ProgressBar, Percentage
 from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
+import numpy as np
 
 #local
 import ecj
@@ -238,4 +239,4 @@ def ringmore(n,m):
 
 # talking about extra edges on top of the ring
 def dens2edgenum(d, n=10): return int(d*n**2)-n
-def edgenum2dens(e, n=10): return int((e+n)/n**2)
+def edgenum2dens(e, n=10): return np.double(e+n)/n**2
