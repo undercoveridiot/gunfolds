@@ -36,9 +36,11 @@ def wrapper(fold, n=10, k=10):
         break
     return {'gt':g,'eq':s,'ms':endTime-startTime}
 
-for nodes in [10, 15, 20, 30, 60]:
+#for nodes in [10, 15, 20, 30, 60]:
+for nodes in [6]:
     z = {}
-    for dens in [0.11, 0.15, 0.2, 0.25, 0.3]:
+#    for dens in [0.11, 0.15, 0.2, 0.25, 0.3]:
+    for dens in [0.2, 0.23, 0.28, 0.32, 0.35]:
         e = dens2edgenum(dens, n=nodes)
         pool=Pool(processes=PNUM)
         eqclasses = pool.map(functools.partial(wrapper, n=nodes, k=e), 
