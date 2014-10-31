@@ -151,7 +151,9 @@ def eqc(g2, capsize=None):
         if edges:
             e = edges.pop()
             #gg = increment(g)
-            for n in g2:
+            ln = [n for n in g2]
+            random.shuffle(ln)
+            for n in ln:
                 if (n,e) in single_cache: continue
                 e1, e2 = add2edges(g,e,n)
                 #if isedgesubset(pincrement(g,gg,e[0],n,e[1]), g2):
