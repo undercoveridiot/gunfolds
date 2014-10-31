@@ -139,7 +139,7 @@ def memo(func):
         return cache[s]               # Return the cached solution
     return wrap
 
-def eqc(g2):
+def eqc(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
@@ -157,7 +157,9 @@ def eqc(g2):
                 if isedgesubset(increment(g), g2):
                     r = nodesearch(g,g2,edges,s)
                     if r and increment(r)==g2:
-                        s.add(g2num(r))                    
+                        s.add(g2num(r))    
+                        if capsize and len(s)>capsize:
+                            raise ValueError('Too many elements in eqclass')
                 deledges(g,e,n,e1,e2)
             edges.append(e)
         else:
@@ -175,5 +177,8 @@ def eqc(g2):
             deledges(g,e,n,e1,e2)
 
     s = set()
-    nodesearch(g,g2,edges,s)
+    try:
+        nodesearch(g,g2,edges,s)
+    except ValueError:
+        s.add(0)
     return s
