@@ -81,27 +81,50 @@ g = {'1': {'2':1,'16':1},
      '60': {'16':1}
 }
 
-g =  {'10': {'1': 1}, '1': {'1': 1, '2': 1}, '3': {'8': 1, '3': 1, '4': 1}, '2': {'3': 1, '2': 1}, '5': {'6': 1}, '4': {'5': 1}, '7': {'8': 1, '3': 1, '7': 1}, '6': {'1': 1, '4': 1, '7': 1}, '9': {'9': 1, '10': 1}, '8': {'9': 1, '8': 1}}
+g = {'1': {'2': set([(0, 1)]), '7': set([(0, 1)])},
+     '10': {'1': set([(0, 1)]), '5': set([(0, 1)]), '9': set([(0, 1)])},
+     '2': {'3': set([(0, 1)]),
+           '4': set([(0, 1)]),
+           '6': set([(0, 1)]),
+           '7': set([(0, 1)])},
+     '3': {'4': set([(0, 1)])},
+     '4': {'1': set([(0, 1)]), '4': set([(0, 1)]), '5': set([(0, 1)])},
+     '5': {'10': set([(0, 1)]),
+           '5': set([(0, 1)]),
+           '6': set([(0, 1)]),
+           '8': set([(0, 1)]),
+           '9': set([(0, 1)])},
+     '6': {'2': set([(0, 1)]), '7': set([(0, 1)])},
+     '7': {'8': set([(0, 1)])},
+     '8': {'4': set([(0, 1)]),
+           '7': set([(0, 1)]),
+           '8': set([(0, 1)]),
+           '9': set([(0, 1)])},
+     '9': {'1': set([(0, 1)]),
+           '10': set([(0, 1)]),
+           '2': set([(0, 1)]),
+           '6': set([(0, 1)]),
+           '7': set([(0, 1)])}}
 
+# fname = 'list.zkl'
+# l = zkl.load(fname)
 
-fname = 'list.zkl'
-l = zkl.load(fname)
-
-y = min(5,len(l))
-x = np.int(np.ceil(len(l)/float(y)))
+# y = min(5,len(l))
+# x = np.int(np.ceil(len(l)/float(y)))
 
 # output file
 foo = open('figures/shipfig_figure.tex', 'wb')
 sys.stdout = foo
 
 # generation of the output
-ww = len(l)
-#d2l.matrix_fold(ring(2),ww,1,R=2.5, w_gap=1, h_gap=2, mname='TT1')
+#ww = len(l)
+
+#d2l.matrix_fold(g,4,1,R=2.5, w_gap=1, h_gap=2, mname='TT1')
 #for i in range(3,10):
 #    d2l.matrix_fold(ring(i),ww,1,R=2.5, w_gap=1, h_gap=2, mname='TT'+str(i-1), 
 #                    stl=', below=5cm of TT'+str(i-2)+'.west,anchor=west')
 
-d2l.matrix_list(l,y,x,R=2, w_gap=1, h_gap=2)
+#d2l.matrix_list(l,y,x,R=2, w_gap=1, h_gap=2)
 
 
 sys.stdout = sys.__stdout__              # remember to reset sys.stdout!
