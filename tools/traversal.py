@@ -3,6 +3,7 @@ sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
 from bfutils import increment_u, g2num, num2CG
 from functools import wraps
 import numpy as np
+import random
 #import ipdb
 import ecj
 import itertools, copy
@@ -165,6 +166,7 @@ def eqc(g2):
     # find all directed g1's not conflicting with g2
     n = len(g2)
     edges = edgelist(g2)
+    random.shuffle(edges)
     g = cloneempty(g2)
 
     for e in edges:
