@@ -8,16 +8,13 @@ import time, socket
 import scipy
 
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=50
+    PNUM=45
 else:
     # Setting the number  of parallel running processes  to the number
     # of cores minus 7% for breathing room
     PNUM=cpu_count()-int(0.07*cpu_count()) 
 print 'processes: ',PNUM
 repeats = 100
-
-def dens2edgenum(d, n=10):
-    return int(d*n**2)-n
 
 def wrapper(fold, n=10, k=10):
     scipy.random.seed()
@@ -27,7 +24,7 @@ def wrapper(fold, n=10, k=10):
             g2 = traversal.increment_u(g,g)
             print fold,': ',traversal.density(g),':',
             startTime = int(round(time.time() * 1000))
-            s = traversal.eqc(g2)
+            s = traversal.eqc(g2, capsize=10000)
             endTime = int(round(time.time() * 1000))
             print len(s)
         except MemoryError:
@@ -36,11 +33,10 @@ def wrapper(fold, n=10, k=10):
         break
     return {'gt':g,'eq':s,'ms':endTime-startTime}
 
-for nodes in [13, 17, 25, 50]:
-#for nodes in [10, 15, 20, 30, 60]:
+for nodes in [10, 15, 20, 30, 60]:
     z = {}
     for dens in [0.11, 0.15, 0.2, 0.25, 0.3]:
-        e = dens2edgenum(dens, n=nodes)
+        e = bfutils.dens2edgenum(dens, n=nodes)
         pool=Pool(processes=PNUM)
         eqclasses = pool.map(functools.partial(wrapper, n=nodes, k=e), 
                              range(repeats))
