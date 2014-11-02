@@ -185,4 +185,5 @@ def eqc(g2, capsize=None):
         nodesearch(g,g2,edges,s)
     except ValueError:
         s.add(0)
+    raise Exception('all done', s)
     return s
