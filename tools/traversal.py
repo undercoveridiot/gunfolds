@@ -144,6 +144,10 @@ def eqc(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
     single_cache = {}
 
     @memo # memoize the search
