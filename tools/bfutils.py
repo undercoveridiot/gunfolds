@@ -1,5 +1,5 @@
 import scipy
-from itertools import combinations
+from itertools import permutations
 #from progressbar import ProgressBar, Percentage
 from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
@@ -22,25 +22,21 @@ def directed_inc(G,D):
     return G_un
 def bidirected_inc(G,D):
     # bidirected edges
-    for w in D:
+    for w in G:
         # transfer old bidirected edges
         l = [e for e in D[w] if (2,0) in D[w][e]]
         for p in l:
-            try: 
-                 G[w][p].add((2,0))
-            except KeyError: 
-                 G[w][p] = set([(2,0)])
-        # new bidirected dges
+            if p in G[w]: 
+                G[w][p].add((2,0))
+            else: 
+                G[w][p] = set([(2,0)])
+        # new bidirected edges
         l = [e for e in D[w] if (0,1) in D[w][e]]
-        for p in list(combinations(l, 2)):
-            try: 
-                G[p[0]][p[1]].add((2,0))
-            except KeyError: 
-                G[p[0]][p[1]] = set([(2,0)])
-            try: 
-                G[p[1]][p[0]].add((2,0))
-            except KeyError: 
-                G[p[1]][p[0]] = set([(2,0)])
+        for pair in permutations(l,2):
+            if pair[1] in G[pair[0]]:
+                G[pair[0]][pair[1]].add((2,0))
+            else:
+                G[pair[0]][pair[1]] = set([(2,0)])
     return G
 def increment_u(G_star, G_u):
     # directed edges
@@ -48,6 +44,11 @@ def increment_u(G_star, G_u):
     # bidirected edges
     G_un = bidirected_inc(G_un,G_u)
     return G_un
+def undersample(G, u):
+    Gu = G
+    for i in range(u):
+        Gu = increment_u(G, Gu)
+    return Gu
 def all_undersamples(G_star,steps=5):
     glist = [G_star]
     while True:
