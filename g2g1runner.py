@@ -45,6 +45,9 @@ def killall(l):
                     #print 'terminating ', p.name
                     p.terminate()
                     p.join()
+                else:
+                    p.close()
+                    p.join()
             return True
     return False
 
@@ -72,20 +75,26 @@ def fan_wrapper(fold,n=10,k=10):
             r = output.get()           
         except MemoryError:
             print 'memory error... retrying'
+            for p in pl:
+		p.terminate()
+		p.join()
             continue
         break
     return r
 
 
 #for nodes in [10, 15, 20, 30, 60]:
-for nodes in [8]:
+for nodes in [20, 60]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.2, 0.23, 0.28, 0.32, 0.35, 0.45, 0.55, 0.65]:
+    for dens in [0.11, 0.15, 0.2, 0.25, 0.3]:
         e = bfutils.dens2edgenum(dens, n=nodes)
         eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e), 
                              range(repeats))
         z[dens] = eqclasses
+        zkl.save(z[dens],
+                 socket.gethostname().split('.')[0]+\
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'.zkl')
     pool.close()
     pool.join()
     zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'.zkl')
