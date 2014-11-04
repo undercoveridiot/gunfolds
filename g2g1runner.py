@@ -7,8 +7,8 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 5 # number of randomized starts per graph
-if socket.gethostname().split('.')[0] == 'leibnitz':
+INPNUM = 2 # number of randomized starts per graph
+if socket.gethostname().split('.')[0] == 'lieibnitz':
     PNUM=45
 else:
     # Setting the number  of parallel running processes  to the number
@@ -46,7 +46,6 @@ def killall(l):
                     p.terminate()
                     p.join()
                 else:
-                    p.close()
                     p.join()
             return True
     return False
@@ -84,10 +83,10 @@ def fan_wrapper(fold,n=10,k=10):
 
 
 #for nodes in [10, 15, 20, 30, 60]:
-for nodes in [20, 60]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.11, 0.15, 0.2, 0.25, 0.3]:
+    for dens in [0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
         eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e), 
                              range(repeats))
