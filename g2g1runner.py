@@ -11,7 +11,8 @@ INPNUM = 2 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=45
+    PNUM=60
+    PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
     # of cores minus 7% for breathing room
@@ -46,6 +47,8 @@ def killall(l):
                     #print 'terminating ', p.name
                     p.terminate()
                     p.join()
+                else:
+                    p.join()
             return True
     return False
 
@@ -73,20 +76,26 @@ def fan_wrapper(fold,n=10,k=10):
             r = output.get()           
         except MemoryError:
             print 'memory error... retrying'
+            for p in pl:
+		p.terminate()
+		p.join()
             continue
         break
     return r
 
 
 #for nodes in [10, 15, 20, 30, 60]:
-for nodes in [8]:
+for nodes in [4]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.2, 0.23, 0.28, 0.32, 0.35, 0.45, 0.55, 0.65]:
+    for dens in [0.2 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
         eqclasses = pool.map(functools.partial(wrapper, n=nodes, k=e), 
                              range(REPEATS))
         z[dens] = eqclasses
+        zkl.save(z[dens],
+                 socket.gethostname().split('.')[0]+\
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'.zkl')
     pool.close()
     pool.join()
     zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'.zkl')
