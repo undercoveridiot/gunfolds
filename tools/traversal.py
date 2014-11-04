@@ -140,7 +140,7 @@ def memo(func):
         return cache[s]               # Return the cached solution
     return wrap
 
-def eqc(g2, capsize=None):
+def g22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
