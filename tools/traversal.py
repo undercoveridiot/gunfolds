@@ -156,7 +156,7 @@ def g22g1(g2, capsize=None):
             e = edges.pop()
             #gg = increment(g)
             ln = [n for n in g2]
-            random.shuffle(ln)
+            #random.shuffle(ln)
             for n in ln:
                 if (n,e) in single_cache: continue
                 e1, e2 = add2edges(g,e,n)
