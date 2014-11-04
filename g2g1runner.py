@@ -65,7 +65,7 @@ def fan_wrapper(fold,n=10,k=10):
                 scipy.random.seed()
                 print fold,': ',traversal.density(g),':',
                 startTime = int(round(time.time() * 1000))
-                s = traversal.g22g1(g2, capsize=1000)
+                s = traversal.g22g1(g2, capsize=CAPSIZE)
                 endTime = int(round(time.time() * 1000))
                 print len(s)
                 output.put({'gt':g,'eq':s,'ms':endTime-startTime})
