@@ -9,6 +9,7 @@ import scipy
 
 INPNUM = 2 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
+REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
     PNUM=45
 else:
@@ -17,7 +18,7 @@ else:
     PNUM=cpu_count()-int(0.07*cpu_count())
     PNUM=max((1,PNUM/INPNUM))
 print 'processes: ',PNUM
-repeats = 100
+
 
 def wrapper(fold, n=10, k=10):
     scipy.random.seed()
@@ -27,7 +28,7 @@ def wrapper(fold, n=10, k=10):
             g2 = traversal.increment_u(g,g)
             print fold,': ',traversal.density(g),':',
             startTime = int(round(time.time() * 1000))
-            s = traversal.g22g1(g2, capsize=10000)
+            s = traversal.g22g1(g2, capsize=CAPSIZE)
             endTime = int(round(time.time() * 1000))
             print len(s)
         except MemoryError:
@@ -83,7 +84,7 @@ for nodes in [6]:
     for dens in [0.2, 0.23, 0.28, 0.32, 0.35]:
         e = bfutils.dens2edgenum(dens, n=nodes)
         eqclasses = pool.map(functools.partial(wrapper, n=nodes, k=e), 
-                             range(repeats))
+                             range(REPEATS))
         z[dens] = eqclasses
     pool.close()
     pool.join()
