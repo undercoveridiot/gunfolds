@@ -2,7 +2,7 @@ import networkx
 from bfutils import g2num, num2CG
 from comparison import graph2nx
 from ecj import undersample
-
+from numpy import argsort
 
 def simple_loops(g, u):
     """
@@ -13,8 +13,10 @@ def simple_loops(g, u):
         yield l
 
 def print_loops(g, u):
-    for l in simple_loops(g,u):
-        print l
+    l = [x for x in simple_loops(g,u)]
+    lens = map(len, l)    
+    for i in argsort(lens):
+        print l[i]
 
 def ul(l):
     """
