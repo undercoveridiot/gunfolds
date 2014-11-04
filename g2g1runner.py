@@ -7,7 +7,7 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 2 # number of randomized starts per graph
+INPNUM = 3 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
@@ -86,10 +86,10 @@ def fan_wrapper(fold,n=10,k=10):
 
 
 #for nodes in [10, 15, 20, 30, 60]:
-for nodes in [5]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+    for dens in [0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
         eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e), 
                              range(REPEATS))

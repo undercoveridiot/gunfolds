@@ -126,7 +126,7 @@ def cc_undersamples(G_star,steps=1):
         n = ug2num(g)
         if n in glist: return []
         glist.append(n)
-        lastgraph = g           
+        lastgraph = g       
     return glist[-1]
 
 def compatible(d1,d2):
