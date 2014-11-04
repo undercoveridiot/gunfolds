@@ -54,7 +54,7 @@ def killall(l):
 
 def fan_wrapper(fold,n=10,k=10):
     scipy.random.seed()
-    curr_proc=current_process() 
+    curr_proc=current_process()
     curr_proc.daemon=False
     output = Queue()
     while True:
@@ -81,16 +81,17 @@ def fan_wrapper(fold,n=10,k=10):
 		p.join()
             continue
         break
+    for p in pl: p.join()
     return r
 
 
 #for nodes in [10, 15, 20, 30, 60]:
-for nodes in [4]:
+for nodes in [5]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.2 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+    for dens in [0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
-        eqclasses = pool.map(functools.partial(wrapper, n=nodes, k=e), 
+        eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e), 
                              range(REPEATS))
         z[dens] = eqclasses
         zkl.save(z[dens],
