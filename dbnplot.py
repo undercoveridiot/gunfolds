@@ -118,8 +118,12 @@ sys.stdout = foo
 
 # generation of the output
 #ww = len(l)
+g = {'1': {'1': {(0, 1)}, '2': {(0, 1)}},
+     '2': {'3': {(0, 1)}},
+     '3': {'1': {(0, 1)}, '4': {(0, 1)}},
+     '4': {'1': {(0, 1)}}}
 
-#d2l.matrix_fold(g,4,1,R=2.5, w_gap=1, h_gap=2, mname='TT1')
+d2l.matrix_fold(g,4,1,R=2.5, w_gap=1, h_gap=2, mname='TT1')
 #for i in range(3,10):
 #    d2l.matrix_fold(ring(i),ww,1,R=2.5, w_gap=1, h_gap=2, mname='TT'+str(i-1), 
 #                    stl=', below=5cm of TT'+str(i-2)+'.west,anchor=west')
