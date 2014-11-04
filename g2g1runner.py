@@ -7,7 +7,8 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 5 # number of randomized starts per graph
+INPNUM = 2 # number of randomized starts per graph
+CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 if socket.gethostname().split('.')[0] == 'leibnitz':
     PNUM=45
 else:
@@ -26,7 +27,7 @@ def wrapper(fold, n=10, k=10):
             g2 = traversal.increment_u(g,g)
             print fold,': ',traversal.density(g),':',
             startTime = int(round(time.time() * 1000))
-            s = traversal.eqc(g2, capsize=10000)
+            s = traversal.g22g1(g2, capsize=10000)
             endTime = int(round(time.time() * 1000))
             print len(s)
         except MemoryError:
@@ -59,7 +60,7 @@ def fan_wrapper():
                 scipy.random.seed()
                 print ': ',traversal.density(g),':',
                 startTime = int(round(time.time() * 1000))
-                s = traversal.eqc(g2, capsize=1000)
+                s = traversal.g22g1(g2, capsize=1000)
                 endTime = int(round(time.time() * 1000))
                 print len(s)
                 output.put({'gt':g,'eq':s,'ms':endTime-startTime})
