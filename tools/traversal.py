@@ -104,9 +104,8 @@ def chunks(l, n):
         yield l[i:i+n]
 
 def vedgelist(g):
-    '''
-    return a list of tuples for edges of g and forks
-    '''
+    """ Return a list of tuples for edges of g and forks
+    """
     l = []
     for n in g: # just all children
         c = [e for e in g[n] if (0,1) in g[n][e]]
@@ -120,7 +119,7 @@ def vedgelist(g):
 
 def checkbedges(v,bel,g2):
     for e in bel:
-        if e[0] in v and not e[0] in g2[e[0]]: 
+        if e[0] in v and not e[0] in g2[e[0]]:
             bel.remove(e)
         elif e[1] in v and not e[1] in g2[e[1]]:
             bel.remove(e)
@@ -128,27 +127,27 @@ def checkbedges(v,bel,g2):
 
 def checkedge(e, g2):
     l = [n for n in g2 if not n in e]
-    for n in e: 
+    for n in e:
         if n in g2[n]: l.append(n)
     return l
 
 def checkvedge(v, g2):
     bl = checkbedges(v,bedgelist(g2),g2)
     l = bl + [(n,n) for n in g2 if not n in v]
-    for n in v: 
+    for n in v:
         if n in g2[n]: l.append((n,n))
     return list(set(l))
-    
+
 def isvedge(v): return len(v) == 3
 
 def checkable(g2):
     d = {}
     vlist = vedgelist(g2)
     for v in vlist:
-        if isvedge(v): 
+        if isvedge(v):
             d[v] = checkvedge(v,g2)
         else:
-            d[v] = checkedge(v,g2)            
+            d[v] = checkedge(v,g2)
     return d
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
