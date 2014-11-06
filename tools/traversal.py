@@ -40,7 +40,7 @@ def isedgesubset(g2star,g2):
                     return False
     return True
 
-def edgelist(g):
+def edgelist(g): # directed
     '''
     return a list of tuples for edges of g
     '''
@@ -72,13 +72,13 @@ def vedgelist(g):
     for n in g: # just all children
         c = [e for e in g[n] if (0,1) in g[n][e]]
         if len(c) == 1:
-            if (n,c[0]) in el: 
+            if (n,c[0]) in el:
                 l.append((n,c[0]))
                 el.remove((n,c[0]))
         elif len(c) > 1:
             r = set()
             for p in [x for x in itertools.combinations(c,2)]:
-                if not p in bl and p in el:                        
+                if not p in bl and p in el:
                     l.append((n,)+p)
                     el.remove(p)
                     r.add(p[0])
@@ -86,7 +86,25 @@ def vedgelist(g):
             for e in r: c.remove(e)
             b = [tuple([n]+i) for i in chunks(c,2)]
             l.extend(b)
+    l = threedges(l) + makechains(twoedges(l))
     return l
+
+def twoedges(l): return [e for e in l if len(e)==2]
+def threedges(l): return [e for e in l if len(e)==3]
+def makechains(l):
+    """ Greedily construct 2 edge chains from edge list
+    """
+    ends = {e[1]:e for e in l}
+    starts = {e[0]:e for e in l}
+    r = []
+    while l:
+        e = l.pop()
+        if e[1] in starts and e[0] != e[1] and starts[e[1]] in l:
+            r.append(('0', e[0],)+starts[e[1]])
+            l.remove(starts[e[1]])
+        else:
+            r.append(e)
+    return r
 
 def selfloop(n,g):
     return n in g[n]
@@ -128,6 +146,14 @@ def checkvedge(v, g2):
         l = checkbedges(v,l,g2)
     return list(set(l))
 
+def checkcedge(c, g2):
+    """ Nodes to check to merge the virtual nodes of c
+    """
+    l = edgelist(g2)
+    l.remove((c[1],c[2]))
+    l.remove((c[2],c[3]))
+    return list(set(l))
+
 def isvedge(v): return len(v) == 3
 
 def checkable(g2):
@@ -136,8 +162,10 @@ def checkable(g2):
     for v in vlist:
         if isvedge(v):
             d[v] = checkvedge(v,g2)
-        else:
+        elif len(v)==2:
             d[v] = checkedge(v,g2)
+        else:
+            d[v] = checkcedge(v,g2)
     return d
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
@@ -176,6 +204,23 @@ def delavedge(g,v,b,mask):
     if not mask[1]: g[v[0]].pop(b[1], None)
     if not mask[2]: g[b[0]].pop(v[1], None)
     if not mask[3]: g[b[1]].pop(v[2], None)
+
+def addacedge(g,v,b): # chain
+    mask = [b[0] in g[v[1]], v[2] in g[b[0]],
+            b[1] in g[v[2]], v[3] in g[b[1]]]
+
+    g[v[1]][b[0]] = set([(0,1)])
+    g[v[2]][b[1]] = set([(0,1)])
+    g[b[0]][v[2]] = set([(0,1)])
+    g[b[1]][v[3]] = set([(0,1)])
+
+    return mask
+
+def delacedge(g,v,b,mask):
+    if not mask[0]: g[v[1]].pop(b[0], None)
+    if not mask[1]: g[b[0]].pop(v[2], None)
+    if not mask[2]: g[v[2]].pop(b[1], None)
+    if not mask[3]: g[b[1]].pop(v[3], None)
 
 def rotate(l): return l[1:] + l[:1] # rotate a list
 def density(g): return len(edgelist(g))/np.double(len(g)**2)
@@ -283,9 +328,12 @@ def vg22g1(g2, capsize=None):
             if len(key) == 2:
                 adder = add2edges
                 remover = del2edges
-            else:
+            elif len(key) == 3:
                 adder = addavedge
                 remover = delavedge
+            elif len(key) == 4:
+                adder = addacedge
+                remover = delacedge
             for n in checklist:
                 mask = adder(g,key,n)
                 if isedgesubset(increment(g), g2):
