@@ -320,20 +320,16 @@ def vg22g1(g2, capsize=None):
     if ecj.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
-
+    f = [(add2edges, del2edges), 
+         (addavedge,delavedge), 
+         (addacedge,delacedge)]
     @memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
-            key, checklist = edges.popitem()
-            if len(key) == 2:
-                adder = add2edges
-                remover = del2edges
-            elif len(key) == 3:
-                adder = addavedge
-                remover = delavedge
-            elif len(key) == 4:
-                adder = addacedge
-                remover = delacedge
+            #key, checklist = edges.popitem()
+            key = random.choice(edges.keys())
+            checklist = edges.pop(key)  
+            adder, remover = f[len(key)-2]
             for n in checklist:
                 mask = adder(g,key,n)
                 if isedgesubset(increment(g), g2):
