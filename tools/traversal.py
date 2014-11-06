@@ -207,6 +207,16 @@ def memo(func):
         return cache[s]               # Return the cached solution
     return wrap
 
+def memo2(func):
+    cache = {}                        # Stored subproblem solutions
+    @wraps(func)                      # Make wrap look like func
+    def wrap(*args):                  # The memoized wrapper
+        s = signature(args[0],args[2].keys())# Signature: g and edges
+        if s not in cache:            # Not already computed?
+            cache[s] = func(*args)    # Compute & cache the solution
+        return cache[s]               # Return the cached solution
+    return wrap
+
 def g22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
@@ -266,7 +276,7 @@ def vg22g1(g2, capsize=None):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
-    #@memo # memoize the search
+    @memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             key, checklist = edges.popitem()
