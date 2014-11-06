@@ -66,7 +66,7 @@ def fan_wrapper(fold,n=10,k=10):
                 scipy.random.seed()
                 print fold,': ',traversal.density(g),':',
                 startTime = int(round(time.time() * 1000))
-                s = traversal.g22g1(g2, capsize=CAPSIZE)
+                s = traversal.vg22g1(g2, capsize=CAPSIZE)
                 endTime = int(round(time.time() * 1000))
                 print len(s)
                 output.put({'gt':g,'eq':s,'ms':endTime-startTime})
@@ -90,7 +90,7 @@ def fan_wrapper(fold,n=10,k=10):
 for nodes in [20]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.15]:
+    for dens in [0.2]:
     #for dens in [0.4, 0.5, 0.6, 0.7, 0.8]:
     #for dens in [0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
