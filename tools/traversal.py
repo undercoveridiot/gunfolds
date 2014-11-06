@@ -8,46 +8,6 @@ import ipdb
 import ecj
 import itertools, copy
 
-def pincrement(g,g2,n1,n2,n3):
-    r = copy.deepcopy(g2)
-    rg= ecj.tr(g)
-    for k in rg[n1]:
-        if n2 in r[k]:
-            r[k][n2].add((0,1))
-        else:
-            r[k][n2] = set([(0,1)])
-    for k in g[n2]:
-        if k in r[n1]:
-            r[n1][k].add((0,1))
-        else:
-            r[n1][k] = set([(0,1)])
-    for k in g[n3]:
-        if k in r[n2]:
-            r[n2][k].add((0,1))
-        else:
-            r[n2][k] = set([(0,1)])
-    for k in g[n1]:
-        if k != n2:
-            if k in r[n2]:
-                r[n2][k].add((2,0))
-            else:
-                r[n2][k] = set([(2,0)])
-            if n2 in r[k]:
-                r[k][n2].add((2,0))
-            else:
-                r[k][n2] = set([(2,0)])
-    for k in g[n2]:
-        if k != n3:
-            if k in r[n3]:
-                r[n3][k].add((2,0))
-            else:
-                r[n3][k] = set([(2,0)])
-            if n3 in r[k]:
-                r[k][n3].add((2,0))
-            else:
-                r[k][n3] = set([(2,0)])
-    return r
-
 def increment(g):
     '''
     undersample g by 2
@@ -107,22 +67,41 @@ def vedgelist(g):
     """ Return a list of tuples for edges of g and forks
     """
     l = []
+    el = edgelist(g)
+    bl = bedgelist(g)
     for n in g: # just all children
         c = [e for e in g[n] if (0,1) in g[n][e]]
-        random.shuffle(c)
         if len(c) == 1:
-            l.append((n,c[0]))
+            if (n,c[0]) in el: 
+                l.append((n,c[0]))
+                el.remove((n,c[0]))
         elif len(c) > 1:
+            r = set()
+            for p in [x for x in itertools.combinations(c,2)]:
+                if not p in bl and p in el:                        
+                    l.append((n,)+p)
+                    el.remove(p)
+                    r.add(p[0])
+                    r.add(p[1])
+            for e in r: c.remove(e)
             b = [tuple([n]+i) for i in chunks(c,2)]
             l.extend(b)
     return l
 
+def selfloop(n,g):
+    return n in g[n]
+
+def selfloops(l,g):
+    return reduce(lambda x,y: x and y, map(lambda x: selfloop(x,g), l))
+
 def checkbedges(v,bel,g2):
+    r = []
     for e in bel:
-        if e[0] in v and not e[0] in g2[e[0]]:
-            bel.remove(e)
-        elif e[1] in v and not e[1] in g2[e[1]]:
-            bel.remove(e)
+        if e == tuple(v[1:]) and not selfloops(e, g2):
+            r.append(e)
+        if e == (v[2],v[1]) and not selfloops(e, g2):
+            r.append(e)
+    for e in r: bel.remove(e)
     return bel
 
 def checkedge(e, g2):
@@ -131,11 +110,22 @@ def checkedge(e, g2):
         if n in g2[n]: l.append(n)
     return l
 
+def single_nodes(v,g2):
+    """ Returns a list of singleton nodes allowed for merging with v
+    """
+    l = [(n,n) for n in g2 if not n in v and len(g2[n])>1]
+    return l
+
 def checkvedge(v, g2):
-    bl = checkbedges(v,bedgelist(g2),g2)
-    l = bl + [(n,n) for n in g2 if not n in v]
-    for n in v:
-        if n in g2[n]: l.append((n,n))
+    """ Nodes to check to merge the virtual nodes of v
+    """
+    l = bedgelist(g2)
+    if (v[1],v[2]) in l:
+        l = checkbedges(v,l,g2) + single_nodes(v,g2)
+        for n in v:
+            if n in g2[n]: l.append((n,n))
+    else:
+        l = checkbedges(v,l,g2)
     return list(set(l))
 
 def isvedge(v): return len(v) == 3
@@ -168,21 +158,16 @@ def del2edges(g,e,p,mask):
     restore the graph as it was before adding e[0]->p and p->e[1]
     '''
     if not mask[0]: g[e[0]].pop(p, None)
-    if not mask[1] and e[1] in g[p]: g[p].pop(e[1], None)
+    if not mask[1]: g[p].pop(e[1], None)
 
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
 
-    if mask[0]: g[v[0]][b[0]].add((0,1))
-    if mask[1]: g[v[0]][b[1]].add((0,1))
-    if mask[2]: g[b[0]][v[1]].add((0,1))
-    if mask[3]: g[b[1]][v[2]].add((0,1))
-
-    if not mask[0]: g[v[0]][b[0]] = set([(0,1)])
-    if not mask[1]: g[v[0]][b[1]] = set([(0,1)])
-    if not mask[2]: g[b[0]][v[1]] = set([(0,1)])
-    if not mask[3]: g[b[1]][v[2]] = set([(0,1)])
+    g[v[0]][b[0]] = set([(0,1)])
+    g[v[0]][b[1]] = set([(0,1)])
+    g[b[0]][v[1]] = set([(0,1)])
+    g[b[1]][v[2]] = set([(0,1)])
 
     return mask
 
@@ -281,9 +266,7 @@ def vg22g1(g2, capsize=None):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
-    single_cache = {}
-
-    @memo # memoize the search
+    #@memo # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             key, checklist = edges.popitem()
