@@ -4,7 +4,7 @@ from bfutils import increment_u, g2num, num2CG, undersample
 from functools import wraps
 import numpy as np
 import random
-import ipdb
+#import ipdb
 import ecj
 import itertools, copy
 
@@ -283,7 +283,7 @@ def vg22g1(g2, capsize=None):
 
     single_cache = {}
 
-    @memo # memoize the search
+    #@memo # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             key, checklist = edges.popitem()
