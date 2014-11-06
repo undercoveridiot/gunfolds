@@ -87,10 +87,10 @@ def fan_wrapper(fold,n=10,k=10):
 
 
 #for nodes in [10, 15, 20, 30, 60]:
-for nodes in [20]:
+for nodes in [30]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.2]:
+    for dens in [0.1]:
     #for dens in [0.4, 0.5, 0.6, 0.7, 0.8]:
     #for dens in [0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
