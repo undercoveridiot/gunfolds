@@ -156,6 +156,8 @@ def isvedge(v): return len(v) == 3
 
 def checkable(g2):
     d = {}
+    g = cloneempty(g2)
+
     vlist = vedgelist(g2)
     for v in vlist:
         if isvedge(v):
@@ -164,6 +166,19 @@ def checkable(g2):
             d[v] = checkedge(v,g2)
         else:
             d[v] = checkcedge(v,g2)
+
+    f = [(add2edges, del2edges), 
+         (addavedge,delavedge), 
+         (addacedge,delacedge)]
+    # check if some of the otherwise permissible nodes still fail
+    for e in d:
+        adder, remover = f[len(e)-2]
+        for n in d[e]:
+            mask = adder(g,e,n)
+            if not isedgesubset(increment(g), g2):
+                d[e].remove(n)
+            remover(g,e,n,mask)
+
     return d
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
@@ -346,16 +361,6 @@ def vg22g1(g2, capsize=None):
     n = len(g2)
     chlist = checkable(g2)
     g = cloneempty(g2)
-
-    # check if some of the otherwise permissible nodes still fail
-    for e in chlist:
-        adder, remover = f[len(e)-2]
-        for n in chlist[e]:
-            mask = adder(g,e,n)
-            if not isedgesubset(increment(g), g2):
-                chlist[e].remove(n)
-            remover(g,e,n,mask)
-
 
     s = set()
     try:
