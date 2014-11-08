@@ -122,11 +122,11 @@ def checkbedges(v,bel,g2):
     for e in r: bel.remove(e)
     return bel
 
-def checkedge(e, g2):
-    l = [n for n in g2 if not n in e]
-    for n in e:
-        if n in g2[n]: l.append(n)
-    return l
+def checkedge(e, g2): return [n for n in g2]
+#    l = [n for n in g2 if not n in e]
+#    for n in e:
+#        if n in g2[n]: l.append(n)
+#    return l
 
 def single_nodes(v,g2):
     """ Returns a list of singleton nodes allowed for merging with v
@@ -150,8 +150,6 @@ def checkcedge(c, g2):
     """ Nodes to check to merge the virtual nodes of c
     """
     l = edgelist(g2)
-    l.remove((c[1],c[2]))
-    l.remove((c[2],c[3]))
     return list(set(l))
 
 def isvedge(v): return len(v) == 3
@@ -320,6 +318,7 @@ def vg22g1(g2, capsize=None):
     if ecj.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
+
     f = [(add2edges, del2edges), 
          (addavedge,delavedge), 
          (addacedge,delacedge)]
@@ -347,6 +346,17 @@ def vg22g1(g2, capsize=None):
     n = len(g2)
     chlist = checkable(g2)
     g = cloneempty(g2)
+
+    # check if some of the otherwise permissible nodes still fail
+    for e in chlist:
+        adder, remover = f[len(e)-2]
+        for n in chlist[e]:
+            mask = adder(g,e,n)
+            if not isedgesubset(increment(g), g2):
+                chlist[e].remove(n)
+            remover(g,e,n,mask)
+
+
     s = set()
     try:
         nodesearch(g,g2,chlist,s)
