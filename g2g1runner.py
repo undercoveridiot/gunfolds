@@ -7,7 +7,7 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 1 # number of randomized starts per graph
+INPNUM = 3 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
@@ -60,8 +60,8 @@ def fan_wrapper(fold,n=10,k=10):
     while True:
         try:
             g = bfutils.ringmore(n,k)
-            g2 = traversal.increment_u(g,g)
-            #g2 = bfutils.undersample(g,2)
+            #g2 = traversal.increment_u(g,g)
+            g2 = bfutils.undersample(g,2)
             def inside_wrapper():
                 scipy.random.seed()
                 print fold,': ',traversal.density(g),':',
@@ -87,10 +87,10 @@ def fan_wrapper(fold,n=10,k=10):
 
 
 #for nodes in [10, 15, 20, 30, 60]:
-for nodes in [30]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
-    for dens in [0.1]:
+    for dens in [0.15, 0.2, 0.25, 0.3]:
     #for dens in [0.4, 0.5, 0.6, 0.7, 0.8]:
     #for dens in [0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
@@ -99,7 +99,7 @@ for nodes in [30]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_g3.zkl')
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_g3.zkl')
