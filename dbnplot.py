@@ -118,6 +118,7 @@ sys.stdout = foo
 
 # generation of the output
 #ww = len(l)
+
 g = {'1': {'2': set([(0, 1)]), '8': set([(0, 1)])},
      '10': {'1': set([(0, 1)])},
      '2': {'3': set([(0, 1)])},

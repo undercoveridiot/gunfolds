@@ -123,7 +123,16 @@ def checkbedges(v,bel,g2):
     for e in r: bel.remove(e)
     return bel
 
-def checkedge(e, g2): return [n for n in g2]
+def checkedge(e, g2):
+    if e[0] == e[1]:
+        l = [n for n in g2 if n in g2[n]]
+        if not (2,0) in g2[e[0]]:
+            l.remove(e[0])
+        return l
+    else:
+        l = [n for n in g2]
+        if not (2,0) in g2[e[0]]: l.remove(e[0])        
+        return l
 #    l = [n for n in g2 if not n in e]
 #    for n in e:
 #        if n in g2[n]: l.append(n)
@@ -338,7 +347,7 @@ def vg22g1(g2, capsize=None):
     f = [(add2edges, del2edges), 
          (addavedge,delavedge), 
          (addacedge,delacedge)]
-    @memo2 # memoize the search
+    #@memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             #key, checklist = edges.popitem()
