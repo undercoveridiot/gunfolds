@@ -69,8 +69,8 @@ def vedgelist(g):
     l = []
     el = edgelist(g)
     bl = bedgelist(g)
-    for n in g: # just all children
-        c = [e for e in g[n] if (0,1) in g[n][e]]
+    for n in g: 
+        c = [e for e in g[n] if (0,1) in g[n][e]]# all children
         if len(c) == 1:
             if (n,c[0]) in el:
                 l.append((n,c[0]))
@@ -78,9 +78,10 @@ def vedgelist(g):
         elif len(c) > 1:
             r = set()
             for p in [x for x in itertools.combinations(c,2)]:
-                if not p in bl and p in el:
+                if (not p in bl) and (n,p[0]) in el and (n,p[1]) in el:
                     l.append((n,)+p)
-                    el.remove(p)
+                    el.remove((n,p[0]))
+                    el.remove((n,p[1]))                    
                     r.add(p[0])
                     r.add(p[1])
             for e in r: c.remove(e)
