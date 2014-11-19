@@ -78,9 +78,11 @@ def vedgelist(g):
         elif len(c) > 1:
             r = set()
             for p in [x for x in itertools.combinations(c,2)]:
-                if not p in bl and p in el:
+                if (not p in bl) and (n,p[0]) in el and (n,p[1]) in el:
+                    assert not p in bl                    
                     l.append((n,)+p)
-                    el.remove(p)
+                    el.remove((n,p[0]))
+                    el.remove((n,p[1]))
                     r.add(p[0])
                     r.add(p[1])
             for e in r: c.remove(e)
@@ -122,7 +124,16 @@ def checkbedges(v,bel,g2):
     for e in r: bel.remove(e)
     return bel
 
-def checkedge(e, g2): return [n for n in g2]
+def checkedge(e, g2):
+    if e[0] == e[1]:
+        l = [n for n in g2 if n in g2[n]]
+        if not (2,0) in g2[e[0]]:
+            l.remove(e[0])
+        return l
+    else:
+        l = [n for n in g2]
+        if not (2,0) in g2[e[0]]: l.remove(e[0])        
+        return l
 #    l = [n for n in g2 if not n in e]
 #    for n in e:
 #        if n in g2[n]: l.append(n)
@@ -322,7 +333,7 @@ def vg22g1(g2, capsize=None):
     f = [(add2edges, del2edges), 
          (addavedge,delavedge), 
          (addacedge,delacedge)]
-    @memo2 # memoize the search
+    #@memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             #key, checklist = edges.popitem()
