@@ -270,3 +270,12 @@ def superclique(n):
                        for j in range(n) if j!=i}
         g[str(i+1)][str(i+1)] = set([(0,1)])
     return g
+
+def complement(g):
+    n = len(g)
+    sq = superclique(n)
+    for v in g:
+        for w in g[v]:
+            sq[v][w].difference_update(g[v][w])
+            if not sq[v][w]: sq[v].pop(w)                
+    return sq
