@@ -241,3 +241,32 @@ def ringmore(n,m):
 # talking about extra edges on top of the ring
 def dens2edgenum(d, n=10): return int(d*n**2)-n
 def edgenum2dens(e, n=10): return np.double(e+n)/n**2
+
+import traversal
+def checker(n,ee):
+    g = ringmore(n,ee)
+    g2 = traversal.increment(g)
+    d = traversal.checkable(g2)
+    t = [len(d[x]) for x in d]
+    r = []
+    n = len(g2)
+    ee= len(traversal.edgelist(g2))
+    for i in range(1,len(t)):
+        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
+    return r
+
+def fordens(n,denslist):
+    rl={}
+    for d in denslist:
+        ee = dens2edgenum(d,n)
+        l=[checker(n,ee)[-1] for i in range(100)]
+        rl[d] = (round(scipy.mean(l),3),round(scipy.std(l),3))
+    return rl
+
+def superclique(n):
+    g = {}
+    for i in range(n):
+        g[str(i+1)] = {str(j+1):set([(0,1),(2,0)])
+                       for j in range(n) if j!=i}
+        g[str(i+1)][str(i+1)] = set([(0,1)])
+    return g
