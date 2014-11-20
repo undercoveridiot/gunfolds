@@ -149,7 +149,7 @@ def checkvedge(v, g2):
     """
     l = bedgelist(g2)
     if (v[1],v[2]) in l:
-        l = checkbedges(v,l,g2) + single_nodes(v,g2)
+        l = single_nodes(v,g2) + checkbedges(v,l,g2)
         for n in v:
             if n in g2[n]: l.append((n,n))
     else:
@@ -347,7 +347,7 @@ def vg22g1(g2, capsize=None):
     f = [(add2edges, del2edges), 
          (addavedge,delavedge), 
          (addacedge,delacedge)]
-    #@memo2 # memoize the search
+    @memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             #key, checklist = edges.popitem()
