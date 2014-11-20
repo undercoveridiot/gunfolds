@@ -126,13 +126,13 @@ def checkbedges(v,bel,g2):
 def checkedge(e, g2):
     if e[0] == e[1]:
         l = [n for n in g2 if n in g2[n]]
-        if not (2,0) in g2[e[0]]:
+        s = set()
+        for v in g2[e[0]]: s=s.union(g2[e[0]][v])        
+        if not (2,0) in s:
             l.remove(e[0])
         return l
     else:
-        l = [n for n in g2]
-        if not (2,0) in g2[e[0]]: l.remove(e[0])        
-        return l
+        return [n for n in g2]
 #    l = [n for n in g2 if not n in e]
 #    for n in e:
 #        if n in g2[n]: l.append(n)
