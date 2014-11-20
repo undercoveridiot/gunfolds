@@ -4,7 +4,7 @@ from bfutils import increment_u, g2num, num2CG
 from functools import wraps
 import numpy as np
 import random
-import ipdb
+#import ipdb
 import ecj
 import itertools, copy
 
@@ -69,8 +69,8 @@ def vedgelist(g):
     l = []
     el = edgelist(g)
     bl = bedgelist(g)
-    for n in g: # just all children
-        c = [e for e in g[n] if (0,1) in g[n][e]]
+    for n in g: 
+        c = [e for e in g[n] if (0,1) in g[n][e]]# all children
         if len(c) == 1:
             if (n,c[0]) in el:
                 l.append((n,c[0]))
@@ -79,10 +79,9 @@ def vedgelist(g):
             r = set()
             for p in [x for x in itertools.combinations(c,2)]:
                 if (not p in bl) and (n,p[0]) in el and (n,p[1]) in el:
-                    assert not p in bl                    
                     l.append((n,)+p)
                     el.remove((n,p[0]))
-                    el.remove((n,p[1]))
+                    el.remove((n,p[1]))                    
                     r.add(p[0])
                     r.add(p[1])
             for e in r: c.remove(e)
@@ -127,13 +126,13 @@ def checkbedges(v,bel,g2):
 def checkedge(e, g2):
     if e[0] == e[1]:
         l = [n for n in g2 if n in g2[n]]
-        if not (2,0) in g2[e[0]]:
+        s = set()
+        for v in g2[e[0]]: s=s.union(g2[e[0]][v])        
+        if not (2,0) in s:
             l.remove(e[0])
         return l
     else:
-        l = [n for n in g2]
-        if not (2,0) in g2[e[0]]: l.remove(e[0])        
-        return l
+        return [n for n in g2]
 #    l = [n for n in g2 if not n in e]
 #    for n in e:
 #        if n in g2[n]: l.append(n)
@@ -167,6 +166,8 @@ def isvedge(v): return len(v) == 3
 
 def checkable(g2):
     d = {}
+    g = cloneempty(g2)
+
     vlist = vedgelist(g2)
     for v in vlist:
         if isvedge(v):
@@ -175,6 +176,19 @@ def checkable(g2):
             d[v] = checkedge(v,g2)
         else:
             d[v] = checkcedge(v,g2)
+
+    f = [(add2edges, del2edges), 
+         (addavedge,delavedge), 
+         (addacedge,delacedge)]
+    # check if some of the otherwise permissible nodes still fail
+    for e in d:
+        adder, remover = f[len(e)-2]
+        for n in d[e]:
+            mask = adder(g,e,n)
+            if not isedgesubset(increment(g), g2):
+                d[e].remove(n)
+            remover(g,e,n,mask)
+
     return d
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
@@ -357,16 +371,6 @@ def vg22g1(g2, capsize=None):
     n = len(g2)
     chlist = checkable(g2)
     g = cloneempty(g2)
-
-    # check if some of the otherwise permissible nodes still fail
-    for e in chlist:
-        adder, remover = f[len(e)-2]
-        for n in chlist[e]:
-            mask = adder(g,e,n)
-            if not isedgesubset(increment(g), g2):
-                chlist[e].remove(n)
-            remover(g,e,n,mask)
-
 
     s = set()
     try:
