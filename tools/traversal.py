@@ -69,7 +69,7 @@ def vedgelist(g):
     l = []
     el = edgelist(g)
     bl = bedgelist(g)
-    for n in g: 
+    for n in g:
         c = [e for e in g[n] if (0,1) in g[n][e]]# all children
         if len(c) == 1:
             if (n,c[0]) in el:
@@ -81,7 +81,7 @@ def vedgelist(g):
                 if (not p in bl) and (n,p[0]) in el and (n,p[1]) in el:
                     l.append((n,)+p)
                     el.remove((n,p[0]))
-                    el.remove((n,p[1]))                    
+                    el.remove((n,p[1]))
                     r.add(p[0])
                     r.add(p[1])
             for e in r: c.remove(e)
@@ -127,7 +127,7 @@ def checkedge(e, g2):
     if e[0] == e[1]:
         l = [n for n in g2 if n in g2[n]]
         s = set()
-        for v in g2[e[0]]: s=s.union(g2[e[0]][v])        
+        for v in g2[e[0]]: s=s.union(g2[e[0]][v])
         if not (2,0) in s:
             l.remove(e[0])
         return l
@@ -177,8 +177,8 @@ def checkable(g2):
         else:
             d[v] = checkcedge(v,g2)
 
-    f = [(add2edges, del2edges), 
-         (addavedge,delavedge), 
+    f = [(add2edges, del2edges),
+         (addavedge,delavedge),
          (addacedge,delacedge)]
     # check if some of the otherwise permissible nodes still fail
     for e in d:
@@ -190,6 +190,36 @@ def checkable(g2):
             remover(g,e,n,mask)
 
     return d
+
+def inorder_check2(e1, e2, j1, j2, g2):
+    g = cloneempty(g2) # the graph to be used for checking
+    f = [(add2edges, del2edges),
+         (addavedge,delavedge),
+         (addacedge,delacedge)]
+
+    adder1, remover1 = f[len(e1)-2]
+    adder2, remover2 = f[len(e2)-2]
+
+    d = {}
+    for c1 in j1: # for each connector
+        mask1 = adder1(g,e1,c1)
+        d[c1] = set()
+        for c2 in j2:
+            mask2 = adder2(g,e2,c2)
+            if isedgesubset(increment(g), g2):
+                d[c1].add(c2)
+            remover2(g,e2,c2,mask2)            
+        remover1(g,e1,c1,mask1)
+    return d
+
+def inorder_checks(g2, gg):
+    f = [(add2edges, del2edges),
+         (addavedge,delavedge),
+         (addacedge,delacedge)]
+    ee = [e for e in gg] # to preserve the order
+    d = {} # new datastructure
+    g = cloneempty(g2) # the graph to be used for checking
+
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
@@ -344,15 +374,15 @@ def vg22g1(g2, capsize=None):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
-    f = [(add2edges, del2edges), 
-         (addavedge,delavedge), 
+    f = [(add2edges, del2edges),
+         (addavedge,delavedge),
          (addacedge,delacedge)]
     @memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
             #key, checklist = edges.popitem()
             key = random.choice(edges.keys())
-            checklist = edges.pop(key)  
+            checklist = edges.pop(key)
             adder, remover = f[len(key)-2]
             for n in checklist:
                 mask = adder(g,key,n)
