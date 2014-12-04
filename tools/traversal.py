@@ -212,14 +212,18 @@ def inorder_check2(e1, e2, j1, j2, g2):
         remover1(g,e1,c1,mask1)
     return d
 
+def del_empty(d):
+    l = [e for e in d]
+    for e in l:
+        if d[e]==set(): del d[e]
+            
 def inorder_checks(g2, gg):
-    f = [(add2edges, del2edges),
-         (addavedge,delavedge),
-         (addacedge,delacedge)]
     ee = [e for e in gg] # to preserve the order
     d = {} # new datastructure
-    g = cloneempty(g2) # the graph to be used for checking
-
+    for i in range(len(ee)-1):
+        d[ee[i]] = del_empty(inorder_check2(ee[i], ee[i+1],
+                                            gg[ee[i]], gg[ee[i+1]], g2))
+    return ee, d
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
