@@ -216,7 +216,7 @@ def del_empty(d):
     l = [e for e in d]
     for e in l:
         if d[e]==set(): del d[e]
-            
+    return d
 def inorder_checks(g2, gg):
     ee = [e for e in gg] # to preserve the order
     d = {} # new datastructure
