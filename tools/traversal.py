@@ -4,7 +4,7 @@ from bfutils import increment_u, g2num, num2CG
 from functools import wraps
 import numpy as np
 import random
-#import ipdb
+import ipdb
 import ecj
 import itertools, copy
 
@@ -219,10 +219,12 @@ def del_empty(d):
     return d
 def inorder_checks(g2, gg):
     ee = [e for e in gg] # to preserve the order
+    random.shuffle(ee)    
     d = {} # new datastructure
+    d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
-        d[ee[i]] = del_empty(inorder_check2(ee[i], ee[i+1],
-                                            gg[ee[i]], gg[ee[i+1]], g2))
+        d[ee[i+1]] = del_empty(inorder_check2(ee[i], ee[i+1],
+                                              gg[ee[i]], gg[ee[i+1]], g2))
     return ee, d
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
@@ -412,3 +414,52 @@ def vg22g1(g2, capsize=None):
     except ValueError:
         s.add(0)
     return s
+
+def v2g22g1(g2, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    f = [(add2edges, del2edges),
+         (addavedge,delavedge),
+         (addacedge,delacedge)]
+
+    def nodesearch(g, g2, edges, inkey, order, s):
+        if edges:
+            
+            key = order.pop(0)
+            checklist = edges.pop(key)
+            
+            if inkey in checklist:
+                adder, remover = f[len(key)-2]
+                for n in checklist[inkey]:
+                    mask = adder(g,key,n)
+                    if isedgesubset(increment(g), g2):
+                        r = nodesearch(g,g2,edges,n,order,s)
+                        if r and increment(r)==g2:
+                            s.add(g2num(r))
+                            if capsize and len(s)>capsize:
+                                raise ValueError('Too many elements')
+                    remover(g,key,n,mask)
+
+            order.insert(0,key)
+            edges[key] = checklist
+
+        else:
+            return g
+
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    chlist = checkable(g2)
+    order, d = inorder_checks(g2,chlist)
+    g = cloneempty(g2)
+
+    s = set()
+    try:
+        nodesearch(g,g2,d,'0',order,s)
+    except ValueError:
+        s.add(0)
+    return s, order, d
