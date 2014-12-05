@@ -462,7 +462,7 @@ def v2g22g1(g2, capsize=None):
         nodesearch(g,g2,d,'0',order,s)
     except ValueError:
         s.add(0)
-    return s, order, d
+    return s
 
 
 def timing(gg, order):
