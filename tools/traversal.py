@@ -7,6 +7,7 @@ import random
 import ipdb
 import ecj
 import itertools, copy
+import munkres
 
 def increment(g):
     '''
@@ -465,12 +466,20 @@ def v2g22g1(g2, capsize=None):
     return s
 
 
-def timing(gg, order):
-    tr = 0.0
-    for i in range(len(order)-1):
-        e = order[i]
-        d = gg[e]
+def cost_matrix(g2, order):
+    gg = checkable(g2)
+    m = np.eye(len(order))
+    for x in itertools.permutations(range(len(order)),2):
+        d = inorder_check2(order[x[0]], order[x[1]],
+                           gg[order[x[0]]], gg[order[x[1]]], g2)
         s = sum([len(d[k]) for k in d])
-        r = len(gg[order[i]])*len(gg[order[i+1]])
-        tr += np.double(s)/r
-    return tr
+        r = len(gg[order[x[0]]])*len(gg[order[x[1]]])
+        m[x[0],x[1]] = np.double(s)/r
+    return m
+
+def new_order(g2, order):
+    M = cost_matrix(g2,order)
+    m = munkres.Munkres()
+    p = m.compute(M)
+    c = [M[i[0],i[1]] for i in p]
+    return order
