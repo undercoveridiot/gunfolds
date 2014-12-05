@@ -426,7 +426,7 @@ def v2g22g1(g2, capsize=None):
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge)]
-
+    @memo2 # memoize the search
     def nodesearch(g, g2, edges, inkey, order, s):
         if edges:
             
@@ -462,4 +462,4 @@ def v2g22g1(g2, capsize=None):
         nodesearch(g,g2,d,'0',order,s)
     except ValueError:
         s.add(0)
-    return s, order, d
+    return s
