@@ -426,7 +426,7 @@ def v2g22g1(g2, capsize=None):
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge)]
-
+    @memo2 # memoize the search
     def nodesearch(g, g2, edges, inkey, order, s):
         if edges:
             
@@ -463,3 +463,14 @@ def v2g22g1(g2, capsize=None):
     except ValueError:
         s.add(0)
     return s, order, d
+
+
+def timing(gg, order):
+    tr = 0.0
+    for i in range(len(order)-1):
+        e = order[i]
+        d = gg[e]
+        s = sum([len(d[k]) for k in d])
+        r = len(gg[order[i]])*len(gg[order[i+1]])
+        tr += np.double(s)/r
+    return tr
