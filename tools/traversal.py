@@ -220,7 +220,9 @@ def del_empty(d):
     return d
 def inorder_checks(g2, gg):
     ee = [e for e in gg] # to preserve the order
-    random.shuffle(ee)    
+    #oo = new_order(g2, ee, repeats=100)
+    #ee = oo[0]
+    random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
@@ -467,19 +469,31 @@ def v2g22g1(g2, capsize=None):
 
 def cost_matrix(g2, order):
     gg = checkable(g2)
-    m = np.eye(len(order))
+    m = 100.0*np.eye(len(order))
     for x in itertools.permutations(range(len(order)),2):
-        d = inorder_check2(order[x[0]], order[x[1]],
-                           gg[order[x[0]]], gg[order[x[1]]], g2)
+        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
+                                     gg[order[x[0]]], gg[order[x[1]]], g2))
         s = sum([len(d[k]) for k in d])
         r = len(gg[order[x[0]]])*len(gg[order[x[1]]])
         m[x[0],x[1]] = np.double(s)/r
     return m
 
-def new_order(g2, order):
+def cost_path(p, W):
+    x = [0]+p[:-1]
+    return W[x,p]    
+def path_weight(p, W):
+    return sum(cost_path(p,W))
+    
+def new_order(g2, order, repeats = 100):    
     M = cost_matrix(g2,order)
-    m = munkres.Munkres()
-    p = m.compute(M)
-    c = [M[i[0],i[1]] for i in p]
-    return order
+    p = range(1,M.shape[0])
+    mnw = path_weight(p,M) - 10*sum(np.diff(cost_path(p,M)))
+    mnp = p[:]
+    for i in range(repeats):
+        random.shuffle(p)
+        pw = path_weight(p,M) - 10*sum(np.diff(cost_path(p,M)))
+        if pw < mnw:
+            mnw = pw
+            mnp = p[:]
+    return [order[i] for i in [0]+mnp], mnw
 

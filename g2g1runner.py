@@ -7,7 +7,7 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 3 # number of randomized starts per graph
+INPNUM = 5 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
@@ -91,7 +91,7 @@ densities = {6: [0.2, 0.25, ],
              15:[0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.1, 0.15, 0.2, 0.25, 0.3]}
 
-for nodes in [10, 15, 20]:
+for nodes in [20]:
 #for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
