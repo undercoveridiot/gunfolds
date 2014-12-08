@@ -209,7 +209,7 @@ def inorder_check2(e1, e2, j1, j2, g2):
             mask2 = adder2(g,e2,c2)
             if isedgesubset(increment(g), g2):
                 d[c1].add(c2)
-            remover2(g,e2,c2,mask2)            
+            remover2(g,e2,c2,mask2)
         remover1(g,e1,c1,mask1)
     return d
 
@@ -432,18 +432,18 @@ def v2g22g1(g2, capsize=None):
          (addavedge,delavedge),
          (addacedge,delacedge)]
     @memo2 # memoize the search
-    def nodesearch(g, g2, edges, inkey, order, s):
+    def nodesearch(g, g2, edges, inlist, order, s):
         if edges:
-            
+
             key = order.pop(0)
             checklist = edges.pop(key)
-            
-            if inkey in checklist:
+
+            if inlist[0] in checklist:
                 adder, remover = f[len(key)-2]
-                for n in checklist[inkey]:
+                for n in checklist[inlist[0]]:
                     mask = adder(g,key,n)
                     if isedgesubset(increment(g), g2):
-                        r = nodesearch(g,g2,edges,n,order,s)
+                        r = nodesearch(g,g2,edges,[n]+inlist,order,s)
                         if r and increment(r)==g2:
                             s.add(g2num(r))
                             if capsize and len(s)>capsize:
@@ -464,11 +464,27 @@ def v2g22g1(g2, capsize=None):
 
     s = set()
     try:
-        nodesearch(g,g2,d,'0',order,s)
+        nodesearch(g,g2,d,['0'],order,s)
     except ValueError:
         s.add(0)
     return s
 
+def conformanceDS(g2, order):
+    gg = checkable(g2)
+    CDS = {}
+    CDS[0] = gg[order[0]]
+    for x in itertools.combinations(range(len(order)),2):
+        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
+                                     gg[order[x[0]]], gg[order[x[1]]], g2))
+        if not x[1] in CDS:
+            CDS[x[1]] = {}
+            CDS[x[1]][x[0]] = d
+        else:
+            CDS[x[1]][x[0]] = d    
+    return CDS
+
+        
+    
 def cost_matrix(g2, order):
     gg = checkable(g2)
     m = 100000.0*np.eye(len(order))
@@ -478,16 +494,16 @@ def cost_matrix(g2, order):
         s = sum([len(d[k]) for k in d])
         r = len(gg[order[x[0]]])*len(gg[order[x[1]]])
         m[x[0],x[1]] = np.double(s)#/r
-        m[x[1],x[0]] = np.double(s)#/r        
+        m[x[1],x[0]] = np.double(s)#/r
     return m
 
 def cost_path(p, W):
     x = [0]+p[:-1]
-    return W[x,p]    
+    return W[x,p]
 def path_weight(p, W):
     return sum(cost_path(p,W))
-    
-def new_order(g2, order, repeats = 100):    
+
+def new_order(g2, order, repeats = 100):
     M = cost_matrix(g2,order)
     p = range(1,M.shape[0])
     mnw = path_weight(p,M) #- 10*sum(np.diff(cost_path(p,M)))
@@ -499,4 +515,3 @@ def new_order(g2, order, repeats = 100):
             mnw = pw
             mnp = p[:]
     return [order[i] for i in [0]+mnp], mnw
-
