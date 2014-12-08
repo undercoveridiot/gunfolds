@@ -220,8 +220,8 @@ def del_empty(d):
     return d
 def inorder_checks(g2, gg):
     ee = [e for e in gg] # to preserve the order
-    #oo = new_order(g2, ee, repeats=100)
-    #ee = oo[0]
+    oo = new_order(g2, ee, repeats=100)
+    ee = oo[0]
     #random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
