@@ -220,8 +220,8 @@ def del_empty(d):
     return d
 def inorder_checks(g2, gg):
     ee = [e for e in gg] # to preserve the order
-    oo = new_order(g2, ee, repeats=100)
-    ee = oo[0]
+    #oo = new_order(g2, ee, repeats=100)
+    #ee = oo[0]
     #random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
@@ -432,18 +432,24 @@ def v2g22g1(g2, capsize=None):
          (addavedge,delavedge),
          (addacedge,delacedge)]
     @memo2 # memoize the search
-    def nodesearch(g, g2, edges, inlist, order, s):
+    def nodesearch(g, g2, edges, inlist, order, s, cds):
         if edges:
 
             key = order.pop(0)
             checklist = edges.pop(key)
 
-            if inlist[0] in checklist:
+            if inlist[0] in checklist:            
+                if len(inlist) == 1:
+                    tocheck = checklist[inlist[0]]
+                else:
+                    tocheck = conformant(cds, inlist)
+                
+                #if tocheck:
                 adder, remover = f[len(key)-2]
-                for n in checklist[inlist[0]]:
+                for n in tocheck:
                     mask = adder(g,key,n)
                     if isedgesubset(increment(g), g2):
-                        r = nodesearch(g,g2,edges,[n]+inlist,order,s)
+                        r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
                         if r and increment(r)==g2:
                             s.add(g2num(r))
                             if capsize and len(s)>capsize:
@@ -460,19 +466,21 @@ def v2g22g1(g2, capsize=None):
     n = len(g2)
     chlist = checkable(g2)
     order, d = inorder_checks(g2,chlist)
+    cds = conformanceDS(g2, order)
     g = cloneempty(g2)
 
     s = set()
     try:
-        nodesearch(g,g2,d,['0'],order,s)
+        nodesearch(g,g2,d,['0'],order,s, cds)
     except ValueError:
         s.add(0)
     return s
 
+
 def conformanceDS(g2, order):
     gg = checkable(g2)
     CDS = {}
-    CDS[0] = gg[order[0]]
+    CDS[0] = set(gg[order[0]])
     for x in itertools.combinations(range(len(order)),2):
         d = del_empty(inorder_check2(order[x[0]], order[x[1]],
                                      gg[order[x[0]]], gg[order[x[1]]], g2))
@@ -481,8 +489,25 @@ def conformanceDS(g2, order):
             CDS[x[1]][x[0]] = d
         else:
             CDS[x[1]][x[0]] = d    
-    return CDS
 
+    return pruneCDS(CDS)
+
+def conformant(cds, inlist):
+    if inlist[len(inlist)-2] in cds[len(inlist)-1][0]:
+        s = cds[len(inlist)-1][0][inlist[len(inlist)-2]]
+    else:
+        return set()        
+    for i in range(1,len(inlist)-1):
+        if inlist[len(inlist)-i-2] in cds[len(inlist)-1][i]:
+            s = s.intersection(cds[len(inlist)-1][i][inlist[len(inlist)-i-2]])
+        else:
+            return set()
+    return s
+
+def pruneCDS(cds):
+    cds[0] = cds[0].intersection(cds[1][0].keys())
+    #for i in range(2, len(cds)):
+    return cds
         
     
 def cost_matrix(g2, order):
