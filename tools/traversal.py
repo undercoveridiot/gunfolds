@@ -220,9 +220,9 @@ def del_empty(d):
     return d
 def inorder_checks(g2, gg):
     ee = [e for e in gg] # to preserve the order
-    #oo = new_order(g2, ee, repeats=100)
-    #ee = oo[0]
-    random.shuffle(ee)
+    oo = new_order(g2, ee, repeats=100)
+    ee = oo[0]
+    #random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
@@ -254,10 +254,12 @@ def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
 
-    g[v[0]][b[0]] = set([(0,1)])
-    g[v[0]][b[1]] = set([(0,1)])
-    g[b[0]][v[1]] = set([(0,1)])
-    g[b[1]][v[2]] = set([(0,1)])
+    #g[v[0]][b[0]] = set([(0,1)])
+    #g[v[0]][b[1]] = set([(0,1)])
+    #g[b[0]][v[1]] = set([(0,1)])
+    #g[b[1]][v[2]] = set([(0,1)])
+
+    g[v[0]][b[0]] = g[v[0]][b[1]] = g[b[0]][v[1]] = g[b[1]][v[2]] = set([(0,1)])
 
     return mask
 
@@ -469,13 +471,14 @@ def v2g22g1(g2, capsize=None):
 
 def cost_matrix(g2, order):
     gg = checkable(g2)
-    m = 100.0*np.eye(len(order))
-    for x in itertools.permutations(range(len(order)),2):
+    m = 100000.0*np.eye(len(order))
+    for x in itertools.combinations(range(len(order)),2):
         d = del_empty(inorder_check2(order[x[0]], order[x[1]],
                                      gg[order[x[0]]], gg[order[x[1]]], g2))
         s = sum([len(d[k]) for k in d])
         r = len(gg[order[x[0]]])*len(gg[order[x[1]]])
-        m[x[0],x[1]] = np.double(s)/r
+        m[x[0],x[1]] = np.double(s)#/r
+        m[x[1],x[0]] = np.double(s)#/r        
     return m
 
 def cost_path(p, W):
@@ -487,11 +490,11 @@ def path_weight(p, W):
 def new_order(g2, order, repeats = 100):    
     M = cost_matrix(g2,order)
     p = range(1,M.shape[0])
-    mnw = path_weight(p,M) - 10*sum(np.diff(cost_path(p,M)))
+    mnw = path_weight(p,M) #- 10*sum(np.diff(cost_path(p,M)))
     mnp = p[:]
     for i in range(repeats):
         random.shuffle(p)
-        pw = path_weight(p,M) - 10*sum(np.diff(cost_path(p,M)))
+        pw = path_weight(p,M) #- 10*sum(np.diff(cost_path(p,M)))
         if pw < mnw:
             mnw = pw
             mnp = p[:]
