@@ -220,8 +220,9 @@ def del_empty(d):
     return d
 def inorder_checks(g2, gg):
     ee = [e for e in gg] # to preserve the order
-    oo = new_order(g2, ee, repeats=100)
-    ee = oo[0]
+    #cds = conformanceDS(g2, ee)
+    #oo = new_order(g2, ee, repeats=100, cds=None)
+    #ee = oo[0]
     #random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
@@ -438,12 +439,12 @@ def v2g22g1(g2, capsize=None):
             key = order.pop(0)
             checklist = edges.pop(key)
 
-            if inlist[0] in checklist:            
+            if inlist[0] in checklist:
                 if len(inlist) == 1:
                     tocheck = checklist[inlist[0]]
                 else:
                     tocheck = conformant(cds, inlist)
-                
+
                 #if tocheck:
                 adder, remover = f[len(key)-2]
                 for n in tocheck:
@@ -488,7 +489,7 @@ def conformanceDS(g2, order):
             CDS[x[1]] = {}
             CDS[x[1]][x[0]] = d
         else:
-            CDS[x[1]][x[0]] = d    
+            CDS[x[1]][x[0]] = d
 
     return pruneCDS(CDS)
 
@@ -496,7 +497,7 @@ def conformant(cds, inlist):
     if inlist[len(inlist)-2] in cds[len(inlist)-1][0]:
         s = cds[len(inlist)-1][0][inlist[len(inlist)-2]]
     else:
-        return set()        
+        return set()
     for i in range(1,len(inlist)-1):
         if inlist[len(inlist)-i-2] in cds[len(inlist)-1][i]:
             s = s.intersection(cds[len(inlist)-1][i][inlist[len(inlist)-i-2]])
@@ -508,19 +509,21 @@ def pruneCDS(cds):
     cds[0] = cds[0].intersection(cds[1][0].keys())
     #for i in range(2, len(cds)):
     return cds
-        
-    
-def cost_matrix(g2, order):
+
+
+def cost_matrix(g2, order, cds=None):
     gg = checkable(g2)
+    if cds==None: cds = conformanceDS(g2, order)
     m = 100000.0*np.eye(len(order))
     for x in itertools.combinations(range(len(order)),2):
-        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
-                                     gg[order[x[0]]], gg[order[x[1]]], g2))
+#        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
+#                                     gg[order[x[0]]], gg[order[x[1]]], g2))
+        d = cds[x[1]][x[0]]
         s = sum([len(d[k]) for k in d])
         r = len(gg[order[x[0]]])*len(gg[order[x[1]]])
         m[x[0],x[1]] = np.double(s)#/r
         m[x[1],x[0]] = np.double(s)#/r
-    return m
+    return m, cds
 
 def cost_path(p, W):
     x = [0]+p[:-1]
@@ -528,8 +531,8 @@ def cost_path(p, W):
 def path_weight(p, W):
     return sum(cost_path(p,W))
 
-def new_order(g2, order, repeats = 100):
-    M = cost_matrix(g2,order)
+def new_order(g2, order, repeats = 100, cds=None):
+    M, cds = cost_matrix(g2,order,cds)
     p = range(1,M.shape[0])
     mnw = path_weight(p,M) #- 10*sum(np.diff(cost_path(p,M)))
     mnp = p[:]
@@ -539,4 +542,4 @@ def new_order(g2, order, repeats = 100):
         if pw < mnw:
             mnw = pw
             mnp = p[:]
-    return [order[i] for i in [0]+mnp], mnw
+    return [order[i] for i in [0]+mnp], mnw, cds
