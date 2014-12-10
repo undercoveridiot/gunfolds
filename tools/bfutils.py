@@ -4,6 +4,7 @@ from itertools import permutations
 from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
 import numpy as np
+import ipdb
 
 #local
 import ecj
@@ -61,24 +62,44 @@ def all_undersamples(G_star,steps=5):
 
 def graph2adj(G):
     n = len(G)
-    A = scipy.zeros((n,n))
+    A = scipy.zeros((n,n), dtype=np.int8)
     for v in G:
         A[int(v)-1,[int(w)-1 for w in G[v] if (0,1) in G[v][w] ]] = 1
     return A
 def graph2badj(G):
     n = len(G)
-    A = scipy.zeros((n,n))
+    A = scipy.zeros((n,n), dtype=np.int8)
     for v in G:
         A[int(v)-1,[int(w)-1 for w in G[v] if (2,0) in G[v][w] ]] = 1
     return A
+def graph2str(G):
+    n = len(G)
+    A = np.asarray(['0' for i in range(n*n)])
+    for v in G:
+        try:
+            A[n*(int(v)-1)+np.asarray([int(w)-1 for w in G[v] if (0,1) in G[v][w] ])] = '1'
+        except IndexError:
+            pass
+    return ''.join(A)
+def graph2bstr(G):
+    n = len(G)
+    A = np.asarray(['0' for i in range(n*n)])
+    for v in G:
+        try:
+            A[n*(int(v)-1)+np.asarray([int(w)-1 for w in G[v] if (2,0) in G[v][w] ])] = '1'
+        except IndexError:
+            pass            
+    return ''.join(A)
+
 def adj2num(A):
-    s = reduce(lambda y,x: y+str(int(x)), 
+    s = reduce(lambda y,x: y+str(x), 
                A.flatten().tolist(),'')
     return int(s,2)
 
-def g2num(G): return adj2num(graph2adj(G))
-def bg2num(G): return adj2num(graph2badj(G))
-def ug2num(G): return (adj2num(graph2adj(G)),adj2num(graph2badj(G)))
+def g2num(G): return int(graph2str(G),2) #adj2num(graph2adj(G))
+
+def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
+def ug2num(G): return (g2num(G),bg2num(G))#(adj2num(graph2adj(G)),adj2num(graph2badj(G)))
 
 def num2adj(num,n):
     l = list(bin(num)[2:])
