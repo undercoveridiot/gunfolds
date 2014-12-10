@@ -74,22 +74,21 @@ def graph2badj(G):
     return A
 def graph2str(G):
     n = len(G)
-    A = np.asarray(['0' for i in range(n*n)])
+    d = {((0,1),):'1', ((2,0),):'0',((2,0),(1,0),):'0'}
+    A = ['0' for i in range(n*n)]
     for v in G:
-        try:
-            A[n*(int(v)-1)+np.asarray([int(w)-1 for w in G[v] if (0,1) in G[v][w] ])] = '1'
-        except IndexError:
-            pass
+        for w in G[v]:
+            A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
     return ''.join(A)
 def graph2bstr(G):
     n = len(G)
-    A = np.asarray(['0' for i in range(n*n)])
+    d = {((0,1),):'0', ((2,0),):'1',((2,0),(1,0),):'1'}
+    A = ['0' for i in range(n*n)]
     for v in G:
-        try:
-            A[n*(int(v)-1)+np.asarray([int(w)-1 for w in G[v] if (2,0) in G[v][w] ])] = '1'
-        except IndexError:
-            pass            
+        for w in G[v]:
+            A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
     return ''.join(A)
+
 
 def adj2num(A):
     s = reduce(lambda y,x: y+str(x), 
