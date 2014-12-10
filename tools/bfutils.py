@@ -75,7 +75,7 @@ def graph2badj(G):
 def graph2str(G):
     n = len(G)
     d = {((0,1),):'1', ((2,0),):'0',((2,0),(1,0),):'0'}
-    A = ['0' for i in range(n*n)]
+    A = ['0']*(n*n)
     for v in G:
         for w in G[v]:
             A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
@@ -83,7 +83,7 @@ def graph2str(G):
 def graph2bstr(G):
     n = len(G)
     d = {((0,1),):'0', ((2,0),):'1',((2,0),(1,0),):'1'}
-    A = ['0' for i in range(n*n)]
+    A = ['0']*(n*n)
     for v in G:
         for w in G[v]:
             A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
