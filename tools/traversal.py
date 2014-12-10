@@ -442,7 +442,7 @@ def v2g22g1(g2, capsize=None):
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge)]
-    #@memo2 # memoize the search
+    @memo2 # memoize the search
     def nodesearch(g, g2, edges, inlist, order, s, cds):
         if edges:
 
@@ -475,14 +475,14 @@ def v2g22g1(g2, capsize=None):
 
     # find all directed g1's not conflicting with g2
     n = len(g2)
-    chlist = checkable(g2)
+    chlist = checkable(g1)
     order, d = inorder_checks(g2,chlist)
     cds = conformanceDS(g2, order)
     g = cloneempty(g2)
 
     s = set()
     try:
-        nodesearch(g,g2,d,['0'],order,s, cds)
+        nodesearch(g,g2,d,['1'],order,s, cds)
     except ValueError:
         s.add(0)
     return s
