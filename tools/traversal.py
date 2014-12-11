@@ -20,11 +20,17 @@ def increment(g):
             for e in g[h]:
                 r[n][e] = set([(0,1)])
     for n in g:
-        for pair in itertools.permutations(g[n],2):
+        for pair in itertools.combinations(g[n],2):
+
             if pair[1] in r[pair[0]]:
-                r[pair[0]][pair[1]].add((2,0))
+                r[pair[0]][pair[1]] = set([(2,0),(1,0)])#.add((2,0))
             else:
                 r[pair[0]][pair[1]] = set([(2,0)])
+                
+            if pair[0] in r[pair[1]]:
+                r[pair[1]][pair[0]] = set([(2,0),(1,0)])#.add((2,0))
+            else:
+                r[pair[1]][pair[0]] = set([(2,0)])                
     return r
 
 def isedgesubset(g2star,g2):
