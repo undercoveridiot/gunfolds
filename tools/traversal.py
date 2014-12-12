@@ -15,13 +15,16 @@ def increment(g):
     only works for g1 to g2 directed
     '''
     r = {n:{} for n in g}
+    
     for n in g:
         for h in g[n]:
             for e in g[h]:
-                r[n][e] = set([(0,1)])
+                if not e in r[n]:
+                   r[n][e] = set([(0,1)])
+                                   
     for n in g:
         for pair in itertools.combinations(g[n],2):
-
+            
             if pair[1] in r[pair[0]]:
                 r[pair[0]][pair[1]].add((2,0))
             else:
@@ -30,8 +33,10 @@ def increment(g):
             if pair[0] in r[pair[1]]:
                 r[pair[1]][pair[0]].add((2,0))
             else:
-                r[pair[1]][pair[0]] = set([(2,0)])                
+                r[pair[1]][pair[0]] = set([(2,0)])
+                
     return r
+
 
 def isedgesubset(g2star,g2):
     '''
