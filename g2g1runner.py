@@ -11,7 +11,10 @@ INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=70
+    PNUM=60
+    PNUM=max((1,PNUM/INPNUM))
+elif socket.gethostname().split('.')[0] == 'mars':
+    PNUM=12
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
