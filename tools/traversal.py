@@ -227,6 +227,28 @@ def inorder_check2(e1, e2, j1, j2, g2):
         remover1(g,e1,c1,mask1)
     return d
 
+def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
+    g = cloneempty(g2) # the graph to be used for checking
+    f = [(add2edges, del2edges),
+         (addavedge,delavedge),
+         (addacedge,delacedge)]
+
+    adder1, remover1 = f[len(e1)-2]
+    adder2, remover2 = f[len(e2)-2]
+    adder3, remover3 = f[len(e3)-2]    
+
+    d = {}
+    for c1 in j1: # for each connector
+        mask1 = adder1(g,e1,c1)
+        d[c1] = set()
+        for c2 in j2:
+            mask2 = adder2(g,e2,c2)
+            if isedgesubset(increment(g), g2):
+                d[c1].add(c2)
+            remover2(g,e2,c2,mask2)
+        remover1(g,e1,c1,mask1)
+    return d
+
 def del_empty(d):
     l = [e for e in d]
     for e in l:
