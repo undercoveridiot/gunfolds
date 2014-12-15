@@ -19,9 +19,9 @@ def ring(n):
     g[str(n)] = {'1': {(0,1)}}
     return g
 
-def listplot(fname, mname='JJ', stl=''):
+def listplot(fname, mname='JJ', stl='', width=5):
     l = zkl.load(fname)
-    y = min(5,len(l))
+    y = min(width,len(l))
     x = np.int(np.ceil(len(l)/float(y)))
     d2l.matrix_list(l,y,x,R=4, w_gap=1, h_gap=2, mname=mname, stl=stl)
 
