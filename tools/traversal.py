@@ -147,7 +147,7 @@ def checkedge(e, g2):
             l.remove(e[0])
         return l
     else:
-        return [n for n in g2]
+        return g2.keys() #[n for n in g2]
 #    l = [n for n in g2 if not n in e]
 #    for n in e:
 #        if n in g2[n]: l.append(n)
@@ -366,7 +366,7 @@ def g22g1(g2, capsize=None):
         if edges:
             e = edges.pop()
             #gg = increment(g)
-            ln = [n for n in g2]
+            ln = g2.keys() [n for n in g2]
             #random.shuffle(ln)
             for n in ln:
                 if (n,e) in single_cache: continue
