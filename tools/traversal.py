@@ -99,10 +99,11 @@ def vedgelist(g):
             for e in r: c.remove(e)
             b = [tuple([n]+i) for i in chunks(c,2)]
             l.extend(b)
-    l = threedges(l) + makechains(twoedges(l))
+    r = twoedges(l)
+    l = threedges(l) + makechains(r) + makesinks(r)
     return l
 
-def twoedges(l): return [e for e in l if len(e)==2]
+def twoedges(l):  return [e for e in l if len(e)==2]
 def threedges(l): return [e for e in l if len(e)==3]
 def makechains(l):
     """ Greedily construct 2 edge chains from edge list
@@ -118,8 +119,27 @@ def makechains(l):
         elif e[0] in ends and e[0] != e[1] and ends[e[0]] in l:
             r.append(('0',)+ends[e[0]]+(e[1],))
             l.remove(ends[e[0]])
+    return r
+def makesink(es): return ('-1', es[0][0],) + es[1]
+def makesinks(l):
+    """ Greedily construct 2 edge sinks ( b->a<-c ) from edge list
+    """
+    sinks = {}
+    for e in l:
+        if e[1] in sinks:
+            sinks[e[1]].append(e)
         else:
-            r.append(e)
+            sinks[e[1]] = [e]            
+    r = []
+    for e in sinks:
+        if len(sinks[e])>1:
+            for es in chunks(sinks[e],2):
+                if len(es)==2:
+                    r.append(makesink(es))
+                else:
+                    r.append(es[0])
+                for i in es:
+                    l.remove(i)
     return r
 
 def selfloop(n,g):
@@ -148,10 +168,6 @@ def checkedge(e, g2):
         return l
     else:
         return g2.keys()
-#    l = [n for n in g2 if not n in e]
-#    for n in e:
-#        if n in g2[n]: l.append(n)
-#    return l
 
 def single_nodes(v,g2):
     """ Returns a list of singleton nodes allowed for merging with v
@@ -160,7 +176,7 @@ def single_nodes(v,g2):
     return l
 
 def checkvedge(v, g2):
-    """ Nodes to check to merge the virtual nodes of v
+    """ Nodes to check to merge the virtual nodes of v ( b<-a->c )
     """
     l = bedgelist(g2)
     if (v[1],v[2]) in l:
@@ -172,12 +188,14 @@ def checkvedge(v, g2):
     return list(set(l))
 
 def checkcedge(c, g2):
-    """ Nodes to check to merge the virtual nodes of c
+    """ Nodes to check to merge the virtual nodes of c ( a->b->c )
     """
     l = edgelist(g2)
     return list(set(l))
 
-def isvedge(v): return len(v) == 3
+def isvedge(v): return len(v) == 3 # b<-a->c
+def isCedge(v): return v[0] == '0' # a->b->c
+def isAedge(v): return v[0] == '-1'# b->a<-c
 
 def checkable(g2):
     d = {}
@@ -192,10 +210,10 @@ def checkable(g2):
         else:
             d[v] = checkcedge(v,g2)
 
+    # check if some of the otherwise permissible nodes still fail
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge)]
-    # check if some of the otherwise permissible nodes still fail
     for e in d:
         adder, remover = f[len(e)-2]
         for n in d[e]:
