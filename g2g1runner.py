@@ -11,7 +11,7 @@ INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=60
+    PNUM=20
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=12
@@ -94,7 +94,7 @@ densities = {6: [0.2, 0.25, ],
              15:[0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.15, 0.2, 0.25, 0.30]}#0.1, 0.15, 0.2, 0.25, 0.3]}
 
-for nodes in [20]:
+for nodes in [15]:
 #for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
