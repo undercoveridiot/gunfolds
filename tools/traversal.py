@@ -14,7 +14,7 @@ def increment(g):
     undersample g by 2
     only works for g1 to g2 directed
     '''
-    r = dict.fromkeys(g.keys(),{}) #{n:{} for n in g}
+    r = {n:{} for n in g}
 
     for n in g:
         for h in g[n]:
