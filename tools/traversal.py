@@ -14,7 +14,7 @@ def increment(g):
     undersample g by 2
     only works for g1 to g2 directed
     '''
-    r = dict.fromkeys(g.keys(),{}) #{n:{} for n in g}
+    r = {n:{} for n in g}
 
     for n in g:
         for h in g[n]:
@@ -245,7 +245,7 @@ def inorder_checks(g2, gg):
                                               gg[ee[i]], gg[ee[i+1]], g2))
     return ee, d
 
-def cloneempty(g): return dict.fromkeys(g.keys(),{}) # return a graph with no edges
+def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
 def add2edges(g,e,p):
     '''
