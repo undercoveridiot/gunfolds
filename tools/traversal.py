@@ -100,7 +100,14 @@ def vedgelist(g):
             b = [tuple([n]+i) for i in chunks(c,2)]
             l.extend(b)
     r = twoedges(l)
-    l = threedges(l) + makechains(r) + makesinks(r)
+    A, singles = makechains(r)
+
+    if singles:
+        B, singles = makesinks(singles)
+    else:
+        B, singles = [], []
+        
+    l = threedges(l) + A + B + singles
     return l
 
 def twoedges(l):  return [e for e in l if len(e)==2]
@@ -111,6 +118,7 @@ def makechains(l):
     ends = {e[1]:e for e in l}
     starts = {e[0]:e for e in l}
     r = []
+    singles = []
     while l:
         e = l.pop()
         if e[1] in starts and e[0] != e[1] and starts[e[1]] in l:
@@ -119,28 +127,31 @@ def makechains(l):
         elif e[0] in ends and e[0] != e[1] and ends[e[0]] in l:
             r.append(('0',)+ends[e[0]]+(e[1],))
             l.remove(ends[e[0]])
-    return r
-def makesink(es): return ('-1', es[0][0],) + es[1]
+        else:
+            singles.append(e)
+    return r, singles
+def makesink(es): return ('1', es[0][0],) + es[1]
 def makesinks(l):
     """ Greedily construct 2 edge sinks ( b->a<-c ) from edge list
     """
-    sinks = {}
+    sinks = {}    
     for e in l:
         if e[1] in sinks:
             sinks[e[1]].append(e)
         else:
-            sinks[e[1]] = [e]            
+            sinks[e[1]] = [e]
     r = []
+    singles = []
     for e in sinks:
         if len(sinks[e])>1:
             for es in chunks(sinks[e],2):
                 if len(es)==2:
                     r.append(makesink(es))
                 else:
-                    r.append(es[0])
-                for i in es:
-                    l.remove(i)
-    return r
+                    singles.append(es[0])
+        else:
+            singles.append(sinks[e][0])
+    return r, singles
 
 def selfloop(n,g):
     return n in g[n]
@@ -187,15 +198,30 @@ def checkvedge(v, g2):
         l = checkbedges(v,l,g2)
     return list(set(l))
 
+def checkAedge(v, g2):
+    """ Nodes to check to merge the virtual nodes of A ( b->a<-c )
+    """
+    l = []
+    # try all pairs but the sources
+    for pair in itertools.combinations(g2,2):
+        if pair == (v[1],v[2]): continue
+        if pair == (v[2],v[1]): continue
+        l.append(pair)
+        l.append(pair[::-1])
+    for n in g2:
+        l.append((n,n))
+    return l
+
 def checkcedge(c, g2):
     """ Nodes to check to merge the virtual nodes of c ( a->b->c )
     """
     l = edgelist(g2)
     return list(set(l))
 
+def isedge(v):  return len(v) == 2 # a->b
 def isvedge(v): return len(v) == 3 # b<-a->c
-def isCedge(v): return v[0] == '0' # a->b->c
-def isAedge(v): return v[0] == '-1'# b->a<-c
+def isCedge(v): return len(v) == 4 and v[0] == '0' # a->b->c
+def isAedge(v): return len(v) == 4 and v[0] == '1'# b->a<-c
 
 def checkable(g2):
     d = {}
@@ -205,17 +231,20 @@ def checkable(g2):
     for v in vlist:
         if isvedge(v):
             d[v] = checkvedge(v,g2)
-        elif len(v)==2:
-            d[v] = checkedge(v,g2)
-        else:
+        elif isCedge(v):
             d[v] = checkcedge(v,g2)
+        elif isAedge(v):
+            d[v] = checkAedge(v,g2)
+        else:
+            d[v] = checkedge(v,g2)
 
     # check if some of the otherwise permissible nodes still fail
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
-         (addacedge,delacedge)]
+         (addacedge,delacedge),
+         (addaAedge,delaAedge)]
     for e in d:
-        adder, remover = f[len(e)-2]
+        adder, remover = f[len(e)-2+(max(3,len(e))-3)*int(e[0])]#f[len(e)-2]
         for n in d[e]:
             mask = adder(g,e,n)
             if not isedgesubset(increment(g), g2):
@@ -228,10 +257,11 @@ def inorder_check2(e1, e2, j1, j2, g2):
     g = cloneempty(g2) # the graph to be used for checking
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
-         (addacedge,delacedge)]
+         (addacedge,delacedge),
+         (addaAedge,delaAedge)]
 
-    adder1, remover1 = f[len(e1)-2]
-    adder2, remover2 = f[len(e2)-2]
+    adder1, remover1 = f[len(e1)-2+(max(3,len(e1))-3)*int(e1[0])]
+    adder2, remover2 = f[len(e2)-2+(max(3,len(e2))-3)*int(e2[0])]
 
     d = {}
     for c1 in j1: # for each connector
@@ -253,7 +283,7 @@ def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
 
     adder1, remover1 = f[len(e1)-2]
     adder2, remover2 = f[len(e2)-2]
-    adder3, remover3 = f[len(e3)-2]    
+    adder3, remover3 = f[len(e3)-2]
 
     d = {}
     for c1 in j1: # for each connector
@@ -309,13 +339,7 @@ def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
 
-    #g[v[0]][b[0]] = set([(0,1)])
-    #g[v[0]][b[1]] = set([(0,1)])
-    #g[b[0]][v[1]] = set([(0,1)])
-    #g[b[1]][v[2]] = set([(0,1)])
-
     g[v[0]][b[0]] = g[v[0]][b[1]] = g[b[0]][v[1]] = g[b[1]][v[2]] = set([(0,1)])
-
     return mask
 
 def delavedge(g,v,b,mask):
@@ -323,6 +347,20 @@ def delavedge(g,v,b,mask):
     if not mask[1]: g[v[0]].pop(b[1], None)
     if not mask[2]: g[b[0]].pop(v[1], None)
     if not mask[3]: g[b[1]].pop(v[2], None)
+
+def addaAedge(g,v,b):
+    mask = [b[0] in g[v[1]], b[1] in g[v[2]],
+            v[3] in g[b[0]], v[3] in g[b[1]]]
+
+    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[3]] = g[b[1]][v[3]] = set([(0,1)])
+    return mask
+
+def delaAedge(g,v,b,mask):
+    if not mask[0]: g[v[1]].pop(b[0], None)
+    if not mask[1]: g[v[2]].pop(b[1], None)
+    if not mask[2]: g[b[0]].pop(v[3], None)
+    if not mask[3]: g[b[1]].pop(v[3], None)
+
 
 def addacedge(g,v,b): # chain
     mask = [b[0] in g[v[1]], v[2] in g[b[0]],
@@ -343,15 +381,6 @@ def delacedge(g,v,b,mask):
 
 def rotate(l): return l[1:] + l[:1] # rotate a list
 def density(g): return len(edgelist(g))/np.double(len(g)**2)
-
-# def esig(l):
-#     '''
-#     turns edge list into a hash string
-#     '''
-#     n = map(lambda x: '.'.join(x), l)
-#     n.sort()
-#     n = ','.join(n)
-#     return n
 
 def esig(l,n):
     '''
@@ -495,11 +524,11 @@ def v2g22g1(g2, capsize=None):
 
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
-         (addacedge,delacedge)]
+         (addacedge,delacedge),
+         (addaAedge,delaAedge)]
     @memo2 # memoize the search
     def nodesearch(g, g2, edges, inlist, order, s, cds):
         if edges:
-
             key = order.pop(0)
             checklist = edges.pop(key)
 
@@ -510,7 +539,9 @@ def v2g22g1(g2, capsize=None):
                     tocheck = conformant(cds, inlist)
 
                 #if tocheck:
-                adder, remover = f[len(key)-2]
+                adder, remover = f[len(key)-2+(max(3,len(key))-3)*int(key[0])]
+
+                #f[len(key)-2]
                 for n in tocheck:
                     mask = adder(g,key,n)
                     if isedgesubset(increment(g), g2):
@@ -528,7 +559,6 @@ def v2g22g1(g2, capsize=None):
             return g
 
     # find all directed g1's not conflicting with g2
-    n = len(g2)
     chlist = checkable(g2)
     order, d = inorder_checks(g2,chlist)
     cds = conformanceDS(g2, order)
