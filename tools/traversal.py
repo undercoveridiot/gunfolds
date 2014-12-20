@@ -281,9 +281,9 @@ def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
          (addavedge,delavedge),
          (addacedge,delacedge)]
 
-    adder1, remover1 = f[len(e1)-2]
-    adder2, remover2 = f[len(e2)-2]
-    adder3, remover3 = f[len(e3)-2]
+    adder1, remover1 = f[len(e1)-2+(max(3,len(e1))-3)*int(e1[0])]
+    adder2, remover2 = f[len(e2)-2+(max(3,len(e2))-3)*int(e2[0])]
+    adder3, remover3 = f[len(e3)-2+(max(3,len(e3))-3)*int(e3[0])]    
 
     d = {}
     for c1 in j1: # for each connector
@@ -637,3 +637,36 @@ def new_order(g2, order, repeats = 100, cds=None):
             mnw = pw
             mnp = p[:]
     return [order[i] for i in [0]+mnp], mnw, cds
+
+def length_d_paths(G, s, d, ok2loop=[]):
+    """
+    Iterate over nodes in G reachable from s in exactly d steps
+    """
+    ok2 = {c:False for c in G}
+    for c in ok2loop:
+        ok2[c] = True    
+    yielded = set()
+    
+    def recurse(G, s, d, path=[]):
+
+        
+        if d == 0:
+            yield path
+
+        for u in G[s]:
+            
+            if u in path:
+                if not u==s: 
+                    continue
+                elif not ok2[u]:
+                    continue
+                else:
+                    ok2[u] = False
+                    
+            for v in recurse(G, u, d-1, path+[u]):
+                yield v
+            if u in ok2loop:
+                ok2[u] = True
+
+    for u in recurse(G, s, d, [s]):
+            yield u
