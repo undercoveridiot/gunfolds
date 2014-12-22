@@ -8,6 +8,8 @@ import ipdb
 import ecj
 import itertools, copy
 import munkres
+from comparison import graph2nx
+from networkx import strongly_connected_components
 
 def increment(g):
     '''
@@ -75,11 +77,66 @@ def chunks(l, n):
     for i in xrange(0, len(l), n):
         yield l[i:i+n]
 
+def purgepath(path, l):
+    for i in range(1,len(path)-1):
+        l.remove((path[i],path[i+1]))
+
+def next_or_none(it):
+    try:
+        n = it.next()
+    except StopIteration:
+        return None
+    return n
+
+def try_till_d_path(g,d):
+    k = []
+    i = 1
+    while not k:
+        print i
+        k = next_or_none(length_d_paths(g,str(i),d,[]))
+        i += 1
+        if i > len(g): return []
+    return k
+
+def try_till_path(g):
+    d = len(g)-1
+    gx = graph2nx(g)
+    sccl = [x for x in strongly_connected_components(gx)]
+    # take the largest
+    ln = [len(x) for x in sccl]
+    idx = np.argsort(ln)
+    d = len(sccl[idx[-1]])-1
+    k = []
+    while not k:
+        k = try_till_d_path(g,d)
+        d -= 1
+        if d == 0: return []
+    return k
+
+def gpurgepath(g,path):
+    for i in range(1,len(path)-1):
+        del g[path[i]][path[i+1]]
+
+
 def vedgelist(g):
     """ Return a list of tuples for edges of g and forks
     """
     l = []
     el = edgelist(g)
+
+    gc = copy.deepcopy(g)
+    for i in range(16):
+        
+        k = try_till_path(gc)
+        if k:
+            l.append(('2',)+tuple(k))
+            purgepath(l[-1],el)
+            gpurgepath(gc,l[-1])
+            if len(k) < 5: #0.5*len(gc):
+                break
+        else:
+            break
+
     bl = bedgelist(g)
     for n in g:
         c = [e for e in g[n] if (0,1) in g[n][e]]# all children
@@ -97,7 +154,23 @@ def vedgelist(g):
                     r.add(p[0])
                     r.add(p[1])
             for e in r: c.remove(e)
-            b = [tuple([n]+i) for i in chunks(c,2)]
+            #b = [tuple([n]+i) for i in chunks(c,2)]
+
+            b = []
+            for p in chunks(c,2):
+                try:
+                    if (n,p[0]) in el:
+                        if (n,p[1]) in el:
+                            b.append(tuple([n]+p))
+                            el.remove((n,p[0]))
+                            el.remove((n,p[1]))
+                        else:
+                            b.append((n,p[0]))
+                            el.remove((n,p[0]))
+                except IndexError:
+                    b.append(tuple([n]+p))
+                    el.remove(tuple([n]+p))
+
             l.extend(b)
     r = twoedges(l)
     A, singles = makechains(r)
@@ -106,12 +179,13 @@ def vedgelist(g):
         B, singles = makesinks(singles)
     else:
         B, singles = [], []
-        
-    l = threedges(l) + A + B + singles
+
+    l = longpaths(l)+threedges(l) + A + B + singles
     return l
 
 def twoedges(l):  return [e for e in l if len(e)==2]
 def threedges(l): return [e for e in l if len(e)==3]
+def longpaths(l): return [e for e in l if len(e)>3 and e[0]=='2']
 def makechains(l):
     """ Greedily construct 2 edge chains from edge list
     """
@@ -134,7 +208,7 @@ def makesink(es): return ('1', es[0][0],) + es[1]
 def makesinks(l):
     """ Greedily construct 2 edge sinks ( b->a<-c ) from edge list
     """
-    sinks = {}    
+    sinks = {}
     for e in l:
         if e[1] in sinks:
             sinks[e[1]].append(e)
@@ -222,6 +296,7 @@ def isedge(v):  return len(v) == 2 # a->b
 def isvedge(v): return len(v) == 3 # b<-a->c
 def isCedge(v): return len(v) == 4 and v[0] == '0' # a->b->c
 def isAedge(v): return len(v) == 4 and v[0] == '1'# b->a<-c
+def ispath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 
 def checkable(g2):
     d = {}
@@ -283,7 +358,7 @@ def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
 
     adder1, remover1 = f[len(e1)-2+(max(3,len(e1))-3)*int(e1[0])]
     adder2, remover2 = f[len(e2)-2+(max(3,len(e2))-3)*int(e2[0])]
-    adder3, remover3 = f[len(e3)-2+(max(3,len(e3))-3)*int(e3[0])]    
+    adder3, remover3 = f[len(e3)-2+(max(3,len(e3))-3)*int(e3[0])]
 
     d = {}
     for c1 in j1: # for each connector
@@ -644,29 +719,27 @@ def length_d_paths(G, s, d, ok2loop=[]):
     """
     ok2 = {c:False for c in G}
     for c in ok2loop:
-        ok2[c] = True    
-    yielded = set()
-    
-    def recurse(G, s, d, path=[]):
+        ok2[c] = True
 
+    def recurse(G, s, d, path=[]):
         
         if d == 0:
             yield path
+            return
 
         for u in G[s]:
-            
+            if G[s][u] == set([(2,0)]): continue
             if u in path:
-                if not u==s: 
+                if not u==s:
                     continue
                 elif not ok2[u]:
                     continue
                 else:
                     ok2[u] = False
-                    
+
             for v in recurse(G, u, d-1, path+[u]):
+                if u in ok2loop: ok2[u] = True
                 yield v
-            if u in ok2loop:
-                ok2[u] = True
 
     for u in recurse(G, s, d, [s]):
             yield u
