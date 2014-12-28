@@ -132,7 +132,7 @@ def vedgelist(g):
     for i in range(16):
 
         k = try_till_path(gc)
-        if len(k) < len(g)-3: break
+        if len(k) < 5: break
         if k:
             l.append(('2',)+tuple(k))
             purgepath(l[-1],el)
@@ -317,9 +317,9 @@ def checkApath(p, g2):
     d = len(p) - 2
     l = []
     for n in g2:
-        l.extend([x for x in length_d_loopy_paths(g2, n, d, p[1:])])
-    k = prunepaths_1D(g2, p, l)
-    return k
+        l.extend([tuple(x) for x in length_d_loopy_paths(g2, n, d, p[1:])])
+    #k = prunepaths_1D(g2, p, l)
+    return l
 
 
 def isedge(v):  return len(v) == 2 # a->b
@@ -693,6 +693,7 @@ def v2g22g1(g2, capsize=None):
     chlist = checkable(g2)
     order, d = inorder_checks(g2,chlist)
     cds = conformanceDS(g2, order)
+
     g = cloneempty(g2)
 
     s = set()
@@ -715,10 +716,38 @@ def conformanceDS(g2, order):
             CDS[x[1]][x[0]] = d
         else:
             CDS[x[1]][x[0]] = d
+            
+    return pruneCDS(CDS)
 
+def oconformanceDS(g2, order):
+    gg = checkable(g2)
+    CDS = {}
+    CDS[0] = set(gg[order[0]])
+    for x in zip(range(len(order)),range(1,len(order))):
+        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
+                                     gg[order[x[0]]], gg[order[x[1]]], g2))
+        if not x[1] in CDS:
+            CDS[x[1]] = {}
+            CDS[x[1]][x[0]] = d
+        else:
+            CDS[x[1]][x[0]] = d
+            
     return pruneCDS(CDS)
 
 def conformant(cds, inlist):
+
+    if inlist[len(inlist)-2] in cds[len(inlist)-1][0]:
+        s = cds[len(inlist)-1][0][inlist[len(inlist)-2]]
+    else:
+        return set()
+    for i in range(1,len(inlist)-1):
+        if inlist[len(inlist)-i-2] in cds[len(inlist)-1][i]:
+            s = s.intersection(cds[len(inlist)-1][i][inlist[len(inlist)-i-2]])
+        else:
+            return set()
+    return s
+
+def oconformant(cds, inlist):
     if inlist[len(inlist)-2] in cds[len(inlist)-1][0]:
         s = cds[len(inlist)-1][0][inlist[len(inlist)-2]]
     else:
@@ -840,6 +869,9 @@ def edge_increment_ok(s,m,e,g,g2):
     # directed edges
     for u in g[m]:
         if not u in g2[s] or not (0,1) in g2[s][u]:
+            return False
+    for u in g[e]:
+        if not u in g2[m] or not (0,1) in g2[m][u]:
             return False
     for u in g:
         if s in g[u] and (not m in g2[u] or not (0,1) in g2[u][m]):
