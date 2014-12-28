@@ -142,6 +142,7 @@ def vedgelist(g):
 
     bl = bedgelist(g)
     for n in g:
+
         c = [e for e in g[n] if (0,1) in g[n][e]]# all children
         if len(c) == 1:
             if (n,c[0]) in el:
@@ -156,6 +157,16 @@ def vedgelist(g):
                     el.remove((n,p[1]))
                     r.add(p[0])
                     r.add(p[1])
+                else:
+                    if (n,p[0]) in el:
+                        l.append((n,p[0]))
+                        el.remove((n,p[0]))
+                        r.add(p[0])
+                    if (n,p[1]) in el:
+                        l.append((n,p[1]))
+                        el.remove((n,p[1]))
+                        r.add(p[1])
+                        
             for e in r: c.remove(e)
             #b = [tuple([n]+i) for i in chunks(c,2)]
 
@@ -176,7 +187,9 @@ def vedgelist(g):
                     el.remove(tuple([n]+p))
 
             l.extend(b)
+
     r = twoedges(l)
+
     A, singles = makechains(r)
 
     if singles:
@@ -184,6 +197,8 @@ def vedgelist(g):
     else:
         B, singles = [], []
 
+
+    
     l = longpaths(l)+threedges(l) + A + B + singles
     return l
 
@@ -198,6 +213,7 @@ def makechains(l):
     r = []
     singles = []
     while l:
+
         e = l.pop()
         if e[1] in starts and e[0] != e[1] and starts[e[1]] in l:
             r.append(('0', e[0],)+starts[e[1]])
@@ -314,7 +330,7 @@ def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 
 def checkable(g2):
     d = {}
-    g = cloneempty(g2)
+
 
     vlist = vedgelist(g2)
     for v in vlist:
@@ -336,12 +352,13 @@ def checkable(g2):
          (addaAedge,delaAedge),
          (addapath,delapath)]
     for e in d:
-        adder, remover = f[min(4,len(e))-2+min(max(3,len(e))-3,1)*int(e[0])]#f[len(e)-2]
+        adder, remover = f[min(4,len(e))-2+min(max(3,len(e))-3,1)*int(e[0])]
         for n in d[e]:
+            g = cloneempty(g2)            
             mask = adder(g,e,n)
             if not isedgesubset(increment(g), g2):
                 d[e].remove(n)
-            remover(g,e,n,mask)
+            #remover(g,e,n,mask)
 
     return d
 
