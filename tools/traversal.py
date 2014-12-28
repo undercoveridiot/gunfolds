@@ -303,7 +303,6 @@ def checkApath(p, g2):
     for n in g2:
         l.extend([x for x in length_d_loopy_paths(g2, n, d, p[1:])])
     k = prunepaths_1D(g2, p, l)
-    print len(k),len(l)
     return k
 
 
