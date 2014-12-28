@@ -132,7 +132,7 @@ def vedgelist(g):
     for i in range(16):
 
         k = try_till_path(gc)
-        if len(k) < 5: break
+        if len(k) < len(g)-3: break
         if k:
             l.append(('2',)+tuple(k))
             purgepath(l[-1],el)
@@ -484,11 +484,7 @@ def addacedge(g,v,b): # chain
     mask = [b[0] in g[v[1]], v[2] in g[b[0]],
             b[1] in g[v[2]], v[3] in g[b[1]]]
 
-    g[v[1]][b[0]] = set([(0,1)])
-    g[v[2]][b[1]] = set([(0,1)])
-    g[b[0]][v[2]] = set([(0,1)])
-    g[b[1]][v[3]] = set([(0,1)])
-
+    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[2]] = g[b[1]][v[3]] = set([(0,1)])
     return mask
 
 def delacedge(g,v,b,mask):
