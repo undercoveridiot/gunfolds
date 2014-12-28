@@ -88,12 +88,14 @@ def next_or_none(it):
         return None
     return n
 
-def try_till_d_path(g,d):
+def try_till_d_path(g,d,order=None):
     k = []
     i = 1
     while not k:
-        print i
-        k = next_or_none(length_d_paths(g,str(i),d,[]))
+        if order:
+            k = next_or_none(length_d_paths(g,order(i),d))
+        else:
+            k = next_or_none(length_d_paths(g,str(i),d))
         i += 1
         if i > len(g): return []
     return k
@@ -106,6 +108,8 @@ def try_till_path(g):
     ln = [len(x) for x in sccl]
     idx = np.argsort(ln)
     d = len(sccl[idx[-1]])-1
+    sccl = [sccl[i] for i in idx[::-1]]
+    order = [item for sublist in sccl for item in sublist]
     k = []
     while not k:
         k = try_till_d_path(g,d)
@@ -126,14 +130,13 @@ def vedgelist(g):
 
     gc = copy.deepcopy(g)
     for i in range(16):
-        
+
         k = try_till_path(gc)
+        if len(k) < 5: break
         if k:
             l.append(('2',)+tuple(k))
             purgepath(l[-1],el)
             gpurgepath(gc,l[-1])
-            if len(k) < 5: #0.5*len(gc):
-                break
         else:
             break
 
@@ -158,6 +161,7 @@ def vedgelist(g):
 
             b = []
             for p in chunks(c,2):
+
                 try:
                     if (n,p[0]) in el:
                         if (n,p[1]) in el:
@@ -292,11 +296,22 @@ def checkcedge(c, g2):
     l = edgelist(g2)
     return list(set(l))
 
+def checkApath(p, g2):
+    sl = [x for x in g2 if selfloop(x,g2)]
+    d = len(p) - 2
+    l = []
+    for n in g2:
+        l.extend([x for x in length_d_loopy_paths(g2, n, d, p[1:])])
+    k = prunepaths_1D(g2, p, l)
+    print len(k),len(l)
+    return k
+
+
 def isedge(v):  return len(v) == 2 # a->b
 def isvedge(v): return len(v) == 3 # b<-a->c
 def isCedge(v): return len(v) == 4 and v[0] == '0' # a->b->c
 def isAedge(v): return len(v) == 4 and v[0] == '1'# b->a<-c
-def ispath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
+def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 
 def checkable(g2):
     d = {}
@@ -310,6 +325,8 @@ def checkable(g2):
             d[v] = checkcedge(v,g2)
         elif isAedge(v):
             d[v] = checkAedge(v,g2)
+        elif isApath(v):
+            d[v] = checkApath(v,g2)
         else:
             d[v] = checkedge(v,g2)
 
@@ -317,9 +334,10 @@ def checkable(g2):
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
-         (addaAedge,delaAedge)]
+         (addaAedge,delaAedge),
+         (addapath,delapath)]
     for e in d:
-        adder, remover = f[len(e)-2+(max(3,len(e))-3)*int(e[0])]#f[len(e)-2]
+        adder, remover = f[min(4,len(e))-2+min(max(3,len(e))-3,1)*int(e[0])]#f[len(e)-2]
         for n in d[e]:
             mask = adder(g,e,n)
             if not isedgesubset(increment(g), g2):
@@ -333,10 +351,11 @@ def inorder_check2(e1, e2, j1, j2, g2):
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
-         (addaAedge,delaAedge)]
+         (addaAedge,delaAedge),
+         (addapath,delapath)]
 
-    adder1, remover1 = f[len(e1)-2+(max(3,len(e1))-3)*int(e1[0])]
-    adder2, remover2 = f[len(e2)-2+(max(3,len(e2))-3)*int(e2[0])]
+    adder1, remover1 = f[min(4,len(e1))-2+min(max(3,len(e1))-3,1)*int(e1[0])]
+    adder2, remover2 = f[min(4,len(e2))-2+min(max(3,len(e2))-3,1)*int(e2[0])]
 
     d = {}
     for c1 in j1: # for each connector
@@ -436,6 +455,31 @@ def delaAedge(g,v,b,mask):
     if not mask[2]: g[b[0]].pop(v[3], None)
     if not mask[3]: g[b[1]].pop(v[3], None)
 
+def addapath(g,v,b):
+    mask = []
+    s = set([(0,1)])
+    for i in range(len(b)):
+        mask.append(b[i] in g[v[i+1]])
+        mask.append(v[i+2] in g[b[i]])
+
+    for i in range(len(b)):
+        g[v[i+1]][b[i]] = g[b[i]][v[i+2]] = s
+
+    return mask
+
+def delapath(g, v, b, mask):
+    for i in range(len(b)):
+        if not mask[2*i]: g[v[i+1]].pop(b[i], None)
+        if not mask[2*i+1]:g[b[i]].pop(v[i+2], None)
+
+def prunepaths_1D(g2, path, conn):
+    c = []
+    g = cloneempty(g2)
+    for p in conn:
+        mask = addapath(g,path,p)
+        if isedgesubset(increment(g), g2): c.append(tuple(p))
+        delapath(g,path,p,mask)
+    return c
 
 def addacedge(g,v,b): # chain
     mask = [b[0] in g[v[1]], v[2] in g[b[0]],
@@ -596,11 +640,12 @@ def v2g22g1(g2, capsize=None):
     if ecj.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
-
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
-         (addaAedge,delaAedge)]
+         (addaAedge,delaAedge),
+         (addapath,delapath)]
+
     @memo2 # memoize the search
     def nodesearch(g, g2, edges, inlist, order, s, cds):
         if edges:
@@ -614,8 +659,7 @@ def v2g22g1(g2, capsize=None):
                     tocheck = conformant(cds, inlist)
 
                 #if tocheck:
-                adder, remover = f[len(key)-2+(max(3,len(key))-3)*int(key[0])]
-
+                adder, remover = f[min(4,len(key))-2+min(max(3,len(key))-3,1)*int(key[0])]
                 #f[len(key)-2]
                 for n in tocheck:
                     mask = adder(g,key,n)
@@ -713,33 +757,123 @@ def new_order(g2, order, repeats = 100, cds=None):
             mnp = p[:]
     return [order[i] for i in [0]+mnp], mnw, cds
 
-def length_d_paths(G, s, d, ok2loop=[]):
+def length_d_paths(G, s, d):
     """
     Iterate over nodes in G reachable from s in exactly d steps
     """
-    ok2 = {c:False for c in G}
-    for c in ok2loop:
-        ok2[c] = True
-
     def recurse(G, s, d, path=[]):
-        
         if d == 0:
             yield path
             return
 
         for u in G[s]:
-            if G[s][u] == set([(2,0)]): continue
-            if u in path:
-                if not u==s:
-                    continue
-                elif not ok2[u]:
-                    continue
-                else:
-                    ok2[u] = False
-
+            if G[s][u] == set([(2,0)]) or u in path: continue
             for v in recurse(G, u, d-1, path+[u]):
-                if u in ok2loop: ok2[u] = True
                 yield v
 
     for u in recurse(G, s, d, [s]):
+            yield u
+
+def subfinder(mylist, pattern):
+    matches = []
+    for i in range(len(mylist)):
+        if mylist[i] == pattern[0] and mylist[i:i+len(pattern)] == pattern:
+            matches.append((i,pattern))
+    return matches
+
+def make_triplets(path, selfloops):
+    tri = {}
+    for u in selfloops:
+        idx = path.index(u)
+        tri[u] = path[idx-1:idx+2]
+    return tri
+
+def length_d_loopy_paths1(G, s, d, path=None, ok2loop=[]):
+    """
+    Iterate over nodes in G reachable from s in exactly d steps
+    """
+    candidates = [x for x in length_d_paths(G,s,d)]
+    triplets = make_triplets(path, ok2loop)
+    for u in ok2loop:
+        ext = []
+        for p in candidates:
+            sub = subfinder(p, triplets[u])
+            if sub:
+                idx = sub[0][0]
+                ext.append(p[:idx+1]+[u,]+p[idx+1:-1])
+        candidates.extend(ext)
+
+    if path[0] in ok2loop:
+        ext = []
+        for p in candidates:
+            if p[:2]==path[:2]:
+                ext.append([p[0]]+p[:-1])
+        candidates.extend(ext)
+
+    if path[-1] in ok2loop:
+        ext = []
+        for p in candidates:
+            if p[-2:]==path[-2:]:
+                ext.append(p[1:]+[p[-1]])
+        candidates.extend(ext)
+
+    return candidates
+
+def edge_increment_ok(s,m,e,g,g2):
+    """
+    s - start,
+    m - middle,
+    e - end
+    """
+    # directed edges
+    for u in g[m]:
+        if not u in g2[s] or not (0,1) in g2[s][u]:
+            return False
+    for u in g:
+        if s in g[u] and (not m in g2[u] or not (0,1) in g2[u][m]):
+            return False
+        if m in g[u] and (not e in g2[u] or not (0,1) in g2[u][e]):
+            return False
+
+    # bidirected edges
+    for c in g[s]:
+        if c == s: continue
+        if c == m: continue
+        try:
+            if not (2,0) in g2[c][m]:
+                return False
+        except KeyError:
+            return False
+    for c in g[m]:
+        if c == m: continue
+        if c == e: continue
+        try:
+            if not (2,0) in g2[c][e]:
+                return False
+        except KeyError:
+            return False
+    return True
+
+def length_d_loopy_paths(G, s, dt, p):
+    """
+    Iterate over nodes in G reachable from s in exactly d steps
+    """
+    g1 = cloneempty(G)
+
+    def recurse(g, g2, s, d, path=[]):
+
+        if edge_increment_ok(p[-d-2],s,p[-d-1],g,g2):
+            
+            if d == 0:
+                yield path
+                return
+
+            mask = add2edges(g,(p[-d-2],p[-d-1]),s)
+            for u in g2[s]:
+                if g2[s][u] == set([(2,0)]): continue
+                for v in recurse(g, g2, u, d-1, path+[u]):
+                    yield v
+            del2edges(g,(p[-d-2],p[-d-1]),s, mask)
+            
+    for u in recurse(g1, G, s, dt-1, [s]):
             yield u
