@@ -88,19 +88,24 @@ def next_or_none(it):
         return None
     return n
 
-def try_till_d_path(g,d,order=None):
+def try_till_d_path(g,d,gt,order=None):
     k = []
     i = 1
     while not k:
         if order:
-            k = next_or_none(length_d_paths(g,order(i),d))
+            k = [x for x in length_d_paths(g,order(i),d)] #next_or_none(length_d_paths(g,order(i),d))
         else:
-            k = next_or_none(length_d_paths(g,str(i),d))
+            k = [x for x in length_d_paths(g,str(i),d)] #next_or_none(length_d_paths(g,str(i),d))
         i += 1
         if i > len(g): return []
-    return k
 
-def try_till_path(g):
+    ld = []
+    for i in range(min(10, len(k))):
+        ld.append(len(checkApath(['2']+k[i], gt)))
+    idx = np.argmin(ld)
+    return k[idx]
+
+def try_till_path(g, gt):
     d = len(g)-1
     gx = graph2nx(g)
     sccl = [x for x in strongly_connected_components(gx)]
@@ -112,9 +117,9 @@ def try_till_path(g):
     order = [item for sublist in sccl for item in sublist]
     k = []
     while not k:
-        k = try_till_d_path(g,d)
+        if d < 5: return []        
+        k = try_till_d_path(g,d,gt)
         d -= 1
-        if d == 0: return []
     return k
 
 def gpurgepath(g,path):
@@ -124,6 +129,7 @@ def gpurgepath(g,path):
 
 def vedgelist(g):
     """ Return a list of tuples for edges of g and forks
+    a superugly organically grown function that badly needs refactoring
     """
     l = []
     el = edgelist(g)
@@ -131,7 +137,7 @@ def vedgelist(g):
     gc = copy.deepcopy(g)
     for i in range(16):
 
-        k = try_till_path(gc)
+        k = try_till_path(gc,g)
         if len(k) < 5: break
         if k:
             l.append(('2',)+tuple(k))
@@ -196,8 +202,6 @@ def vedgelist(g):
         B, singles = makesinks(singles)
     else:
         B, singles = [], []
-
-
     
     l = longpaths(l)+threedges(l) + A + B + singles
     return l
@@ -330,8 +334,7 @@ def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 
 def checkable(g2):
     d = {}
-
-
+    g = cloneempty(g2)
     vlist = vedgelist(g2)
     for v in vlist:
         if isvedge(v):
@@ -351,14 +354,14 @@ def checkable(g2):
          (addacedge,delacedge),
          (addaAedge,delaAedge),
          (addapath,delapath)]
+
     for e in d:
         adder, remover = f[min(4,len(e))-2+min(max(3,len(e))-3,1)*int(e[0])]
         for n in d[e]:
-            g = cloneempty(g2)            
             mask = adder(g,e,n)
             if not isedgesubset(increment(g), g2):
                 d[e].remove(n)
-            #remover(g,e,n,mask)
+            remover(g,e,n,mask)
 
     return d
 
@@ -473,11 +476,10 @@ def delaAedge(g,v,b,mask):
 
 def addapath(g,v,b):
     mask = []
-    s = set([(0,1)])
     for i in range(len(b)):
         mask.append(b[i] in g[v[i+1]])
         mask.append(v[i+2] in g[b[i]])
-
+    s = set([(0,1)])
     for i in range(len(b)):
         g[v[i+1]][b[i]] = g[b[i]][v[i+2]] = s
 
@@ -704,13 +706,24 @@ def v2g22g1(g2, capsize=None):
     return s
 
 
+def unionpool(idx, cds):
+    s = set()
+    for u in cds[idx]:
+        for v in cds[idx][u]:
+            s = s.union(cds[idx][u][v])
+    return s
+
 def conformanceDS(g2, order):
     gg = checkable(g2)
     CDS = {}
     CDS[0] = set(gg[order[0]])
     for x in itertools.combinations(range(len(order)),2):
+        if x[0] > 0 and x[0] in CDS:
+            j1 = unionpool(x[0], CDS)
+        else:
+            j1 = gg[order[x[0]]]
         d = del_empty(inorder_check2(order[x[0]], order[x[1]],
-                                     gg[order[x[0]]], gg[order[x[1]]], g2))
+                                     j1, gg[order[x[1]]], g2))
         if not x[1] in CDS:
             CDS[x[1]] = {}
             CDS[x[1]][x[0]] = d
