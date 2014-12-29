@@ -132,7 +132,7 @@ def vedgelist(g):
     for i in range(16):
 
         k = try_till_path(gc)
-        if len(k) < len(g)-3: break
+        if len(k) < 5: break
         if k:
             l.append(('2',)+tuple(k))
             purgepath(l[-1],el)
@@ -417,7 +417,7 @@ def inorder_checks(g2, gg):
     #cds = conformanceDS(g2, ee)
     #oo = new_order(g2, ee, repeats=100, cds=None)
     #ee = oo[0]
-    #random.shuffle(ee)
+    random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
