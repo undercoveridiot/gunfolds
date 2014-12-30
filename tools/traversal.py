@@ -619,7 +619,7 @@ def vg22g1(g2, capsize=None):
             #key, checklist = edges.popitem()
             key = random.choice(edges.keys())
             checklist = edges.pop(key)
-            adder, remover = f[len(key)-2]
+            adder, remover = f[edge_function_idx(key)]
             for n in checklist:
                 mask = adder(g,key,n)
                 if isedgesubset(increment(g), g2):
@@ -644,6 +644,9 @@ def vg22g1(g2, capsize=None):
     except ValueError:
         s.add(0)
     return s
+
+def edge_function_idx(edge):
+    return min(4,len(edge))-2+min(max(3,len(edge))-3,1)*int(edge[0])
 
 def v2g22g1(g2, capsize=None):
     '''
@@ -671,8 +674,7 @@ def v2g22g1(g2, capsize=None):
                     tocheck = conformant(cds, inlist)
 
                 #if tocheck:
-                adder, remover = f[min(4,len(key))-2+min(max(3,len(key))-3,1)*int(key[0])]
-                #f[len(key)-2]
+                adder, remover = f[edge_function_idx(key)]
                 for n in tocheck:
                     mask = adder(g,key,n)
                     if isedgesubset(increment(g), g2):
@@ -693,7 +695,7 @@ def v2g22g1(g2, capsize=None):
     chlist = checkable(g2)
     order, d = inorder_checks(g2,chlist)
     cds = conformanceDS(g2, order)
-
+    
     g = cloneempty(g2)
 
     s = set()
