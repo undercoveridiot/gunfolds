@@ -437,8 +437,7 @@ def add2edges(g,e,p):
     and add them to g
     '''
     mask = [p in g[e[0]], e[1] in g[p]]
-    g[e[0]][p] = set([(0,1)])
-    g[p][e[1]] = set([(0,1)])
+    g[e[0]][p] = g[p][e[1]] = set([(0,1)])
     return mask
 
 def del2edges(g,e,p,mask):
@@ -896,19 +895,19 @@ def edge_increment_ok(s,m,e,g,g2):
     for c in g[s]:
         if c == s: continue
         if c == m: continue
-        try:
-            if not (2,0) in g2[c][m]:
-                return False
-        except KeyError:
+        if not m in g2[c]:
             return False
+        elif not (2,0) in g2[c][m]:
+            return False
+
     for c in g[m]:
         if c == m: continue
         if c == e: continue
-        try:
-            if not (2,0) in g2[c][e]:
-                return False
-        except KeyError:
+        if not e in g2[c]:
+            return False        
+        elif not (2,0) in g2[c][e]:
             return False
+
     return True
 
 def length_d_loopy_paths(G, s, dt, p):
