@@ -134,17 +134,17 @@ def vedgelist(g):
     l = []
     el = edgelist(g)
 
-    gc = copy.deepcopy(g)
-    for i in range(16):
+    # gc = copy.deepcopy(g)
+    # for i in range(16):
 
-        k = try_till_path(gc,g)
-        if len(k) < 5: break
-        if k:
-            l.append(('2',)+tuple(k))
-            purgepath(l[-1],el)
-            gpurgepath(gc,l[-1])
-        else:
-            break
+    #    k = try_till_path(gc,g)
+    #    if len(k) < 5: break
+    #    if k:
+    #        l.append(('2',)+tuple(k))
+    #        purgepath(l[-1],el)
+    #        gpurgepath(gc,l[-1])
+    #    else:
+    #        break
 
     bl = bedgelist(g)
     for n in g:

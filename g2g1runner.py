@@ -107,7 +107,7 @@ for nodes in [10]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U3.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U32.zkl')
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U3.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U32.zkl')
