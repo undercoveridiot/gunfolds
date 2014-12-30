@@ -203,7 +203,7 @@ def vedgelist(g):
     else:
         B, singles = [], []
     
-    l = longpaths(l)+threedges(l) + A + B + singles
+    l = longpaths(l)+threedges(l) + A + B  + singles
     return l
 
 def twoedges(l):  return [e for e in l if len(e)==2]
@@ -302,8 +302,8 @@ def checkAedge(v, g2):
     l = []
     # try all pairs but the sources
     for pair in itertools.combinations(g2,2):
-        if pair == (v[1],v[2]): continue
-        if pair == (v[2],v[1]): continue
+        #if pair == (v[1],v[2]): continue
+        #if pair == (v[2],v[1]): continue
         l.append(pair)
         l.append(pair[::-1])
     for n in g2:
@@ -329,7 +329,7 @@ def checkApath(p, g2):
 def isedge(v):  return len(v) == 2 # a->b
 def isvedge(v): return len(v) == 3 # b<-a->c
 def isCedge(v): return len(v) == 4 and v[0] == '0' # a->b->c
-def isAedge(v): return len(v) == 4 and v[0] == '1'# b->a<-c
+def isAedge(v): return len(v) == 4 and v[0] == '1'# b->c<-b
 def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 
 def checkable(g2):
@@ -420,7 +420,7 @@ def inorder_checks(g2, gg):
     #cds = conformanceDS(g2, ee)
     #oo = new_order(g2, ee, repeats=100, cds=None)
     #ee = oo[0]
-    #random.shuffle(ee)
+    random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
@@ -571,14 +571,13 @@ def g22g1(g2, capsize=None):
             #random.shuffle(ln)
             for n in ln:
                 if (n,e) in single_cache: continue
+                if not edge_increment_ok(e[0],n,e[1],g,g2): continue
                 mask = add2edges(g,e,n)
-                #if isedgesubset(pincrement(g,gg,e[0],n,e[1]), g2):
-                if isedgesubset(increment(g), g2):
-                    r = nodesearch(g,g2,edges,s)
-                    if r and increment(r)==g2:
-                        s.add(g2num(r))
-                        if capsize and len(s)>capsize:
-                            raise ValueError('Too many elements in eqclass')
+                r = nodesearch(g,g2,edges,s)
+                if r and increment(r)==g2:
+                    s.add(g2num(r))
+                    if capsize and len(s)>capsize:
+                        raise ValueError('Too many elements in eqclass')
                 del2edges(g,e,n,mask)
             edges.append(e)
         else:
