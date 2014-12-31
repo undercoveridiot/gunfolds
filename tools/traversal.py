@@ -430,6 +430,7 @@ def inorder_checks(g2, gg):
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
+def ok2add2edges(e,p,g,g2): return edge_increment_ok(e[0],p,e[1],g,g2)
 def add2edges(g,e,p):
     '''
     break edge e[0] -> e[1] into two pieces
@@ -447,6 +448,9 @@ def del2edges(g,e,p,mask):
     if not mask[0]: g[e[0]].pop(p, None)
     if not mask[1]: g[p].pop(e[1], None)
 
+def ok2addavedge(e,p,g,g2):
+    return edge_increment_ok(e[0],p[0],e[1],g,g2) \
+        and edge_increment_ok(e[0],p[1],e[2],g,g2)
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
@@ -460,6 +464,9 @@ def delavedge(g,v,b,mask):
     if not mask[2]: g[b[0]].pop(v[1], None)
     if not mask[3]: g[b[1]].pop(v[2], None)
 
+def ok2addaAedge(e,p,g,g2):
+    return edge_increment_ok(e[0],p[0],e[2],g,g2) \
+        and edge_increment_ok(e[1],p[1],e[2],g,g2)    
 def addaAedge(g,v,b):
     mask = [b[0] in g[v[1]], b[1] in g[v[2]],
             v[3] in g[b[0]], v[3] in g[b[1]]]
@@ -473,6 +480,9 @@ def delaAedge(g,v,b,mask):
     if not mask[2]: g[b[0]].pop(v[3], None)
     if not mask[3]: g[b[1]].pop(v[3], None)
 
+def ok2addapath(e,p,g,g2):
+    return edge_increment_ok(e[0],p[0],e[2],g,g2) \
+        and edge_increment_ok(e[1],p[1],e[2],g,g2)        
 def addapath(g,v,b):
     mask = []
     for i in range(len(b)):
