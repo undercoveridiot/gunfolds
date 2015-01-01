@@ -63,6 +63,9 @@ def edgelist(g): # directed
         l.extend([(n,e) for e in g[n] if (0,1) in g[n][e]])
     return l
 
+def edgenumber(g):
+    return sum([sum([len(g[y][x]) for x in g[y]]) for y in g])
+
 def bedgelist(g): # bidirected edge list with flips
     l = []
     for n in g:
@@ -134,17 +137,17 @@ def vedgelist(g):
     l = []
     el = edgelist(g)
 
-    gc = copy.deepcopy(g)
-    for i in range(16):
+    # gc = copy.deepcopy(g)
+    # for i in range(16):
 
-        k = try_till_path(gc,g)
-        if len(k) < 5: break
-        if k:
-            l.append(('2',)+tuple(k))
-            purgepath(l[-1],el)
-            gpurgepath(gc,l[-1])
-        else:
-            break
+    #     k = try_till_path(gc,g)
+    #     if len(k) < 5: break
+    #     if k:
+    #         l.append(('2',)+tuple(k))
+    #         purgepath(l[-1],el)
+    #         gpurgepath(gc,l[-1])
+    #     else:
+    #         break
 
     bl = bedgelist(g)
     for n in g:
@@ -583,7 +586,7 @@ def g22g1(g2, capsize=None):
 
                 mask = add2edges(g,e,n)
                 r = nodesearch(g,g2,edges,s)
-                if r:# and increment(r)==g2:
+                if r and increment(r)==g2:
                     s.add(g2num(r))
                     if capsize and len(s)>capsize:
                         raise ValueError('Too many elements in eqclass')
@@ -892,6 +895,12 @@ def edge_increment_ok(s,m,e,g,g2):
     e - end
     """
     # directed edges
+    if s == e:
+        if (not m in g2[m] or not (0,1) in g2[m][m]):
+            return False
+        if (not s in g2[s] or not (0,1) in g2[s][s]):
+            return False
+        
     for u in g[m]:
         if not u in g2[s] or not (0,1) in g2[s][u]:
             return False
@@ -906,7 +915,7 @@ def edge_increment_ok(s,m,e,g,g2):
 
     # bidirected edges
     for c in g[s]:
-        if c == s: continue
+        #if c == s: continue
         if c == m: continue
         if not m in g2[c]:
             return False
@@ -914,7 +923,7 @@ def edge_increment_ok(s,m,e,g,g2):
             return False
 
     for c in g[m]:
-        if c == m: continue
+        #if c == m: continue
         if c == e: continue
         if not e in g2[c]:
             return False        
