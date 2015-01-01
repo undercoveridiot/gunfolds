@@ -11,7 +11,6 @@ import ecj
 import zickle as zkl
 from comparison import num2CG
 
-
 def directed_inc(G,D):
     G_un = {}
     # directed edges
@@ -72,6 +71,7 @@ def graph2badj(G):
     for v in G:
         A[int(v)-1,[int(w)-1 for w in G[v] if (2,0) in G[v][w] ]] = 1
     return A
+
 def graph2str(G):
     n = len(G)
     d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'0',((0,1),(2,0),):'0'}
@@ -80,6 +80,7 @@ def graph2str(G):
         for w in G[v]:
             A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
     return ''.join(A)
+
 def graph2bstr(G):
     n = len(G)
     d = {((0,1),):'0', ((2,0),):'1',((2,0),(0,1),):'1',((0,1),(2,0),):'1'}
