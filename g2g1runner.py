@@ -69,7 +69,7 @@ def fan_wrapper(fold,n=10,k=10):
                 scipy.random.seed()
                 print fold,': ',traversal.density(g),':',
                 startTime = int(round(time.time() * 1000))
-                s = traversal.v2g22g1(g2, capsize=CAPSIZE)
+                s = traversal.g22g1(g2, capsize=CAPSIZE)
                 endTime = int(round(time.time() * 1000))
                 print len(s)
                 output.put({'gt':g,'eq':s,'ms':endTime-startTime})
@@ -91,10 +91,10 @@ def fan_wrapper(fold,n=10,k=10):
 densities = {6: [0.2, 0.25, ],
              8: [0.15, 0.2, 0.25,],
              10:[0.15, 0.2, 0.25, 0.3],
-             15:[0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
+             15:[0.1, 0.15, 0.2, 0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.15, 0.2, 0.25, 0.30]}#0.1, 0.15, 0.2, 0.25, 0.3]}
 
-for nodes in [20]:
+for nodes in [15]:
 #for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
@@ -107,7 +107,7 @@ for nodes in [20]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U3.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U0.zkl')
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U3.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U0.zkl')
