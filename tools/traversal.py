@@ -207,7 +207,7 @@ def vedgelist(g, pathtoo=False):
     else:
         B, singles = [], []
 
-    l = longpaths(l)+threedges(l) + A + B  + singles
+    l = longpaths(l)+threedges(l) + A + B + singles
     return l
 
 def twoedges(l):  return [e for e in l if len(e)==2]
@@ -339,7 +339,7 @@ def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 def checkable(g2):
     d = {}
     g = cloneempty(g2)
-    vlist = vedgelist(g2)
+    vlist = vedgelist(g2,pathtoo=False)
     for v in vlist:
         if isvedge(v):
             d[v] = checkvedge(v,g2)
