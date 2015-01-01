@@ -130,24 +130,25 @@ def gpurgepath(g,path):
     for i in range(1,len(path)-1):
         del g[path[i]][path[i+1]]
 
-def vedgelist(g):
+def vedgelist(g, pathtoo=False):
     """ Return a list of tuples for edges of g and forks
     a superugly organically grown function that badly needs refactoring
     """
     l = []
     el = edgelist(g)
 
-    gc = copy.deepcopy(g)
-    for i in range(16):
-
-        k = try_till_path(gc,g)
-        if len(k) < 5: break
-        if k:
-            l.append(('2',)+tuple(k))
-            purgepath(l[-1],el)
-            gpurgepath(gc,l[-1])
-        else:
-            break
+    if pathtoo:
+        gc = copy.deepcopy(g)
+        for i in range(16):
+            
+            k = try_till_path(gc,g)
+            if len(k) < 5: break
+            if k:
+                l.append(('2',)+tuple(k))
+                purgepath(l[-1],el)
+                gpurgepath(gc,l[-1])
+            else:
+                break
 
     bl = bedgelist(g)
     for n in g:
@@ -206,7 +207,7 @@ def vedgelist(g):
     else:
         B, singles = [], []
 
-    l = longpaths(l)+threedges(l) + A + B  + singles
+    l = longpaths(l)+threedges(l) + A + B + singles
     return l
 
 def twoedges(l):  return [e for e in l if len(e)==2]
@@ -338,7 +339,7 @@ def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 def checkable(g2):
     d = {}
     g = cloneempty(g2)
-    vlist = vedgelist(g2)
+    vlist = vedgelist(g2,pathtoo=False)
     for v in vlist:
         if isvedge(v):
             d[v] = checkvedge(v,g2)
@@ -649,7 +650,14 @@ def vg22g1(g2, capsize=None):
 
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
-         (addacedge,delacedge)]
+         (addacedge,delacedge),
+         (addaAedge,delaAedge),
+         (addapath,delapath)]    
+    c = [ok2add2edges,
+         ok2addavedge,
+         ok2addacedge,
+         ok2addaAedge,
+         ok2addapath]    
     @memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
@@ -657,6 +665,7 @@ def vg22g1(g2, capsize=None):
             key = random.choice(edges.keys())
             checklist = edges.pop(key)
             adder, remover = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]            
             for n in checklist:
                 mask = adder(g,key,n)
                 if isedgesubset(increment(g), g2):

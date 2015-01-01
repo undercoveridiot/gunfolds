@@ -72,6 +72,7 @@ def graph2badj(G):
         A[int(v)-1,[int(w)-1 for w in G[v] if (2,0) in G[v][w] ]] = 1
     return A
 
+# tried mutable ctypes buffer - not faster :(
 def graph2str(G):
     n = len(G)
     d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'0',((0,1),(2,0),):'0'}
