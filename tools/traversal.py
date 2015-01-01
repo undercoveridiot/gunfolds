@@ -137,17 +137,17 @@ def vedgelist(g):
     l = []
     el = edgelist(g)
 
-    # gc = copy.deepcopy(g)
-    # for i in range(16):
+    gc = copy.deepcopy(g)
+    for i in range(16):
 
-    #     k = try_till_path(gc,g)
-    #     if len(k) < 5: break
-    #     if k:
-    #         l.append(('2',)+tuple(k))
-    #         purgepath(l[-1],el)
-    #         gpurgepath(gc,l[-1])
-    #     else:
-    #         break
+        k = try_till_path(gc,g)
+        if len(k) < 5: break
+        if k:
+            l.append(('2',)+tuple(k))
+            purgepath(l[-1],el)
+            gpurgepath(gc,l[-1])
+        else:
+            break
 
     bl = bedgelist(g)
     for n in g:
@@ -486,8 +486,11 @@ def delaAedge(g,v,b,mask):
     if not mask[3]: g[b[1]].pop(v[3], None)
 
 def ok2addapath(e,p,g,g2):
-    return edge_increment_ok(e[0],p[0],e[2],g,g2) \
-        and edge_increment_ok(e[1],p[1],e[2],g,g2)
+    for i in range(len(b)):
+        if not edge_increment_ok(v[i+1],p[i],v[i+2],g,g2):
+            return False
+    return True
+    
 def addapath(g,v,b):
     mask = []
     for i in range(len(b)):
