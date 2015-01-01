@@ -22,7 +22,7 @@ def increment(g):
         for h in g[n]:
             for e in g[h]:
                 if not e in r[n]:
-                   r[n][e] = set([(0,1)])
+                    r[n][e] = set([(0,1)])
 
     for n in g:
         for pair in itertools.combinations(g[n],2):
@@ -332,7 +332,7 @@ def checkApath(p, g2):
 def isedge(v):  return len(v) == 2 # a->b
 def isvedge(v): return len(v) == 3 # b<-a->c
 def isCedge(v): return len(v) == 4 and v[0] == '0' # a->b->c
-def isAedge(v): return len(v) == 4 and v[0] == '1'# b->c<-b
+def isAedge(v): return len(v) == 4 and v[0] == '1'# a->c<-b
 def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 
 def checkable(g2):
@@ -370,25 +370,29 @@ def checkable(g2):
 
 def inorder_check2(e1, e2, j1, j2, g2):
     g = cloneempty(g2) # the graph to be used for checking
+
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
          (addaAedge,delaAedge),
          (addapath,delapath)]
 
-    adder1, remover1 = f[min(4,len(e1))-2+min(max(3,len(e1))-3,1)*int(e1[0])]
-    adder2, remover2 = f[min(4,len(e2))-2+min(max(3,len(e2))-3,1)*int(e2[0])]
+    c = [ok2add2edges,
+         ok2addavedge,
+         ok2addacedge,
+         ok2addaAedge,
+         ok2addapath]
+
+    adder, remover = f[edge_function_idx(e1)]                         
+    checks_ok = c[edge_function_idx(e2)]
 
     d = {}
     for c1 in j1: # for each connector
-        mask1 = adder1(g,e1,c1)
+        mask = adder(g,e1,c1)
         d[c1] = set()
         for c2 in j2:
-            mask2 = adder2(g,e2,c2)
-            if isedgesubset(increment(g), g2):
-                d[c1].add(c2)
-            remover2(g,e2,c2,mask2)
-        remover1(g,e1,c1,mask1)
+            if checks_ok(e2,c2,g,g2): d[c1].add(c2)
+        remover(g,e1,c1,mask)
     return d
 
 def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
@@ -452,8 +456,7 @@ def del2edges(g,e,p,mask):
     if not mask[1]: g[p].pop(e[1], None)
 
 def ok2addavedge(e,p,g,g2):
-    return edge_increment_ok(e[0],p[0],e[1],g,g2) \
-        and edge_increment_ok(e[0],p[1],e[2],g,g2)
+    return edge_increment_ok(e[0],p[0],e[1],g,g2) and edge_increment_ok(e[0],p[1],e[2],g,g2) and (p[0] in g2 and (2,0) in g2[p[0]][p[1]])
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
@@ -468,8 +471,7 @@ def delavedge(g,v,b,mask):
     if not mask[3]: g[b[1]].pop(v[2], None)
 
 def ok2addaAedge(e,p,g,g2):
-    return edge_increment_ok(e[0],p[0],e[2],g,g2) \
-        and edge_increment_ok(e[1],p[1],e[2],g,g2)    
+    return edge_increment_ok(e[1],p[0],e[3],g,g2) and edge_increment_ok(e[2],p[1],e[3],g,g2)
 def addaAedge(g,v,b):
     mask = [b[0] in g[v[1]], b[1] in g[v[2]],
             v[3] in g[b[0]], v[3] in g[b[1]]]
@@ -511,6 +513,12 @@ def prunepaths_1D(g2, path, conn):
         delapath(g,path,p,mask)
     return c
 
+def ok2addacedge(e,p,g,g2):
+    for u in g[e[2]]:
+        if not u in g2[p[0]] or not (0,1) in g2[p[0]][u]:
+            return False    
+    return edge_increment_ok(e[1],p[0],e[2],g,g2) and edge_increment_ok(e[2],p[1],e[3],g,g2)
+    
 def addacedge(g,v,b): # chain
     mask = [b[0] in g[v[1]], v[2] in g[b[0]],
             b[1] in g[v[2]], v[3] in g[b[1]]]
@@ -895,11 +903,11 @@ def edge_increment_ok(s,m,e,g,g2):
     e - end
     """
     # directed edges
-    if s == e:
-        if (not m in g2[m] or not (0,1) in g2[m][m]):
-            return False
-        if (not s in g2[s] or not (0,1) in g2[s][s]):
-            return False
+    # if s == e:
+    #     if (not m in g2[m] or not (0,1) in g2[m][m]):
+    #         return False
+    #     if (not s in g2[s] or not (0,1) in g2[s][s]):
+    #         return False
         
     for u in g[m]:
         if not u in g2[s] or not (0,1) in g2[s][u]:
@@ -915,7 +923,7 @@ def edge_increment_ok(s,m,e,g,g2):
 
     # bidirected edges
     for c in g[s]:
-        #if c == s: continue
+        if c == s: continue
         if c == m: continue
         if not m in g2[c]:
             return False
@@ -923,7 +931,7 @@ def edge_increment_ok(s,m,e,g,g2):
             return False
 
     for c in g[m]:
-        #if c == m: continue
+        if c == m: continue
         if c == e: continue
         if not e in g2[c]:
             return False        
