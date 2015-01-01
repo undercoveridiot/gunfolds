@@ -487,7 +487,7 @@ def delaAedge(g,v,b,mask):
 
 def ok2addapath(e,p,g,g2):
     for i in range(len(p)):
-        if not edge_increment_ok(v[i+1],p[i],v[i+2],g,g2):
+        if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
             return False
     return True
     
