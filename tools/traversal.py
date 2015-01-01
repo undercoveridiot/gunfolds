@@ -22,7 +22,7 @@ def increment(g):
         for h in g[n]:
             for e in g[h]:
                 if not e in r[n]:
-                   r[n][e] = set([(0,1)])
+                    r[n][e] = set([(0,1)])
 
     for n in g:
         for pair in itertools.combinations(g[n],2):
@@ -62,6 +62,9 @@ def edgelist(g): # directed
     for n in g:
         l.extend([(n,e) for e in g[n] if (0,1) in g[n][e]])
     return l
+
+def edgenumber(g):
+    return sum([sum([len(g[y][x]) for x in g[y]]) for y in g])
 
 def bedgelist(g): # bidirected edge list with flips
     l = []
@@ -117,7 +120,7 @@ def try_till_path(g, gt):
     order = [item for sublist in sccl for item in sublist]
     k = []
     while not k:
-        if d < 5: return []        
+        if d < 5: return []
         k = try_till_d_path(g,d,gt)
         d -= 1
     return k
@@ -134,17 +137,17 @@ def vedgelist(g):
     l = []
     el = edgelist(g)
 
-    gc = copy.deepcopy(g)
-    for i in range(16):
+    # gc = copy.deepcopy(g)
+    # for i in range(16):
+    #     k = try_till_path(gc,g)
+    #     if len(k) < 5: break
+    #     if k:
+    #         l.append(('2',)+tuple(k))
+    #         purgepath(l[-1],el)
+    #         gpurgepath(gc,l[-1])
+    #     else:
+    #         break
 
-       k = try_till_path(gc,g)
-       if len(k) < 5: break
-       if k:
-           l.append(('2',)+tuple(k))
-           purgepath(l[-1],el)
-           gpurgepath(gc,l[-1])
-       else:
-           break
 
     bl = bedgelist(g)
     for n in g:
@@ -172,7 +175,7 @@ def vedgelist(g):
                         l.append((n,p[1]))
                         el.remove((n,p[1]))
                         r.add(p[1])
-                        
+
             for e in r: c.remove(e)
             #b = [tuple([n]+i) for i in chunks(c,2)]
 
@@ -202,7 +205,7 @@ def vedgelist(g):
         B, singles = makesinks(singles)
     else:
         B, singles = [], []
-    
+
     l = longpaths(l)+threedges(l) + A + B  + singles
     return l
 
@@ -329,7 +332,7 @@ def checkApath(p, g2):
 def isedge(v):  return len(v) == 2 # a->b
 def isvedge(v): return len(v) == 3 # b<-a->c
 def isCedge(v): return len(v) == 4 and v[0] == '0' # a->b->c
-def isAedge(v): return len(v) == 4 and v[0] == '1'# b->c<-b
+def isAedge(v): return len(v) == 4 and v[0] == '1'# a->c<-b
 def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
 
 def checkable(g2):
@@ -367,25 +370,29 @@ def checkable(g2):
 
 def inorder_check2(e1, e2, j1, j2, g2):
     g = cloneempty(g2) # the graph to be used for checking
+
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
          (addaAedge,delaAedge),
          (addapath,delapath)]
 
-    adder1, remover1 = f[min(4,len(e1))-2+min(max(3,len(e1))-3,1)*int(e1[0])]
-    adder2, remover2 = f[min(4,len(e2))-2+min(max(3,len(e2))-3,1)*int(e2[0])]
+    c = [ok2add2edges,
+         ok2addavedge,
+         ok2addacedge,
+         ok2addaAedge,
+         ok2addapath]
+
+    adder, remover = f[edge_function_idx(e1)]
+    checks_ok = c[edge_function_idx(e2)]
 
     d = {}
     for c1 in j1: # for each connector
-        mask1 = adder1(g,e1,c1)
+        mask = adder(g,e1,c1)
         d[c1] = set()
         for c2 in j2:
-            mask2 = adder2(g,e2,c2)
-            if isedgesubset(increment(g), g2):
-                d[c1].add(c2)
-            remover2(g,e2,c2,mask2)
-        remover1(g,e1,c1,mask1)
+            if checks_ok(e2,c2,g,g2): d[c1].add(c2)
+        remover(g,e1,c1,mask)
     return d
 
 def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
@@ -430,6 +437,7 @@ def inorder_checks(g2, gg):
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
+def ok2add2edges(e,p,g,g2): return edge_increment_ok(e[0],p,e[1],g,g2)
 def add2edges(g,e,p):
     '''
     break edge e[0] -> e[1] into two pieces
@@ -447,6 +455,8 @@ def del2edges(g,e,p,mask):
     if not mask[0]: g[e[0]].pop(p, None)
     if not mask[1]: g[p].pop(e[1], None)
 
+def ok2addavedge(e,p,g,g2):
+    return edge_increment_ok(e[0],p[0],e[1],g,g2) and edge_increment_ok(e[0],p[1],e[2],g,g2) and (p[0] in g2 and (2,0) in g2[p[0]][p[1]])
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
@@ -460,6 +470,8 @@ def delavedge(g,v,b,mask):
     if not mask[2]: g[b[0]].pop(v[1], None)
     if not mask[3]: g[b[1]].pop(v[2], None)
 
+def ok2addaAedge(e,p,g,g2):
+    return edge_increment_ok(e[1],p[0],e[3],g,g2) and edge_increment_ok(e[2],p[1],e[3],g,g2)
 def addaAedge(g,v,b):
     mask = [b[0] in g[v[1]], b[1] in g[v[2]],
             v[3] in g[b[0]], v[3] in g[b[1]]]
@@ -473,6 +485,9 @@ def delaAedge(g,v,b,mask):
     if not mask[2]: g[b[0]].pop(v[3], None)
     if not mask[3]: g[b[1]].pop(v[3], None)
 
+def ok2addapath(e,p,g,g2):
+    return edge_increment_ok(e[0],p[0],e[2],g,g2) \
+        and edge_increment_ok(e[1],p[1],e[2],g,g2)
 def addapath(g,v,b):
     mask = []
     for i in range(len(b)):
@@ -497,6 +512,12 @@ def prunepaths_1D(g2, path, conn):
         if isedgesubset(increment(g), g2): c.append(tuple(p))
         delapath(g,path,p,mask)
     return c
+
+def ok2addacedge(e,p,g,g2):
+    for u in g[e[2]]:
+        if not u in g2[p[0]] or not (0,1) in g2[p[0]][u]:
+            return False
+    return edge_increment_ok(e[1],p[0],e[2],g,g2) and edge_increment_ok(e[2],p[1],e[3],g,g2)
 
 def addacedge(g,v,b): # chain
     mask = [b[0] in g[v[1]], v[2] in g[b[0]],
@@ -566,12 +587,11 @@ def g22g1(g2, capsize=None):
     def nodesearch(g, g2, edges, s):
         if edges:
             e = edges.pop()
-            #gg = increment(g)
-            ln = g2.keys()
-            #random.shuffle(ln)
-            for n in ln:
+            for n in g2:
+
                 if (n,e) in single_cache: continue
                 if not edge_increment_ok(e[0],n,e[1],g,g2): continue
+
                 mask = add2edges(g,e,n)
                 r = nodesearch(g,g2,edges,s)
                 if r and increment(r)==g2:
@@ -579,17 +599,20 @@ def g22g1(g2, capsize=None):
                     if capsize and len(s)>capsize:
                         raise ValueError('Too many elements in eqclass')
                 del2edges(g,e,n,mask)
+
             edges.append(e)
         else:
             return g
+
     # find all directed g1's not conflicting with g2
     n = len(g2)
     edges = edgelist(g2)
-    random.shuffle(edges)
+    #random.shuffle(edges)
     g = cloneempty(g2)
 
     for e in edges:
         for n in g2:
+
             mask = add2edges(g,e,n)
             if not isedgesubset(increment(g), g2):
                 single_cache[(n,e)] = False
@@ -660,6 +683,11 @@ def v2g22g1(g2, capsize=None):
          (addacedge,delacedge),
          (addaAedge,delaAedge),
          (addapath,delapath)]
+    c = [ok2add2edges,
+         ok2addavedge,
+         ok2addacedge,
+         ok2addaAedge,
+         ok2addapath]
 
     @memo2 # memoize the search
     def nodesearch(g, g2, edges, inlist, order, s, cds):
@@ -667,23 +695,43 @@ def v2g22g1(g2, capsize=None):
             key = order.pop(0)
             checklist = edges.pop(key)
 
-            if inlist[0] in checklist:
-                if len(inlist) == 1:
-                    tocheck = checklist[inlist[0]]
-                else:
-                    tocheck = conformant(cds, inlist)
+            if len(inlist) == 1:
+                tocheck = checklist[inlist[0]]
+            else:
+                tocheck = conformant(cds, inlist)
+                
+            adder, remover = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]
 
-                #if tocheck:
-                adder, remover = f[edge_function_idx(key)]
-                for n in tocheck:
-                    mask = adder(g,key,n)
-                    if isedgesubset(increment(g), g2):
-                        r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
-                        if r and increment(r)==g2:
-                            s.add(g2num(r))
-                            if capsize and len(s)>capsize:
-                                raise ValueError('Too many elements')
-                    remover(g,key,n,mask)
+            for n in tocheck:
+                if not checks_ok(key,n,g,g2): continue
+                mask = adder(g,key,n)
+                r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
+                if r and increment(r)==g2:
+                    s.add(g2num(r))
+                    if capsize and len(s)>capsize:
+                        raise ValueError('Too many elements')
+                remover(g,key,n,mask)
+
+            # if inlist[0] in checklist:
+            #     if len(inlist) == 1:
+            #         tocheck = checklist[inlist[0]]
+            #     else:
+            #         tocheck = conformant(cds, inlist)
+
+            #     #if tocheck:
+            #     adder, remover = f[edge_function_idx(key)]
+            #     checks_ok = c[edge_function_idx(key)]
+
+            #     for n in tocheck:
+            #         if not checks_ok(key,n,g,g2): continue
+            #         mask = adder(g,key,n)
+            #         r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
+            #         if r and increment(r)==g2:
+            #             s.add(g2num(r))
+            #             if capsize and len(s)>capsize:
+            #                 raise ValueError('Too many elements')
+            #         remover(g,key,n,mask)
 
             order.insert(0,key)
             edges[key] = checklist
@@ -695,7 +743,7 @@ def v2g22g1(g2, capsize=None):
     chlist = checkable(g2)
     order, d = inorder_checks(g2,chlist)
     cds = conformanceDS(g2, order)
-    
+
     g = cloneempty(g2)
 
     s = set()
@@ -729,7 +777,7 @@ def conformanceDS(g2, order):
             CDS[x[1]][x[0]] = d
         else:
             CDS[x[1]][x[0]] = d
-            
+
     return pruneCDS(CDS)
 
 def oconformanceDS(g2, order):
@@ -744,7 +792,7 @@ def oconformanceDS(g2, order):
             CDS[x[1]][x[0]] = d
         else:
             CDS[x[1]][x[0]] = d
-            
+
     return pruneCDS(CDS)
 
 def conformant(cds, inlist):
@@ -880,6 +928,12 @@ def edge_increment_ok(s,m,e,g,g2):
     e - end
     """
     # directed edges
+    # if s == e:
+    #     if (not m in g2[m] or not (0,1) in g2[m][m]):
+    #         return False
+    #     if (not s in g2[s] or not (0,1) in g2[s][s]):
+    #         return False
+
     for u in g[m]:
         if not u in g2[s] or not (0,1) in g2[s][u]:
             return False
@@ -905,7 +959,7 @@ def edge_increment_ok(s,m,e,g,g2):
         if c == m: continue
         if c == e: continue
         if not e in g2[c]:
-            return False        
+            return False
         elif not (2,0) in g2[c][e]:
             return False
 
@@ -920,7 +974,7 @@ def length_d_loopy_paths(G, s, dt, p):
     def recurse(g, g2, s, d, path=[]):
 
         if edge_increment_ok(p[-d-2],s,p[-d-1],g,g2):
-            
+
             if d == 0:
                 yield path
                 return
@@ -931,6 +985,6 @@ def length_d_loopy_paths(G, s, dt, p):
                 for v in recurse(g, g2, u, d-1, path+[u]):
                     yield v
             del2edges(g,(p[-d-2],p[-d-1]),s, mask)
-            
+
     for u in recurse(g1, G, s, dt-1, [s]):
             yield u
