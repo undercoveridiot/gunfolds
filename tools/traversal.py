@@ -8,6 +8,7 @@ import ipdb
 import ecj
 import itertools, copy
 import munkres
+import time
 from comparison import graph2nx
 from networkx import strongly_connected_components
 
@@ -128,7 +129,6 @@ def try_till_path(g, gt):
 def gpurgepath(g,path):
     for i in range(1,len(path)-1):
         del g[path[i]][path[i+1]]
-
 
 def vedgelist(g):
     """ Return a list of tuples for edges of g and forks
@@ -456,7 +456,10 @@ def del2edges(g,e,p,mask):
     if not mask[1]: g[p].pop(e[1], None)
 
 def ok2addavedge(e,p,g,g2):
-    return edge_increment_ok(e[0],p[0],e[1],g,g2) and edge_increment_ok(e[0],p[1],e[2],g,g2) and (p[0] in g2 and (2,0) in g2[p[0]][p[1]])
+    if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
+    if not edge_increment_ok(e[0],p[1],e[2],g,g2): return False
+    if not (p[0] in g2 and (2,0) in g2[p[0]][p[1]]): return False
+    return  True
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
@@ -471,7 +474,9 @@ def delavedge(g,v,b,mask):
     if not mask[3]: g[b[1]].pop(v[2], None)
 
 def ok2addaAedge(e,p,g,g2):
-    return edge_increment_ok(e[1],p[0],e[3],g,g2) and edge_increment_ok(e[2],p[1],e[3],g,g2)
+    if not edge_increment_ok(e[1],p[0],e[3],g,g2): return False
+    if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
+    return True
 def addaAedge(g,v,b):
     mask = [b[0] in g[v[1]], b[1] in g[v[2]],
             v[3] in g[b[0]], v[3] in g[b[1]]]
@@ -518,9 +523,15 @@ def prunepaths_1D(g2, path, conn):
 
 def ok2addacedge(e,p,g,g2):
     for u in g[e[2]]:
-        if not u in g2[p[0]] or not (0,1) in g2[p[0]][u]:
+        if not u in g2[p[0]]:            
             return False
-    return edge_increment_ok(e[1],p[0],e[2],g,g2) and edge_increment_ok(e[2],p[1],e[3],g,g2)
+        elif not (0,1) in g2[p[0]][u]:
+            return False            
+    if not edge_increment_ok(e[1],p[0],e[2],g,g2):
+        return False
+    if not edge_increment_ok(e[2],p[1],e[3],g,g2):
+        return False
+    return True
 
 def addacedge(g,v,b): # chain
     mask = [b[0] in g[v[1]], v[2] in g[b[0]],
@@ -698,43 +709,43 @@ def v2g22g1(g2, capsize=None):
             key = order.pop(0)
             checklist = edges.pop(key)
 
-            if len(inlist) == 1:
-                tocheck = checklist[inlist[0]]
-            else:
-                tocheck = conformant(cds, inlist)
+            # if len(inlist) == 1:
+            #     tocheck = checklist[inlist[0]]
+            # else:
+            #     tocheck = conformant(cds, inlist)
                 
-            adder, remover = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]
+            # adder, remover = f[edge_function_idx(key)]
+            # checks_ok = c[edge_function_idx(key)]
 
-            for n in tocheck:
-                if not checks_ok(key,n,g,g2): continue
-                mask = adder(g,key,n)
-                r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
-                if r and increment(r)==g2:
-                    s.add(g2num(r))
-                    if capsize and len(s)>capsize:
-                        raise ValueError('Too many elements')
-                remover(g,key,n,mask)
+            # for n in tocheck:
+            #     if not checks_ok(key,n,g,g2): continue
+            #     mask = adder(g,key,n)
+            #     r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
+            #     if r and increment(r)==g2:
+            #         s.add(g2num(r))
+            #         if capsize and len(s)>capsize:
+            #             raise ValueError('Too many elements')
+            #     remover(g,key,n,mask)
 
-            # if inlist[0] in checklist:
-            #     if len(inlist) == 1:
-            #         tocheck = checklist[inlist[0]]
-            #     else:
-            #         tocheck = conformant(cds, inlist)
+            if inlist[0] in checklist:
+                if len(inlist) == 1:
+                    tocheck = checklist[inlist[0]]
+                else:
+                    tocheck = conformant(cds, inlist)
 
-            #     #if tocheck:
-            #     adder, remover = f[edge_function_idx(key)]
-            #     checks_ok = c[edge_function_idx(key)]
+                #if tocheck:
+                adder, remover = f[edge_function_idx(key)]
+                checks_ok = c[edge_function_idx(key)]
 
-            #     for n in tocheck:
-            #         if not checks_ok(key,n,g,g2): continue
-            #         mask = adder(g,key,n)
-            #         r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
-            #         if r and increment(r)==g2:
-            #             s.add(g2num(r))
-            #             if capsize and len(s)>capsize:
-            #                 raise ValueError('Too many elements')
-            #         remover(g,key,n,mask)
+                for n in tocheck:
+                    if not checks_ok(key,n,g,g2): continue
+                    mask = adder(g,key,n)
+                    r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
+                    if r and increment(r)==g2:
+                        s.add(g2num(r))
+                        if capsize and len(s)>capsize:
+                            raise ValueError('Too many elements')
+                    remover(g,key,n,mask)
 
             order.insert(0,key)
             edges[key] = checklist
@@ -746,6 +757,7 @@ def v2g22g1(g2, capsize=None):
     chlist = checkable(g2)
     order, d = inorder_checks(g2,chlist)
     cds = conformanceDS(g2, order)
+
 
     g = cloneempty(g2)
 
@@ -931,11 +943,11 @@ def edge_increment_ok(s,m,e,g,g2):
     e - end
     """
     # directed edges
-    # if s == e:
-    #     if (not m in g2[m] or not (0,1) in g2[m][m]):
-    #         return False
-    #     if (not s in g2[s] or not (0,1) in g2[s][s]):
-    #         return False
+    if s == e:
+        if (not m in g2[m] or not (0,1) in g2[m][m]):
+            return False
+        if (not s in g2[s] or not (0,1) in g2[s][s]):
+            return False
 
     for u in g[m]:
         if not u in g2[s] or not (0,1) in g2[s][u]:
