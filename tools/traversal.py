@@ -107,7 +107,7 @@ def try_till_d_path(g,d,gt,order=None):
     for i in range(min(10, len(k))):
         ld.append(len(checkApath(['2']+k[i], gt)))
     idx = np.argmin(ld)
-    return k[idx]
+    return k[0]
 
 def try_till_path(g, gt):
     d = len(g)-1
@@ -140,7 +140,7 @@ def vedgelist(g, pathtoo=False):
     if pathtoo:
         gc = copy.deepcopy(g)
         for i in range(16):
-            
+
             k = try_till_path(gc,g)
             if len(k) < 5: break
             if k:
@@ -358,15 +358,17 @@ def checkable(g2):
          (addacedge,delacedge),
          (addaAedge,delaAedge),
          (addapath,delapath)]
+    c = [ok2add2edges,
+         ok2addavedge,
+         ok2addacedge,
+         ok2addaAedge,
+         ok2addapath]
 
     for e in d:
-        adder, remover = f[min(4,len(e))-2+min(max(3,len(e))-3,1)*int(e[0])]
+        adder, remover = f[edge_function_idx(e)]
+        checks_ok = c[edge_function_idx(e)]
         for n in d[e]:
-            mask = adder(g,e,n)
-            if not isedgesubset(increment(g), g2):
-                d[e].remove(n)
-            remover(g,e,n,mask)
-
+            if not checks_ok(e,n,g,g2): continue
     return d
 
 def inorder_check2(e1, e2, j1, j2, g2):
@@ -388,23 +390,39 @@ def inorder_check2(e1, e2, j1, j2, g2):
     checks_ok = c[edge_function_idx(e2)]
 
     d = {}
+    s1 = set()
+    s2 = set()
     for c1 in j1: # for each connector
         mask = adder(g,e1,c1)
         d[c1] = set()
         for c2 in j2:
-            if checks_ok(e2,c2,g,g2): d[c1].add(c2)
+            if checks_ok(e2,c2,g,g2):
+                d[c1].add(c2)
+                s2.add(c2)
         remover(g,e1,c1,mask)
-    return d
+        if d[c1]: s1.add(c1)
+    return d,s1,s2
 
 def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
     g = cloneempty(g2) # the graph to be used for checking
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
-         (addacedge,delacedge)]
+         (addacedge,delacedge),
+         (addaAedge,delaAedge),
+         (addapath,delapath)]
 
-    adder1, remover1 = f[len(e1)-2+(max(3,len(e1))-3)*int(e1[0])]
-    adder2, remover2 = f[len(e2)-2+(max(3,len(e2))-3)*int(e2[0])]
-    adder3, remover3 = f[len(e3)-2+(max(3,len(e3))-3)*int(e3[0])]
+    c = [ok2add2edges,
+         ok2addavedge,
+         ok2addacedge,
+         ok2addaAedge,
+         ok2addapath]
+
+    adder1, remover1 = f[edge_function_idx(e1)]
+    adder2, remover2 = f[edge_function_idx(e2)]
+    adder3, remover3 = f[edge_function_idx(e3)]
+
+    checks_ok2 = c[edge_function_idx(e2)]
+    checks_ok3 = c[edge_function_idx(e3)]
 
     d = {}
     for c1 in j1: # for each connector
@@ -428,12 +446,12 @@ def inorder_checks(g2, gg):
     #cds = conformanceDS(g2, ee)
     #oo = new_order(g2, ee, repeats=100, cds=None)
     #ee = oo[0]
-    random.shuffle(ee)
+    #random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
         d[ee[i+1]] = del_empty(inorder_check2(ee[i], ee[i+1],
-                                              gg[ee[i]], gg[ee[i+1]], g2))
+                                              gg[ee[i]], gg[ee[i+1]], g2)[0])
     return ee, d
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
@@ -457,9 +475,15 @@ def del2edges(g,e,p,mask):
     if not mask[1]: g[p].pop(e[1], None)
 
 def ok2addavedge(e,p,g,g2):
+    if p[1] == e[1]:
+        if not (e[2] in g2[p[0]] and (0,1) in g2[p[0]][e[2]]): return False
+        if not (e[1] in g2[p[0]] and (2,0) in g2[p[0]][e[1]]): return False
+    if p[0] == e[2]:
+        if not (e[1] in g2[p[1]] and (0,1) in g2[p[1]][e[1]]): return False
+        if not (e[2] in g2[p[1]] and (2,0) in g2[p[1]][e[2]]): return False
     if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
     if not edge_increment_ok(e[0],p[1],e[2],g,g2): return False
-    if not (p[0] in g2 and (2,0) in g2[p[0]][p[1]]): return False
+    if not (p[1] in g2[p[0]] and (2,0) in g2[p[0]][p[1]]): return False
     return  True
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
@@ -475,6 +499,10 @@ def delavedge(g,v,b,mask):
     if not mask[3]: g[b[1]].pop(v[2], None)
 
 def ok2addaAedge(e,p,g,g2):
+    if p[1] == e[1]:
+        if not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
+    if p[0] == e[2]:
+        if not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
     if not edge_increment_ok(e[1],p[0],e[3],g,g2): return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
     return True
@@ -491,12 +519,28 @@ def delaAedge(g,v,b,mask):
     if not mask[2]: g[b[0]].pop(v[3], None)
     if not mask[3]: g[b[1]].pop(v[3], None)
 
+def cleanedges(e,p,g, mask):
+    i = 0
+    for m in mask:
+        if not m[0]: g[e[i+1]].pop(p[i], None)
+        if not m[1]: g[p[i]].pop(e[i+2], None)
+        i += 1
 def ok2addapath(e,p,g,g2):
+    mask = []
+    for i in range(len(p)):
+        if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
+            cleanedges(e,p,g,mask)
+            return False
+        mask.append(add2edges(g,(e[i+1],e[i+2]),p[i]))
+    cleanedges(e,p,g,mask)
+    return True
+
+def ok2addapath1(e,p,g,g2):
     for i in range(len(p)):
         if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
             return False
     return True
-    
+
 def addapath(g,v,b):
     mask = []
     for i in range(len(b)):
@@ -524,10 +568,15 @@ def prunepaths_1D(g2, path, conn):
 
 def ok2addacedge(e,p,g,g2):
     for u in g[e[2]]:
-        if not u in g2[p[0]]:            
+        if not u in g2[p[0]]:
             return False
         elif not (0,1) in g2[p[0]][u]:
-            return False            
+            return False
+    if p[1] == e[1]:
+        if not (p[0] in g2[e[1]] and (1,0) in g2[e[1]][p[0]]):
+            return False
+        if not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
+            return False
     if not edge_increment_ok(e[1],p[0],e[2],g,g2):
         return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2):
@@ -652,12 +701,12 @@ def vg22g1(g2, capsize=None):
          (addavedge,delavedge),
          (addacedge,delacedge),
          (addaAedge,delaAedge),
-         (addapath,delapath)]    
+         (addapath,delapath)]
     c = [ok2add2edges,
          ok2addavedge,
          ok2addacedge,
          ok2addaAedge,
-         ok2addapath]    
+         ok2addapath]
     @memo2 # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
@@ -665,7 +714,7 @@ def vg22g1(g2, capsize=None):
             key = random.choice(edges.keys())
             checklist = edges.pop(key)
             adder, remover = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]            
+            checks_ok = c[edge_function_idx(key)]
             for n in checklist:
                 mask = adder(g,key,n)
                 if isedgesubset(increment(g), g2):
@@ -717,24 +766,6 @@ def v2g22g1(g2, capsize=None):
         if edges:
             key = order.pop(0)
             checklist = edges.pop(key)
-
-            # if len(inlist) == 1:
-            #     tocheck = checklist[inlist[0]]
-            # else:
-            #     tocheck = conformant(cds, inlist)
-                
-            # adder, remover = f[edge_function_idx(key)]
-            # checks_ok = c[edge_function_idx(key)]
-
-            # for n in tocheck:
-            #     if not checks_ok(key,n,g,g2): continue
-            #     mask = adder(g,key,n)
-            #     r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
-            #     if r and increment(r)==g2:
-            #         s.add(g2num(r))
-            #         if capsize and len(s)>capsize:
-            #             raise ValueError('Too many elements')
-            #     remover(g,key,n,mask)
 
             if inlist[0] in checklist:
                 if len(inlist) == 1:
@@ -788,14 +819,18 @@ def unionpool(idx, cds):
 def conformanceDS(g2, order):
     gg = checkable(g2)
     CDS = {}
+    pool = {}
     CDS[0] = set(gg[order[0]])
+    pool = [set(gg[order[i]]) for i in range(len(order))]
+
     for x in itertools.combinations(range(len(order)),2):
-        if x[0] > 0 and x[0] in CDS:
-            j1 = unionpool(x[0], CDS)
-        else:
-            j1 = gg[order[x[0]]]
-        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
-                                     j1, gg[order[x[1]]], g2))
+
+        d_i, s_i1, s_i2 = inorder_check2(order[x[0]], order[x[1]],
+                                         pool[x[0]], pool[x[1]], g2)
+
+        pool[x[0]] = pool[x[0]].intersection(s_i1)
+        pool[x[1]] = pool[x[1]].intersection(s_i2)
+        d = del_empty(d_i)
         if not x[1] in CDS:
             CDS[x[1]] = {}
             CDS[x[1]][x[0]] = d
@@ -988,6 +1023,7 @@ def edge_increment_ok(s,m,e,g,g2):
             return False
 
     return True
+
 
 def length_d_loopy_paths(G, s, dt, p):
     """
