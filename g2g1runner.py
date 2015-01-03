@@ -98,13 +98,10 @@ densities = {6: [0.2, 0.25, 0.3],
              50:[0.15],
              60:[0.15]}
 
-for nodes in [10]:
-#for nodes in [8]:
+for nodes in [20]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
-    #for dens in [0.4, 0.5, 0.6, 0.7, 0.8]:
-    #for dens in [0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         e = bfutils.dens2edgenum(dens, n=nodes)
         eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e), 
                              range(REPEATS))
