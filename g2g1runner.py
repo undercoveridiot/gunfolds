@@ -14,7 +14,7 @@ if socket.gethostname().split('.')[0] == 'leibnitz':
     PNUM=60
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
-    PNUM=12
+    PNUM=10
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
