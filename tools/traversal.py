@@ -760,27 +760,21 @@ def v2g22g1(g2, capsize=None):
         if edges:
             key = order.pop(0)
             checklist = edges.pop(key)
+            tocheck = checklist
+            
+            adder, remover = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]
 
-            if inlist[0] in checklist:
-                if len(inlist) == 1:
-                    tocheck = checklist[inlist[0]]
-                else:
-                    tocheck = conformant(cds, inlist)
-
-                #if tocheck:
-                adder, remover = f[edge_function_idx(key)]
-                checks_ok = c[edge_function_idx(key)]
-
-                for n in tocheck:
-                    if not checks_ok(key,n,g,g2): continue
-                    mask = adder(g,key,n)
-                    r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
-                    if r and increment(r)==g2:
-                        s.add(g2num(r))
-                        if capsize and len(s)>capsize:
-                            raise ValueError('Too many elements')
-                    remover(g,key,n,mask)
-
+            for n in tocheck:
+                if not checks_ok(key,n,g,g2): continue
+                mask = adder(g,key,n)
+                r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
+                if r and increment(r)==g2:
+                    s.add(g2num(r))
+                    if capsize and len(s)>capsize:
+                        raise ValueError('Too many elements')
+                remover(g,key,n,mask)
+            
             order.insert(0,key)
             edges[key] = checklist
 
@@ -790,14 +784,15 @@ def v2g22g1(g2, capsize=None):
     # find all directed g1's not conflicting with g2
     chlist = checkable(g2)
     order, d = inorder_checks(g2,chlist)
-    cds = conformanceDS(g2, order)
-
-
+    cds, pool = conformanceDS(g2, order)
+    dd = {}
+    for i in range(len(order)):
+        dd[order[i]] = list(pool[i])
     g = cloneempty(g2)
 
     s = set()
     try:
-        nodesearch(g,g2,d,['0'],order,s, cds)
+        nodesearch(g,g2,dd,[order[0]],order,s, cds)
     except ValueError:
         s.add(0)
     return s
@@ -831,7 +826,7 @@ def conformanceDS(g2, order):
         else:
             CDS[x[1]][x[0]] = d
 
-    return pruneCDS(CDS, pool)
+    return pruneCDS(CDS, pool), pool
 
 def oconformanceDS(g2, order):
     gg = checkable(g2)
