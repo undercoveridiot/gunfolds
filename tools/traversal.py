@@ -447,7 +447,7 @@ def inorder_checks(g2, gg):
     #cds = conformanceDS(g2, ee)
     #oo = new_order(g2, ee, repeats=100, cds=None)
     #ee = oo[0]
-    random.shuffle(ee)
+    #random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
@@ -831,7 +831,7 @@ def conformanceDS(g2, order):
         else:
             CDS[x[1]][x[0]] = d
 
-    return pruneCDS(CDS)
+    return pruneCDS(CDS, pool)
 
 def oconformanceDS(g2, order):
     gg = checkable(g2)
@@ -873,8 +873,17 @@ def oconformant(cds, inlist):
             return set()
     return s
 
-def pruneCDS(cds):
-    cds[0] = cds[0].intersection(cds[1][0].keys())
+def pruneCDS(cds, pool):
+    cds[0] = pool[0]
+    for i in range(1,len(pool)):
+        for j in cds[i].keys():
+            for e in pool[j].difference(cds[i][j].keys()):
+                cds[i][j].pop(e, None)
+    return cds
+
+def pruneCDS1(cds, pool):
+    cds[0] = pool[0]    
+    #cds[0] = cds[0].intersection(cds[1][0].keys())
     #for i in range(2, len(cds)):
     return cds
 
