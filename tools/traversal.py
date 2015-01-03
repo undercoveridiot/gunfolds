@@ -387,6 +387,7 @@ def inorder_check2(e1, e2, j1, j2, g2):
          ok2addapath]
 
     adder, remover = f[edge_function_idx(e1)]
+    #adder2, remover2 = f[edge_function_idx(e2)]    
     checks_ok = c[edge_function_idx(e2)]
 
     d = {}
@@ -395,10 +396,10 @@ def inorder_check2(e1, e2, j1, j2, g2):
     for c1 in j1: # for each connector
         mask = adder(g,e1,c1)
         d[c1] = set()
-        for c2 in j2:
+        for c2 in j2:            
             if checks_ok(e2,c2,g,g2):
-                d[c1].add(c2)
-                s2.add(c2)
+               d[c1].add(c2)
+               s2.add(c2)
         remover(g,e1,c1,mask)
         if d[c1]: s1.add(c1)
     return d,s1,s2
@@ -446,7 +447,7 @@ def inorder_checks(g2, gg):
     #cds = conformanceDS(g2, ee)
     #oo = new_order(g2, ee, repeats=100, cds=None)
     #ee = oo[0]
-    #random.shuffle(ee)
+    random.shuffle(ee)
     d = {} # new datastructure
     d[ee[0]] = {('0'):gg[ee[0]]}
     for i in range(len(ee)-1):
@@ -477,13 +478,13 @@ def del2edges(g,e,p,mask):
 def ok2addavedge(e,p,g,g2):
     if p[1] == e[1]:
         if not (e[2] in g2[p[0]] and (0,1) in g2[p[0]][e[2]]): return False
-        if not (e[1] in g2[p[0]] and (2,0) in g2[p[0]][e[1]]): return False
+        if p[1] != e[1] and not (e[1] in g2[p[0]] and (2,0) in g2[p[0]][e[1]]): return False
     if p[0] == e[2]:
         if not (e[1] in g2[p[1]] and (0,1) in g2[p[1]][e[1]]): return False
-        if not (e[2] in g2[p[1]] and (2,0) in g2[p[1]][e[2]]): return False
+        if p[1] != e[2] and not (e[2] in g2[p[1]] and (2,0) in g2[p[1]][e[2]]): return False
     if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
     if not edge_increment_ok(e[0],p[1],e[2],g,g2): return False
-    if not (p[1] in g2[p[0]] and (2,0) in g2[p[0]][p[1]]): return False
+    if p[1] != p[0] and not (p[1] in g2[p[0]] and (2,0) in g2[p[0]][p[1]]): return False
     return  True
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
@@ -567,20 +568,13 @@ def prunepaths_1D(g2, path, conn):
     return c
 
 def ok2addacedge(e,p,g,g2):
-    for u in g[e[2]]:
-        if not u in g2[p[0]]:
-            return False
-        elif not (0,1) in g2[p[0]][u]:
-            return False
     if p[1] == e[1]:
-        if not (p[0] in g2[e[1]] and (1,0) in g2[e[1]][p[0]]):
+        #if not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
+        #    return False        
+        if p[0] == e[2] and not (p[0] in g2[e[3]] and (1,0) in g2[e[3]][p[0]]):
             return False
-        if not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
-            return False
-    if not edge_increment_ok(e[1],p[0],e[2],g,g2):
-        return False
-    if not edge_increment_ok(e[2],p[1],e[3],g,g2):
-        return False
+    if not edge_increment_ok(e[1],p[0],e[2],g,g2):return False
+    if not edge_increment_ok(e[2],p[1],e[3],g,g2):return False
     return True
 
 def addacedge(g,v,b): # chain
@@ -671,7 +665,7 @@ def g22g1(g2, capsize=None):
     # find all directed g1's not conflicting with g2
     n = len(g2)
     edges = edgelist(g2)
-    #random.shuffle(edges)
+    random.shuffle(edges)
     g = cloneempty(g2)
 
     for e in edges:
@@ -825,12 +819,12 @@ def conformanceDS(g2, order):
 
     for x in itertools.combinations(range(len(order)),2):
 
-        d_i, s_i1, s_i2 = inorder_check2(order[x[0]], order[x[1]],
+        d, s_i1, s_i2 = inorder_check2(order[x[0]], order[x[1]],
                                          pool[x[0]], pool[x[1]], g2)
-
+        
         pool[x[0]] = pool[x[0]].intersection(s_i1)
         pool[x[1]] = pool[x[1]].intersection(s_i2)
-        d = del_empty(d_i)
+        d = del_empty(d)
         if not x[1] in CDS:
             CDS[x[1]] = {}
             CDS[x[1]][x[0]] = d
