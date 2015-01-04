@@ -227,10 +227,9 @@ def vedgelist(g, pathtoo=False):
     if pathtoo: l.extend(make_longpaths(g,el))
     l2,r = make_allforks_and_rest(g,el,bl,dofullforks=False)
     l.extend(l2)
-    print l
-    print r
+
     A, singles = makechains(r)
-    print A, singles
+
     if singles:
         B, singles = makesinks(singles)
     else:
