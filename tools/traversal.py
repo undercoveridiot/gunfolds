@@ -760,7 +760,7 @@ def v2g22g1(g2, capsize=None):
         if edges:
             key = order.pop(0)
             checklist = edges.pop(key)
-            tocheck = checklist
+            tocheck = cds[len(inlist)-1][inlist[0]]#checklist
             
             adder, remover = f[edge_function_idx(key)]
             checks_ok = c[edge_function_idx(key)]
@@ -792,7 +792,7 @@ def v2g22g1(g2, capsize=None):
 
     s = set()
     try:
-        nodesearch(g,g2,dd,[order[0]],order,s, cds)
+        nodesearch(g,g2,dd,['0'],order,s, cds)
     except ValueError:
         s.add(0)
     return s
@@ -826,7 +826,7 @@ def conformanceDS(g2, order):
         else:
             CDS[x[1]][x[0]] = d
 
-    return pruneCDS(CDS, pool), pool
+    return prune_modify_CDS(CDS, pool), pool
 
 def oconformanceDS(g2, order):
     gg = checkable(g2)
@@ -875,6 +875,17 @@ def pruneCDS(cds, pool):
             for e in pool[j].difference(cds[i][j].keys()):
                 cds[i][j].pop(e, None)
     return cds
+
+def prune_modify_CDS(cds, pool):
+    ds = {}
+    ds[0]={}
+    ds[0]['0'] = pool[0]
+    for i in range(1,len(pool)):
+        ds[i] = {}
+        for j in cds[i].keys():
+            for e in pool[i-1].intersection(cds[i][j].keys()):
+                ds[i][e] = pool[i].intersection(cds[i][j][e])
+    return ds
 
 def pruneCDS1(cds, pool):
     cds[0] = pool[0]    
