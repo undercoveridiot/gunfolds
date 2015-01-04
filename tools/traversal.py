@@ -211,8 +211,8 @@ def make_allforks_and_rest(g,el,bl, dofullforks=True):
                 l.append((n,c[0]))
                 el.remove((n,c[0]))
         elif len(c) > 1:
-            l.extend(emptyforks(n,c,el,bl))
-            if dofullforks: l.extend(fullforks(n,c,el,bl))
+            l.extend(make_emptyforks(n,c,el,bl))
+            if dofullforks: l.extend(make_fullforks(n,c,el,bl))
             r.extend(childrenedges(n,c,el,bl))
     return l, r
 
@@ -220,12 +220,13 @@ def vedgelist(g, pathtoo=False):
     """ Return a list of tuples for edges of g and forks
     a superugly organically grown function that badly needs refactoring
     """
+    l = []
     el = edgelist(g)
     bl = bedgelist(g)
     
-
-    l,r = make_allforks_and_rest(g,el,bl,dofullforks=False)
-    if pathtoo: l.extend(make_longpaths(g,l))
+    if pathtoo: l.extend(make_longpaths(g,el))
+    l2,r = make_allforks_and_rest(g,el,bl,dofullforks=False)
+    l.extend(l2)
     
     A, singles = makechains(r)
     if singles:
@@ -502,21 +503,27 @@ def del2edges(g,e,p,mask):
 
 def ok2addavedge(e,p,g,g2):
     if p[1] == e[0]:
-        if p[0] != p[1] and not (e[2] in g2[p[0]] and (2,0) in g2[p[0]][e[2]]):
-            return False
+        if p[0] != p[1] and p[0] != e[2]:
+            if not (e[2] in g2[p[0]] and (2,0) in g2[p[0]][e[2]]):
+                return False
         if p[0] == p[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
         if p[0] == e[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
 
     if p[0] == e[0]:
-        if p[0] != p[1] and not (e[1] in g2[p[1]] and (2,0) in g2[p[1]][e[1]]):
-            return False
+        if p[0] != p[1] and p[1] != e[1]:
+            if not (e[1] in g2[p[1]] and (2,0) in g2[p[1]][e[1]]):
+                return False
         if p[0] == p[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
         if p[1] == e[2] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
 
+    if p[0] == e[1] and p[1] == e[2]:
+        if not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+            return False
+        
     if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
     if not edge_increment_ok(e[0],p[1],e[2],g,g2): return False
 
