@@ -542,10 +542,10 @@ def delavedge(g,v,b,mask):
     if not mask[3]: g[b[1]].pop(v[2], None)
 
 def ok2addaAedge(e,p,g,g2):
-    #if p[1] == e[1]:
-    #    if not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
-    #if p[0] == e[2]:
-    #    if not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
+    if p[1] == e[1]:
+       if not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
+    if p[0] == e[2]:
+       if not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
     if not edge_increment_ok(e[1],p[0],e[3],g,g2): return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
     return True
@@ -611,11 +611,12 @@ def prunepaths_1D(g2, path, conn):
     return c
 
 def ok2addacedge(e,p,g,g2):
-    if p[1] == e[1]:
-        #if not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
-        #    return False
-        if p[0] == e[2] and not (p[0] in g2[e[3]] and (1,0) in g2[e[3]][p[0]]):
-            return False
+    # if p[1] == e[1]:
+    #     if p[0] != e[3]:
+    #         if not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
+    #             return False
+        #if p[0] == e[2] and not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
+         #   return False
     if not edge_increment_ok(e[1],p[0],e[2],g,g2):return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2):return False
     return True
