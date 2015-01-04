@@ -208,7 +208,7 @@ def make_allforks_and_rest(g,el,bl, dofullforks=True):
         c = [e for e in g[n] if (0,1) in g[n][e]]# all children
         if len(c) == 1:
             if (n,c[0]) in el:
-                l.append((n,c[0]))
+                r.append((n,c[0]))
                 el.remove((n,c[0]))
         elif len(c) > 1:
             l.extend(make_emptyforks(n,c,el,bl))
@@ -227,8 +227,10 @@ def vedgelist(g, pathtoo=False):
     if pathtoo: l.extend(make_longpaths(g,el))
     l2,r = make_allforks_and_rest(g,el,bl,dofullforks=False)
     l.extend(l2)
-    
+    print l
+    print r
     A, singles = makechains(r)
+    print A, singles
     if singles:
         B, singles = makesinks(singles)
     else:
