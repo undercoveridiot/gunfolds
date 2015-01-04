@@ -130,27 +130,79 @@ def gpurgepath(g,path):
     for i in range(1,len(path)-1):
         del g[path[i]][path[i+1]]
 
-def vedgelist(g, pathtoo=False):
-    """ Return a list of tuples for edges of g and forks
-    a superugly organically grown function that badly needs refactoring
-    """
+def forks(n,c,el,bl,doempty=lambda x,y: True):
+    '''
+    INPUT:
+    n - single node string
+    c - mutable list of children of node n (will be changed as a side effect)
+    el - list of edges available for construction (side effect change)
+    bl - list of bidirected edges
+
+    OUTPUT:
+    l - list of forks
+    '''
     l = []
-    el = edgelist(g)
+    r = set()
+    for p in [x for x in itertools.combinations(c,2)]:
+        if doempty(p, bl) and (n,p[0]) in el and (n,p[1]) in el:
+            l.append((n,)+p)
+            el.remove((n,p[0]))
+            el.remove((n,p[1]))
+            r.add(p[0])
+            r.add(p[1])
+    for e in r: c.remove(e)
+    return l
 
-    if pathtoo:
-        gc = copy.deepcopy(g)
-        for i in range(16):
+def childrenedges(n,c,el,bl):
+    '''
+    INPUT:
+    n - single node string
+    c - mutable list of children of node n (will be changed as a side effect)
+    el - list of edges available for construction (side effect change)
+    bl - list of bidirected edges
 
-            k = try_till_path(gc,g)
-            if len(k) < 5: break
-            if k:
-                l.append(('2',)+tuple(k))
-                purgepath(l[-1],el)
-                gpurgepath(gc,l[-1])
-            else:
-                break
+    OUTPUT:
+    l - list of
+    '''
+    l = []
+    r = set()
+    for ch in c:
+        if (n,ch) in el:
+            l.append((n,ch))
+            el.remove((n,ch))
+            r.add(ch)
+    for e in r: c.remove(e)
+    return l
 
-    bl = bedgelist(g)
+def make_emptyforks(n,c,el,bl):
+    return forks(n,c,el,bl,doempty=lambda x,y: not x in y)
+def make_fullforks(n,c,el,bl):
+    return forks(n,c,el,bl,doempty=lambda x,y: x in y)
+
+def make_longpaths(g, el):
+    '''
+    el - list of edges that is modified as a side effect
+    '''
+    l = []
+    gc = copy.deepcopy(g)
+    for i in range(16):
+        
+        k = try_till_path(gc,g)
+        if len(k) < 5: break
+        if k:
+            l.append(('2',)+tuple(k))
+            purgepath(l[-1],el)
+            gpurgepath(gc,l[-1])
+        else:
+            break
+    return l
+
+def make_allforks_and_rest(g,el,bl, dofullforks=True):
+    '''
+    el - list of edges that is modified as a side effect
+    '''
+    l = []
+    r = []
     for n in g:
 
         c = [e for e in g[n] if (0,1) in g[n][e]]# all children
@@ -159,60 +211,34 @@ def vedgelist(g, pathtoo=False):
                 l.append((n,c[0]))
                 el.remove((n,c[0]))
         elif len(c) > 1:
-            r = set()
-            for p in [x for x in itertools.combinations(c,2)]:
-                if (not p in bl) and (n,p[0]) in el and (n,p[1]) in el:
-                    l.append((n,)+p)
-                    el.remove((n,p[0]))
-                    el.remove((n,p[1]))
-                    r.add(p[0])
-                    r.add(p[1])
-                else:
-                    if (n,p[0]) in el:
-                        l.append((n,p[0]))
-                        el.remove((n,p[0]))
-                        r.add(p[0])
-                    if (n,p[1]) in el:
-                        l.append((n,p[1]))
-                        el.remove((n,p[1]))
-                        r.add(p[1])
+            l.extend(emptyforks(n,c,el,bl))
+            if dofullforks: l.extend(fullforks(n,c,el,bl))
+            r.extend(childrenedges(n,c,el,bl))
+    return l, r
 
-            for e in r: c.remove(e)
-            #b = [tuple([n]+i) for i in chunks(c,2)]
+def vedgelist(g, pathtoo=False):
+    """ Return a list of tuples for edges of g and forks
+    a superugly organically grown function that badly needs refactoring
+    """
+    el = edgelist(g)
+    bl = bedgelist(g)
+    
 
-            b = []
-            for p in chunks(c,2):
-
-                try:
-                    if (n,p[0]) in el:
-                        if (n,p[1]) in el:
-                            b.append(tuple([n]+p))
-                            el.remove((n,p[0]))
-                            el.remove((n,p[1]))
-                        else:
-                            b.append((n,p[0]))
-                            el.remove((n,p[0]))
-                except IndexError:
-                    b.append(tuple([n]+p))
-                    el.remove(tuple([n]+p))
-
-            l.extend(b)
-
-    r = twoedges(l)
-
+    l,r = make_allforks_and_rest(g,el,bl,dofullforks=False)
+    if pathtoo: l.extend(make_longpaths(g,l))
+    
     A, singles = makechains(r)
-
     if singles:
         B, singles = makesinks(singles)
     else:
         B, singles = [], []
 
-    l = longpaths(l)+threedges(l) + A + B + singles
+    l = longpaths_pick(l)+threedges_pick(l) + A + B + singles
     return l
 
-def twoedges(l):  return [e for e in l if len(e)==2]
-def threedges(l): return [e for e in l if len(e)==3]
-def longpaths(l): return [e for e in l if len(e)>3 and e[0]=='2']
+def twoedges_pick(l):  return [e for e in l if len(e)==2]
+def threedges_pick(l): return [e for e in l if len(e)==3]
+def longpaths_pick(l): return [e for e in l if len(e)>3 and e[0]=='2']
 def makechains(l):
     """ Greedily construct 2 edge chains from edge list
     """
@@ -387,7 +413,6 @@ def inorder_check2(e1, e2, j1, j2, g2):
          ok2addapath]
 
     adder, remover = f[edge_function_idx(e1)]
-    #adder2, remover2 = f[edge_function_idx(e2)]    
     checks_ok = c[edge_function_idx(e2)]
 
     d = {}
@@ -396,7 +421,7 @@ def inorder_check2(e1, e2, j1, j2, g2):
     for c1 in j1: # for each connector
         mask = adder(g,e1,c1)
         d[c1] = set()
-        for c2 in j2:            
+        for c2 in j2:
             if checks_ok(e2,c2,g,g2):
                d[c1].add(c2)
                s2.add(c2)
@@ -476,15 +501,25 @@ def del2edges(g,e,p,mask):
     if not mask[1]: g[p].pop(e[1], None)
 
 def ok2addavedge(e,p,g,g2):
-    if p[1] == e[1]:
-        if not (e[2] in g2[p[0]] and (0,1) in g2[p[0]][e[2]]): return False
-        if p[1] != e[1] and not (e[1] in g2[p[0]] and (2,0) in g2[p[0]][e[1]]): return False
-    if p[0] == e[2]:
-        if not (e[1] in g2[p[1]] and (0,1) in g2[p[1]][e[1]]): return False
-        if p[1] != e[2] and not (e[2] in g2[p[1]] and (2,0) in g2[p[1]][e[2]]): return False
+    if p[1] == e[0]:
+        if p[0] != p[1] and not (e[2] in g2[p[0]] and (2,0) in g2[p[0]][e[2]]):
+            return False
+        if p[0] == p[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+            return False
+        if p[0] == e[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+            return False
+
+    if p[0] == e[0]:
+        if p[0] != p[1] and not (e[1] in g2[p[1]] and (2,0) in g2[p[1]][e[1]]):
+            return False
+        if p[0] == p[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+            return False
+        if p[1] == e[2] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+            return False
+
     if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
     if not edge_increment_ok(e[0],p[1],e[2],g,g2): return False
-    if p[1] != p[0] and not (p[1] in g2[p[0]] and (2,0) in g2[p[0]][p[1]]): return False
+
     return  True
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
@@ -500,10 +535,10 @@ def delavedge(g,v,b,mask):
     if not mask[3]: g[b[1]].pop(v[2], None)
 
 def ok2addaAedge(e,p,g,g2):
-    if p[1] == e[1]:
-        if not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
-    if p[0] == e[2]:
-        if not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
+    #if p[1] == e[1]:
+    #    if not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
+    #if p[0] == e[2]:
+    #    if not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
     if not edge_increment_ok(e[1],p[0],e[3],g,g2): return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
     return True
@@ -526,7 +561,8 @@ def cleanedges(e,p,g, mask):
         if not m[0]: g[e[i+1]].pop(p[i], None)
         if not m[1]: g[p[i]].pop(e[i+2], None)
         i += 1
-def ok2addapath(e,p,g,g2):
+
+def ok2addapath1(e,p,g,g2):
     mask = []
     for i in range(len(p)):
         if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
@@ -536,7 +572,7 @@ def ok2addapath(e,p,g,g2):
     cleanedges(e,p,g,mask)
     return True
 
-def ok2addapath1(e,p,g,g2):
+def ok2addapath(e,p,g,g2):
     for i in range(len(p)):
         if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
             return False
@@ -570,7 +606,7 @@ def prunepaths_1D(g2, path, conn):
 def ok2addacedge(e,p,g,g2):
     if p[1] == e[1]:
         #if not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
-        #    return False        
+        #    return False
         if p[0] == e[2] and not (p[0] in g2[e[3]] and (1,0) in g2[e[3]][p[0]]):
             return False
     if not edge_increment_ok(e[1],p[0],e[2],g,g2):return False
@@ -761,7 +797,7 @@ def v2g22g1(g2, capsize=None):
             key = order.pop(0)
             checklist = edges.pop(key)
             tocheck = cds[len(inlist)-1][inlist[0]]#checklist
-            
+
             adder, remover = f[edge_function_idx(key)]
             checks_ok = c[edge_function_idx(key)]
 
@@ -774,7 +810,7 @@ def v2g22g1(g2, capsize=None):
                     if capsize and len(s)>capsize:
                         raise ValueError('Too many elements')
                 remover(g,key,n,mask)
-            
+
             order.insert(0,key)
             edges[key] = checklist
 
@@ -816,7 +852,7 @@ def conformanceDS(g2, order):
 
         d, s_i1, s_i2 = inorder_check2(order[x[0]], order[x[1]],
                                          pool[x[0]], pool[x[1]], g2)
-        
+
         pool[x[0]] = pool[x[0]].intersection(s_i1)
         pool[x[1]] = pool[x[1]].intersection(s_i2)
         d = del_empty(d)
@@ -888,7 +924,7 @@ def prune_modify_CDS(cds, pool):
     return ds
 
 def pruneCDS1(cds, pool):
-    cds[0] = pool[0]    
+    cds[0] = pool[0]
     #cds[0] = cds[0].intersection(cds[1][0].keys())
     #for i in range(2, len(cds)):
     return cds
