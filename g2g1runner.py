@@ -11,10 +11,10 @@ INPNUM = 3 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=60
+    PNUM=30
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
-    PNUM=10
+    PNUM=9
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
@@ -91,14 +91,14 @@ def fan_wrapper(fold,n=10,k=10):
 densities = {6: [0.2, 0.25, 0.3],
              8: [0.15, 0.2, 0.25, 0.3],
              10:[0.15, 0.2, 0.25, 0.3],
-             15:[0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
+             15:[0.1, 0.15, 0.2, 0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.15, 0.2, 0.25, 0.30],
              30:[0.15],
              40:[0.15],
              50:[0.15],
              60:[0.15]}
 
-for nodes in [20]:
+for nodes in [15]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
