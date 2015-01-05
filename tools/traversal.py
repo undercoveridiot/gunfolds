@@ -2,6 +2,7 @@ import sys
 sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
 from bfutils import increment_u, g2num, num2CG
 from functools import wraps
+from scipy.misc import comb
 import numpy as np
 import random
 import ipdb
@@ -9,6 +10,7 @@ import ecj
 import itertools, copy
 import munkres
 import time
+import random
 from comparison import graph2nx
 from networkx import strongly_connected_components
 
@@ -186,7 +188,7 @@ def make_longpaths(g, el):
     l = []
     gc = copy.deepcopy(g)
     for i in range(16):
-        
+
         k = try_till_path(gc,g)
         if len(k) < 5: break
         if k:
@@ -223,7 +225,7 @@ def vedgelist(g, pathtoo=False):
     l = []
     el = edgelist(g)
     bl = bedgelist(g)
-    
+
     if pathtoo: l.extend(make_longpaths(g,el))
     l2,r = make_allforks_and_rest(g,el,bl,dofullforks=False)
     l.extend(l2)
@@ -431,7 +433,7 @@ def inorder_check2(e1, e2, j1, j2, g2):
         if d[c1]: s1.add(c1)
     return d,s1,s2
 
-def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
+def check3(e1, e2, e3, j1, j2, j3, g2):
     g = cloneempty(g2) # the graph to be used for checking
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
@@ -453,16 +455,26 @@ def inorder_check3(e1, e2, e3, j1, j2, j3, g2):
     checks_ok3 = c[edge_function_idx(e3)]
 
     d = {}
+    s1 = set()
+    s2 = set()
+    s3 = set()
+
     for c1 in j1: # for each connector
         mask1 = adder1(g,e1,c1)
-        d[c1] = set()
+        append_set1 = False
         for c2 in j2:
-            mask2 = adder2(g,e2,c2)
-            if isedgesubset(increment(g), g2):
-                d[c1].add(c2)
-            remover2(g,e2,c2,mask2)
+            append_set2 = False
+            if checks_ok2(e2,c2,g,g2):
+                mask2 = adder2(g,e2,c2)
+                for c3 in j3:
+                    if checks_ok3(e3,c3,g,g2):
+                        append_set1 = append_set2 = True
+                        s3.add(c3)
+                remover2(g,e2,c2,mask2)
+            if append_set2: s2.add(c2)
+        if append_set1: s1.add(c1)
         remover1(g,e1,c1,mask1)
-    return d
+    return s1, s2, s3
 
 def del_empty(d):
     l = [e for e in d]
@@ -524,7 +536,7 @@ def ok2addavedge(e,p,g,g2):
     if p[0] == e[1] and p[1] == e[2]:
         if not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
-        
+
     if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
     if not edge_increment_ok(e[0],p[1],e[2],g,g2): return False
 
@@ -870,6 +882,15 @@ def conformanceDS(g2, order):
             CDS[x[1]][x[0]] = d
         else:
             CDS[x[1]][x[0]] = d
+
+    itr3 = [x for x in itertools.combinations(range(len(order)),3)]
+    for x in random.sample(itr3, min(200,np.int(comb(len(order),3)))):
+        s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
+                            pool[x[0]], pool[x[1]], pool[x[2]], g2)
+
+        pool[x[0]] = pool[x[0]].intersection(s1)
+        pool[x[1]] = pool[x[1]].intersection(s2)
+        pool[x[2]] = pool[x[2]].intersection(s3)
 
     return prune_modify_CDS(CDS, pool), pool
 
