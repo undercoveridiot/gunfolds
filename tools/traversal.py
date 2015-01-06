@@ -645,12 +645,9 @@ def ok2addacedge(e,p,g,g2):
         if not e[2] in g2[e[2]]: return False
         if not p[0] in g2[p[0]]: return False
         if not (e[3] in g2[e[1]] and (0,1) in g2[e[1]][e[3]]): return False
-        if e[2] != e[3]:
-            if not (e[3] in g2[e[1]] and (2,0) in g2[e[1]][e[3]]):
-                return False
 
-    if not edge_increment_ok(e[1],p[0],e[2],g,g2):return False
-    if not edge_increment_ok(e[2],p[1],e[3],g,g2):return False
+    if not edge_increment_ok(e[1],p[0],e[2],g,g2): return False
+    if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
 
     return True
 
@@ -821,6 +818,7 @@ def v2g22g1(g2, capsize=None):
     if ecj.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
+    
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
@@ -852,7 +850,7 @@ def v2g22g1(g2, capsize=None):
                         if capsize and len(s)>capsize:
                             raise ValueError('Too many elements')
                     remover(g,key,n,mask)
-            else:
+            elif tocheck:
                 (n,) = tocheck
                 mask = adder(g,key,n)
                 r = nodesearch(g,g2, order, [n]+inlist, s, cds)
@@ -871,12 +869,15 @@ def v2g22g1(g2, capsize=None):
     gg = checkable(g2)
     keys = [k for k in gg]
     cds, order, idx = conformanceDS(g2, gg, keys)
+    if 0 in [len(x) for x in order]:
+        return set()
     g = cloneempty(g2)
 
     s = set()
     try:
         nodesearch(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
-    except ValueError:
+    except ValueError, e:
+        print e
         s.add(0)
     return s
 
