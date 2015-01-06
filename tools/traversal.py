@@ -540,11 +540,21 @@ def ok2addavedge(e,p,g,g2):
     if p[0] == e[1] and p[1] == e[2]:
         if not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
+    if p[0] == e[2]:
+        if not (e[1] in g2[p[1]] and (0,1) in g2[p[1]][e[1]]):
+            return False
+    if p[1] == e[1]:
+        if not (e[2] in g2[p[0]] and (0,1) in g2[p[0]][e[2]]):
+            return False
+    if p[0] == p[1] == e[0]:
+        if not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+            return False
 
     if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
     if not edge_increment_ok(e[0],p[1],e[2],g,g2): return False
 
     return  True
+
 def addavedge(g,v,b):
     mask = [b[0] in g[v[0]], b[1] in g[v[0]],
             v[1] in g[b[0]], v[2] in g[b[1]]]
@@ -563,8 +573,10 @@ def ok2addaAedge(e,p,g,g2):
         if not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
     if p[0] == e[2]:
         if not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
+
     if not edge_increment_ok(e[1],p[0],e[3],g,g2): return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
+
     return True
 def addaAedge(g,v,b):
     mask = [b[0] in g[v[1]], b[1] in g[v[2]],
@@ -628,14 +640,18 @@ def prunepaths_1D(g2, path, conn):
     return c
 
 def ok2addacedge(e,p,g,g2):
-    # if p[1] == e[1]:
-    #     if p[0] != e[3]:
-    #         if not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
-    #             return False
-        #if p[0] == e[2] and not (p[0] in g2[e[3]] and (0,2) in g2[e[3]][p[0]]):
-         #   return False
+
+    if p[0] == p[1]:
+        if not e[2] in g2[e[2]]: return False
+        if not p[0] in g2[p[0]]: return False
+        if not (e[3] in g2[e[1]] and (0,1) in g2[e[1]][e[3]]): return False
+        if e[2] != e[3]:
+            if not (e[3] in g2[e[1]] and (2,0) in g2[e[1]][e[3]]):
+                return False
+
     if not edge_increment_ok(e[1],p[0],e[2],g,g2):return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2):return False
+
     return True
 
 def addacedge(g,v,b): # chain
@@ -840,7 +856,7 @@ def v2g22g1(g2, capsize=None):
                 (n,) = tocheck
                 mask = adder(g,key,n)
                 r = nodesearch(g,g2, order, [n]+inlist, s, cds)
-                if r and increment(r)==g2:
+                if r and increment(r) == g2:
                     s.add(g2num(r))
                     if capsize and len(s)>capsize:
                         raise ValueError('Too many elements')
