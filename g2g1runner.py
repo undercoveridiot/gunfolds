@@ -11,7 +11,7 @@ INPNUM = 3 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=30
+    PNUM=60
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=21
@@ -91,7 +91,7 @@ def fan_wrapper(fold,n=10,k=10):
 densities = {6: [0.2, 0.25, 0.3],
              8: [0.15, 0.2, 0.25, 0.3],
              10:[0.15, 0.2, 0.25, 0.3],
-             15:[0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
+             15:[0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.1, 0.25, 0.30],
              30:[0.1, 0.15],
              40:[0.1, 0.15],
