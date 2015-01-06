@@ -482,6 +482,8 @@ def del_empty(d):
         if d[e]==set(): del d[e]
     return d
 def inorder_checks(g2, gg):
+    #idx = np.argsort([len(gg[x]) for x in gg.keys()])
+    #ee = [gg.keys()[i] for i in idx] # to preserve the order
     ee = [e for e in gg] # to preserve the order
     #cds = conformanceDS(g2, ee)
     #oo = new_order(g2, ee, repeats=100, cds=None)
@@ -682,7 +684,7 @@ def memo2(func):
     cache = {}                        # Stored subproblem solutions
     @wraps(func)                      # Make wrap look like func
     def wrap(*args):                  # The memoized wrapper
-        s = signature(args[0],args[2].keys())# Signature: g and edges
+        s = signature(args[0],args[2])# Signature: g and edges
         if s not in cache:            # Not already computed?
             cache[s] = func(*args)    # Compute & cache the solution
         return cache[s]               # Return the cached solution
@@ -813,19 +815,29 @@ def v2g22g1(g2, capsize=None):
          ok2addapath]
 
     @memo2 # memoize the search
-    def nodesearch(g, g2, edges, inlist, order, s, cds):
-        if edges:
+    def nodesearch(g, g2, order, inlist, s, cds):
+
+        if order:
             key = order.pop(0)
-            checklist = edges.pop(key)
-            tocheck = cds[len(inlist)-1][inlist[0]]#checklist
+            tocheck = cds[len(inlist)-1][inlist[0]]
 
             adder, remover = f[edge_function_idx(key)]
             checks_ok = c[edge_function_idx(key)]
 
-            for n in tocheck:
-                if not checks_ok(key,n,g,g2): continue
+            if len(tocheck) > 1:
+                for n in tocheck:
+                    if not checks_ok(key,n,g,g2): continue
+                    mask = adder(g,key,n)
+                    r = nodesearch(g,g2,order, [n]+inlist, s, cds)
+                    if r and increment(r)==g2:
+                        s.add(g2num(r))
+                        if capsize and len(s)>capsize:
+                            raise ValueError('Too many elements')
+                    remover(g,key,n,mask)
+            else:
+                (n,) = tocheck
                 mask = adder(g,key,n)
-                r = nodesearch(g,g2,edges,[n]+inlist,order,s, cds)
+                r = nodesearch(g,g2, order, [n]+inlist, s, cds)
                 if r and increment(r)==g2:
                     s.add(g2num(r))
                     if capsize and len(s)>capsize:
@@ -833,23 +845,18 @@ def v2g22g1(g2, capsize=None):
                 remover(g,key,n,mask)
 
             order.insert(0,key)
-            edges[key] = checklist
 
         else:
             return g
 
     # find all directed g1's not conflicting with g2
-    chlist = checkable(g2)
-    order, d = inorder_checks(g2,chlist)
-    cds, pool = conformanceDS(g2, order)
-    dd = {}
-    for i in range(len(order)):
-        dd[order[i]] = list(pool[i])
+    gg = checkable(g2)
+    cds, order, idx = conformanceDS(g2, gg.keys())
     g = cloneempty(g2)
 
     s = set()
     try:
-        nodesearch(g,g2,dd,['0'],order,s, cds)
+        nodesearch(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
     except ValueError:
         s.add(0)
     return s
@@ -892,7 +899,50 @@ def conformanceDS(g2, order):
         pool[x[1]] = pool[x[1]].intersection(s2)
         pool[x[2]] = pool[x[2]].intersection(s3)
 
-    return prune_modify_CDS(CDS, pool), pool
+    return prune_sort_CDS(CDS, pool)
+
+def prune_modify_CDS(cds, pool):
+    ds = {}
+    ds[0]={}
+    ds[0]['0'] = pool[0]
+    for i in range(1,len(pool)):
+        ds[i] = {}
+        for j in cds[i].keys():
+            for e in pool[i-1].intersection(cds[i][j].keys()):
+                ds[i][e] = pool[i].intersection(cds[i][j][e])
+    return ds, pool, range(len(pool))
+
+def prune_sort_CDS(cds, pool):
+
+    idx = np.argsort([len(x) for x in pool])
+    p = [pool[i] for i in idx]
+
+    ds = {}
+    ds[0]={}
+    ds[0]['0'] = pool[idx[0]]
+
+    for i in range(1,len(idx)):
+        ds[i] = {}
+        for j in range(i):
+            if idx[j] > idx[i]:
+                dd = invertCDSelement(cds[idx[j]][idx[i]])
+            else:
+                dd = cds[idx[i]][idx[j]]
+            for e in pool[idx[i-1]].intersection(dd.keys()):
+                ds[i][e] = pool[idx[i]].intersection(dd[e])
+
+    return ds, p, idx
+
+def invertCDSelement(d_i):
+    d = {}
+    for e in d_i:
+        for v in d_i[e]:
+            if v in d:
+                d[v].add(e)
+            else:
+                d[v]=set()
+                d[v].add(e)
+    return d
 
 def oconformanceDS(g2, order):
     gg = checkable(g2)
@@ -942,16 +992,6 @@ def pruneCDS(cds, pool):
                 cds[i][j].pop(e, None)
     return cds
 
-def prune_modify_CDS(cds, pool):
-    ds = {}
-    ds[0]={}
-    ds[0]['0'] = pool[0]
-    for i in range(1,len(pool)):
-        ds[i] = {}
-        for j in cds[i].keys():
-            for e in pool[i-1].intersection(cds[i][j].keys()):
-                ds[i][e] = pool[i].intersection(cds[i][j][e])
-    return ds
 
 def pruneCDS1(cds, pool):
     cds[0] = pool[0]
