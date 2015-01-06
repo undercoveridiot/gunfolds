@@ -63,16 +63,19 @@ def fan_wrapper(fold,n=10,k=10):
     while True:
         try:
             g = bfutils.ringmore(n,k)
+            gdens = traversal.density(g)
             g2 = traversal.increment_u(g,g)
             #g2 = bfutils.undersample(g,2)
             def inside_wrapper():
                 scipy.random.seed()
-                print fold,': ',traversal.density(g),':',
+                
+                #print fold,': ',traversal.density(g),':',
                 startTime = int(round(time.time() * 1000))
                 s = traversal.v2g22g1(g2, capsize=CAPSIZE)
                 endTime = int(round(time.time() * 1000))
-                print len(s),'   ',
-                print (endTime-startTime)/1000.,' seconds'
+                #print len(s),'   ',
+                #print (endTime-startTime)/1000.,' seconds'
+                print "{:2}: {:8} :[ {:4} ] {:10} seconds".format(fold, round(gdens,3), len(s), round((endTime-startTime)/1000.,3))
                 output.put({'gt':g,'eq':s,'ms':endTime-startTime})
             pl = [Process(target=inside_wrapper) for x in range(INPNUM)]
             for e in pl: e.start()
@@ -95,13 +98,12 @@ densities = {6: [0.2, 0.25, ],
              15:[0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.15, 0.2, 0.25, 0.30]}#0.1, 0.15, 0.2, 0.25, 0.3]}
 
-for nodes in [15]:
+for nodes in [6]:
 #for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
-    #for dens in [0.4, 0.5, 0.6, 0.7, 0.8]:
-    #for dens in [0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+        print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')    
         e = bfutils.dens2edgenum(dens, n=nodes)
         eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e), 
                              range(REPEATS))
