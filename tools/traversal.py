@@ -853,7 +853,8 @@ def v2g22g1(g2, capsize=None):
 
     # find all directed g1's not conflicting with g2
     gg = checkable(g2)
-    cds, order, idx = conformanceDS(g2, gg.keys())
+    keys = [k for k in gg]
+    cds, order, idx = conformanceDS(g2, gg, keys)
     g = cloneempty(g2)
 
     s = set()
@@ -871,8 +872,7 @@ def unionpool(idx, cds):
             s = s.union(cds[idx][u][v])
     return s
 
-def conformanceDS(g2, order):
-    gg = checkable(g2)
+def conformanceDS(g2, gg, order):
     CDS = {}
     pool = {}
     CDS[0] = set(gg[order[0]])
