@@ -205,7 +205,9 @@ def make_allforks_and_rest(g,el,bl, dofullforks=True):
     '''
     l = []
     r = []
-    for n in g:
+    nodes = [n for n in g]
+    random.shuffle(nodes)
+    for n in nodes:
 
         c = [e for e in g[n] if (0,1) in g[n][e]]# all children
         if len(c) == 1:
