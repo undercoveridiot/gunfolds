@@ -109,6 +109,9 @@ for nodes in [15]:
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
                      '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U2.zkl')
+        print ''
+        print '----'
+        print ''
     pool.close()
     pool.join()
     zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U2.zkl')
