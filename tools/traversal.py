@@ -884,7 +884,7 @@ def conformanceDS(g2, order):
             CDS[x[1]][x[0]] = d
 
     itr3 = [x for x in itertools.combinations(range(len(order)),3)]
-    for x in random.sample(itr3, min(200,np.int(comb(len(order),3)))):
+    for x in random.sample(itr3, min(400,np.int(comb(len(order),3)))):
         s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
                             pool[x[0]], pool[x[1]], pool[x[2]], g2)
 
