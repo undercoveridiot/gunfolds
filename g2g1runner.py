@@ -75,7 +75,7 @@ def fan_wrapper(fold,n=10,k=10):
                 endTime = int(round(time.time() * 1000))
                 #print len(s),'   ',
                 #print (endTime-startTime)/1000.,' seconds'
-                print "{:2}: {:8} :[ {:4} ] {:10} seconds".format(fold, round(gdens,3), len(s), round((endTime-startTime)/1000.,3))
+                print "{:2}: {:8} : {:4}  {:10} seconds".format(fold, round(gdens,3), len(s), round((endTime-startTime)/1000.,3))
                 output.put({'gt':g,'eq':s,'ms':endTime-startTime})
             pl = [Process(target=inside_wrapper) for x in range(INPNUM)]
             for e in pl: e.start()
