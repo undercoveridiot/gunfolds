@@ -865,7 +865,7 @@ def v2g22g1(g2, capsize=None):
         else:
             return g
 
-    # find all directed g1's not conflicting with g2
+    # find all directed g1's not conflicting with g2 
     gg = checkable(g2)
     keys = [k for k in gg]
     cds, order, idx = conformanceDS(g2, gg, keys)
