@@ -866,9 +866,13 @@ def v2g22g1(g2, capsize=None):
             return g
 
     # find all directed g1's not conflicting with g2 
+    
+    startTime = int(round(time.time() * 1000))    
     gg = checkable(g2)
     keys = [k for k in gg]
     cds, order, idx = conformanceDS(g2, gg, keys)
+    endTime = int(round(time.time() * 1000))
+    print "precomputed in {:10} ms".format(round((endTime-startTime),3))    
     if 0 in [len(x) for x in order]:
         return set()
     g = cloneempty(g2)
