@@ -7,14 +7,14 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 1 # number of randomized starts per graph
+INPNUM = 3 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=20
+    PNUM=60
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
-    PNUM=12
+    PNUM=21
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
@@ -64,17 +64,13 @@ def fan_wrapper(fold,n=10,k=10):
         try:
             g = bfutils.ringmore(n,k)
             gdens = traversal.density(g)
-            g2 = traversal.increment_u(g,g)
-            #g2 = bfutils.undersample(g,2)
+            #g2 = traversal.increment_u(g,g)
+            g2 = bfutils.undersample(g,1)
             def inside_wrapper():
                 scipy.random.seed()
-                
-                #print fold,': ',traversal.density(g),':',
                 startTime = int(round(time.time() * 1000))
                 s = traversal.v2g22g1(g2, capsize=CAPSIZE)
                 endTime = int(round(time.time() * 1000))
-                #print len(s),'   ',
-                #print (endTime-startTime)/1000.,' seconds'
                 print "{:2}: {:8} : {:4}  {:10} seconds".format(fold, round(gdens,3), len(s), round((endTime-startTime)/1000.,3))
                 output.put({'gt':g,'eq':s,'ms':endTime-startTime})
             pl = [Process(target=inside_wrapper) for x in range(INPNUM)]
@@ -92,14 +88,17 @@ def fan_wrapper(fold,n=10,k=10):
     for p in pl: p.join()
     return r
 
-densities = {6: [0.2, 0.25, ],
-             8: [0.15, 0.2, 0.25,],
-             10:[0.3],#0.15, 0.2, 0.25, 0.3],
-             15:[0.25, 0.30],#0.1, 0.15, 0.2, 0.25, 0.3],
-             20:[0.15, 0.2, 0.25, 0.30]}#0.1, 0.15, 0.2, 0.25, 0.3]}
+densities = {6: [0.2, 0.25, 0.3],
+             8: [0.15, 0.2, 0.25, 0.3],
+             10:[0.1, 0.15, 0.2, 0.25, 0.3],
+             15:[0.1, 0.15, 0.2, 0.25, 0.3],
+             20:[0.1, 0.25, 0.30],
+             30:[0.1, 0.15],
+             40:[0.1, 0.15],
+             50:[0.1, 0.15],
+             60:[0.1, 0.15]}
 
-for nodes in [6]:
-#for nodes in [8]:
+for nodes in [40]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -110,10 +109,10 @@ for nodes in [6]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U2.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U333.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U2.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U333.zkl')
