@@ -852,9 +852,13 @@ def v2g22g1(g2, capsize=None):
             return g
 
     # find all directed g1's not conflicting with g2
+    
+    startTime = int(round(time.time() * 1000))    
     gg = checkable(g2)
     keys = [k for k in gg]
     cds, order, idx = conformanceDS(g2, gg, keys)
+    endTime = int(round(time.time() * 1000))
+    print "precomputed in {:10} ms".format(round((endTime-startTime),3))    
     g = cloneempty(g2)
 
     s = set()
@@ -893,7 +897,7 @@ def conformanceDS(g2, gg, order):
             CDS[x[1]][x[0]] = d
 
     itr3 = [x for x in itertools.combinations(range(len(order)),3)]
-    for x in random.sample(itr3, min(200,np.int(comb(len(order),3)))):
+    for x in random.sample(itr3, min(400,np.int(comb(len(order),3)))):
         s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
                             pool[x[0]], pool[x[1]], pool[x[2]], g2)
 
