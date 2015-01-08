@@ -503,13 +503,26 @@ def inorder_checks(g2, gg):
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
 def ok2add2edges(e,p,g,g2): return edge_increment_ok(e[0],p,e[1],g,g2)
+
+def mask2edges(g,e,p): return [p in g[e[0]], e[1] in g[p]]
+def maskavedge(g,e,p):
+    return [p[0] in g[e[0]], p[1] in g[e[0]],
+            e[1] in g[p[0]], e[2] in g[p[1]]]
+def maskaAedge(g,e,p):
+    return [p[0] in g[e[1]], p[1] in g[e[2]],
+            e[3] in g[p[0]], e[3] in g[p[1]]]
+def maskaCedge(g,e,p):
+    return [p[0] in g[e[1]], e[2] in g[p[0]],
+            p[1] in g[e[2]], e[3] in g[p[1]]]
+    
+
 def add2edges(g,e,p):
     '''
     break edge e[0] -> e[1] into two pieces
     e[0] -> p and p -> e[1]
     and add them to g
     '''
-    mask = [p in g[e[0]], e[1] in g[p]]
+    mask = mask2edges(g,e,p)
     g[e[0]][p] = g[p][e[1]] = set([(0,1)])
     return mask
 
@@ -552,9 +565,7 @@ def ok2addavedge(e,p,g,g2):
     return  True
 
 def addavedge(g,v,b):
-    mask = [b[0] in g[v[0]], b[1] in g[v[0]],
-            v[1] in g[b[0]], v[2] in g[b[1]]]
-
+    mask = maskavedge(g,v,b)
     g[v[0]][b[0]] = g[v[0]][b[1]] = g[b[0]][v[1]] = g[b[1]][v[2]] = set([(0,1)])
     return mask
 
@@ -572,10 +583,9 @@ def ok2addaAedge(e,p,g,g2):
     if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
 
     return True
-def addaAedge(g,v,b):
-    mask = [b[0] in g[v[1]], b[1] in g[v[2]],
-            v[3] in g[b[0]], v[3] in g[b[1]]]
 
+def addaAedge(g,v,b):
+    mask = maskaAedge(g,v,b)
     g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[3]] = g[b[1]][v[3]] = set([(0,1)])
     return mask
 
@@ -646,9 +656,7 @@ def ok2addacedge(e,p,g,g2):
     return True
 
 def addacedge(g,v,b): # chain
-    mask = [b[0] in g[v[1]], v[2] in g[b[0]],
-            b[1] in g[v[2]], v[3] in g[b[1]]]
-
+    mask = maskaCedge(g,v,b)
     g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[2]] = g[b[1]][v[3]] = set([(0,1)])
     return mask
 
