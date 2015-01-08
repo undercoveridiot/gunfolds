@@ -384,7 +384,7 @@ def checkable(g2):
         else:
             d[v] = checkedge(v,g2)
 
-    # check if some of the otherwise permissible nodes still fail
+    # # check if some of the otherwise permissible nodes still fail
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
@@ -400,7 +400,9 @@ def checkable(g2):
         adder, remover = f[edge_function_idx(e)]
         checks_ok = c[edge_function_idx(e)]
         for n in d[e]:
-            if not checks_ok(e,n,g,g2): continue
+            if not checks_ok(e,n,g,g2):
+                d[e].remove(n)
+                
     return d
 
 def inorder_check2(e1, e2, j1, j2, g2):
