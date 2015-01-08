@@ -8,7 +8,6 @@ import random
 import ipdb
 import ecj
 import itertools, copy
-import munkres
 import time
 import random
 from comparison import graph2nx
