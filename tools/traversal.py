@@ -467,14 +467,14 @@ def check3(e1, e2, e3, j1, j2, j3, g2):
         mask1 = adder1(g,e1,c1)
         append_set1 = False
         for c2 in j2:
-            append_set2 = False
-            if checks_ok2(e2,c2,g,g2):
+            append_set2 = False                    
+            if checks_ok2(e2,c2,g,g2):                
                 mask2 = adder2(g,e2,c2)
                 for c3 in j3:
                     if checks_ok3(e3,c3,g,g2):
                         append_set1 = append_set2 = True
                         s3.add(c3)
-                remover2(g,e2,c2,mask2)
+                remover2(g,e2,c2,mask2)                
             if append_set2: s2.add(c2)
         if append_set1: s1.add(c1)
         remover1(g,e1,c1,mask1)
@@ -522,8 +522,7 @@ def del2edges(g,e,p,mask):
 
 def ok2addavedge(e,p,g,g2):
     if p[1] == e[0]:
-        if p[0] != p[1] and p[0] != e[2]:
-            if not (e[2] in g2[p[0]] and (2,0) in g2[p[0]][e[2]]):
+        if p[0] != p[1] and p[0] != e[2] and not (e[2] in g2[p[0]] and (2,0) in g2[p[0]][e[2]]):
                 return False
         if p[0] == p[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
@@ -531,25 +530,20 @@ def ok2addavedge(e,p,g,g2):
             return False
 
     if p[0] == e[0]:
-        if p[0] != p[1] and p[1] != e[1]:
-            if not (e[1] in g2[p[1]] and (2,0) in g2[p[1]][e[1]]):
+        if p[0] != p[1] and p[1] != e[1] and not (e[1] in g2[p[1]] and (2,0) in g2[p[1]][e[1]]):
                 return False
         if p[0] == p[1] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
         if p[1] == e[2] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
 
-    if p[0] == e[1] and p[1] == e[2]:
-        if not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+    if p[0] == e[1] and p[1] == e[2] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
-    if p[0] == e[2]:
-        if not (e[1] in g2[p[1]] and (0,1) in g2[p[1]][e[1]]):
+    if p[0] == e[2] and not (e[1] in g2[p[1]] and (0,1) in g2[p[1]][e[1]]):
             return False
-    if p[1] == e[1]:
-        if not (e[2] in g2[p[0]] and (0,1) in g2[p[0]][e[2]]):
+    if p[1] == e[1] and not (e[2] in g2[p[0]] and (0,1) in g2[p[0]][e[2]]):
             return False
-    if p[0] == p[1] == e[0]:
-        if not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
+    if p[0] == p[1] == e[0] and not (e[2] in g2[e[1]] and (2,0) in g2[e[1]][e[2]]):
             return False
 
     if not edge_increment_ok(e[0],p[0],e[1],g,g2): return False
@@ -571,10 +565,8 @@ def delavedge(g,v,b,mask):
     if not mask[3]: g[b[1]].pop(v[2], None)
 
 def ok2addaAedge(e,p,g,g2):
-    if p[1] == e[1]:
-        if not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
-    if p[0] == e[2]:
-        if not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
+    if p[1] == e[1] and not (p[0] in g2[e[2]] and (0,1) in g2[e[2]][p[0]]): return False
+    if p[0] == e[2] and not (p[1] in g2[e[1]] and (0,1) in g2[e[1]][p[1]]): return False
 
     if not edge_increment_ok(e[1],p[0],e[3],g,g2): return False
     if not edge_increment_ok(e[2],p[1],e[3],g,g2): return False
