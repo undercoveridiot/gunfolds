@@ -383,7 +383,7 @@ def checkable(g2):
         else:
             d[v] = checkedge(v,g2)
 
-    # check if some of the otherwise permissible nodes still fail
+    # # check if some of the otherwise permissible nodes still fail
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
@@ -399,7 +399,9 @@ def checkable(g2):
         adder, remover = f[edge_function_idx(e)]
         checks_ok = c[edge_function_idx(e)]
         for n in d[e]:
-            if not checks_ok(e,n,g,g2): continue
+            if not checks_ok(e,n,g,g2):
+                d[e].remove(n)
+                
     return d
 
 def inorder_check2(e1, e2, j1, j2, g2):
@@ -817,7 +819,7 @@ def v2g22g1(g2, capsize=None):
     if ecj.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
-    
+
     f = [(add2edges, del2edges),
          (addavedge,delavedge),
          (addacedge,delacedge),
@@ -865,13 +867,13 @@ def v2g22g1(g2, capsize=None):
             return g
 
     # find all directed g1's not conflicting with g2
-    
-    startTime = int(round(time.time() * 1000))    
+
+    startTime = int(round(time.time() * 1000))
     gg = checkable(g2)
     keys = [k for k in gg]
     cds, order, idx = conformanceDS(g2, gg, keys)
     endTime = int(round(time.time() * 1000))
-    print "precomputed in {:10} ms".format(round((endTime-startTime),3))    
+    print "precomputed in {:10} seconds".format(round((endTime-startTime)/1000.,3))
     if 0 in [len(x) for x in order]:
         return set()
     g = cloneempty(g2)
@@ -913,7 +915,7 @@ def conformanceDS(g2, gg, order):
             CDS[x[1]][x[0]] = d
 
     itr3 = [x for x in itertools.combinations(range(len(order)),3)]
-    for x in random.sample(itr3, min(400,np.int(comb(len(order),3)))):
+    for x in random.sample(itr3, min(100,np.int(comb(len(order),3)))):
         s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
                             pool[x[0]], pool[x[1]], pool[x[2]], g2)
 
@@ -1117,6 +1119,14 @@ def length_d_loopy_paths1(G, s, d, path=None, ok2loop=[]):
 
     return candidates
 
+def tr(G):                      # Transpose (rev. edges of) G
+    GT = {}
+    for u in G: GT[u] = []   # Get all the nodes in there
+    for u in G:
+        for v in G[u]:
+            GT[v].append(u)        # Add all reverse edges
+    return GT
+
 def edge_increment_ok(s,m,e,g,g2):
     """
     s - start,
@@ -1125,39 +1135,24 @@ def edge_increment_ok(s,m,e,g,g2):
     """
     # directed edges
     if s == e:
-        if (not m in g2[m] or not (0,1) in g2[m][m]):
-            return False
-        if (not s in g2[s] or not (0,1) in g2[s][s]):
-            return False
-
+        if (not m in g2[m] or not (0,1) in g2[m][m]):return False
+        if (not s in g2[s] or not (0,1) in g2[s][s]):return False
     for u in g[m]:
-        if not u in g2[s] or not (0,1) in g2[s][u]:
-            return False
+        if not (u in g2[s] and (0,1) in g2[s][u]):return False
+        # bidirected edges        
+        if u!=e and not (e in g2[u] and (2,0) in g2[u][e]):return False
     for u in g[e]:
-        if not u in g2[m] or not (0,1) in g2[m][u]:
-            return False
+        if not (u in g2[m] and (0,1) in g2[m][u]):return False
+
     for u in g:
-        if s in g[u] and (not m in g2[u] or not (0,1) in g2[u][m]):
+        if s in g[u] and not (m in g2[u] and (0,1) in g2[u][m]):
             return False
-        if m in g[u] and (not e in g2[u] or not (0,1) in g2[u][e]):
+        if m in g[u] and not (e in g2[u] and (0,1) in g2[u][e]):
             return False
 
     # bidirected edges
     for c in g[s]:
-        if c == s: continue
-        if c == m: continue
-        if not m in g2[c]:
-            return False
-        elif not (2,0) in g2[c][m]:
-            return False
-
-    for c in g[m]:
-        if c == m: continue
-        if c == e: continue
-        if not e in g2[c]:
-            return False
-        elif not (2,0) in g2[c][e]:
-            return False
+        if c!=m and not (m in g2[c] and (2,0) in g2[c][m]):return False
 
     return True
 
