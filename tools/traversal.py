@@ -452,7 +452,6 @@ def check3(e1, e2, e3, j1, j2, j3, g2):
 
     adder1, remover1 = f[edge_function_idx(e1)]
     adder2, remover2 = f[edge_function_idx(e2)]
-    adder3, remover3 = f[edge_function_idx(e3)]
 
     checks_ok2 = c[edge_function_idx(e2)]
     checks_ok3 = c[edge_function_idx(e3)]
@@ -1118,14 +1117,6 @@ def length_d_loopy_paths1(G, s, d, path=None, ok2loop=[]):
         candidates.extend(ext)
 
     return candidates
-
-def tr(G):                      # Transpose (rev. edges of) G
-    GT = {}
-    for u in G: GT[u] = []   # Get all the nodes in there
-    for u in G:
-        for v in G[u]:
-            GT[v].append(u)        # Add all reverse edges
-    return GT
 
 def edge_increment_ok(s,m,e,g,g2):
     """
