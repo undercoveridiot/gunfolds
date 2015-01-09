@@ -10,7 +10,6 @@ import ecj
 import itertools, copy
 import time
 import random
-import operator
 from comparison import graph2nx
 from networkx import strongly_connected_components
 
@@ -831,21 +830,20 @@ def v2g22g1(g2, capsize=None):
          ok2addaAedge,
          ok2addapath]
 
-    def predictive_check(g,g2,ds,checks_ok, key):
+    def predictive_check(g,g2,pool,checks_ok, key):
         s = set()
-        c = set().union(*[ds[x] for x in ds])
-        for u in c:
+        for u in pool:
             if not checks_ok(key,u,g,g2): continue
             s.add(u)
         return s
 
     @memo2 # memoize the search
-    def nodesearch(g, g2, order, inlist, s, cds, pc):
+    def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
 
         if order:
             key = order.pop(0)
             if pc:
-                tocheck = pc.intersection(cds[len(inlist)-1][inlist[0]])
+                tocheck = [x for x in pc if x in cds[len(inlist)-1][inlist[0]]]
             else:
                 tocheck = cds[len(inlist)-1][inlist[0]]
 
@@ -854,7 +852,7 @@ def v2g22g1(g2, capsize=None):
 
             if len(inlist) < len(cds)-1:
                 kk = order[0]
-                pc = predictive_check(g,g2,cds[len(inlist)],
+                pc = predictive_check(g,g2,pool[len(inlist)],
                                       c[edge_function_idx(kk)],kk)
             else:
                 pc = set()
@@ -865,14 +863,14 @@ def v2g22g1(g2, capsize=None):
                     mask = masker(g,key,n)
                     if not np.prod(mask):
                         mask = adder(g,key,n)
-                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pc)
+                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
                         if r and increment(r)==g2:
                             s.add(g2num(r))
                             if capsize and len(s)>capsize:
                                 raise ValueError('Too many elements')
                         remover(g,key,n,mask)
                     else:
-                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pc)
+                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
                         if r and increment(r)==g2:
                             s.add(g2num(r))
                             if capsize and len(s)>capsize:
@@ -880,7 +878,7 @@ def v2g22g1(g2, capsize=None):
             elif tocheck:
                 (n,) = tocheck
                 mask = adder(g,key,n)
-                r = nodesearch(g,g2, order, [n]+inlist, s, cds, pc)
+                r = nodesearch(g,g2, order, [n]+inlist, s, cds, pool, pc)
                 if r and increment(r) == g2:
                     s.add(g2num(r))
                     if capsize and len(s)>capsize:
@@ -948,7 +946,7 @@ def v2g22g1(g2, capsize=None):
 
     s = set()
     try:
-        nodesearch(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds, set())
+        nodesearch(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds, order, set())
         #nodesearch0(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
     except ValueError, e:
         print e
@@ -975,7 +973,8 @@ def conformanceDS(g2, gg, order):
                                          pool[x[0]], pool[x[1]], g2)
 
         pool[x[0]] = pool[x[0]].intersection(s_i1)
-        pool[x[1]] = pool[x[1]].intersection(s_i2)
+        pool[x[1]] = pool[x[1]].intersection(s_i2)        
+        
         d = del_empty(d)
         if not x[1] in CDS:
             CDS[x[1]] = {}
@@ -1033,8 +1032,7 @@ def invertCDSelement(d_i):
             if v in d:
                 d[v].add(e)
             else:
-                d[v]=set()
-                d[v].add(e)
+                d[v]=set([e])
     return d
 
 def oconformanceDS(g2, order):
@@ -1196,8 +1194,8 @@ def edge_increment_ok(s,m,e,g,g2):
     """
     # directed edges
     if s == e:
-        if (not m in g2[m] or not (0,1) in g2[m][m]):return False
-        if (not s in g2[s] or not (0,1) in g2[s][s]):return False
+        if not (m in g2[m] and (0,1) in g2[m][m]):return False
+        if not (s in g2[s] and (0,1) in g2[s][s]):return False
     for u in g[m]:
         if not (u in g2[s] and (0,1) in g2[s][u]):return False
         # bidirected edges
@@ -1212,8 +1210,8 @@ def edge_increment_ok(s,m,e,g,g2):
             return False
 
     # bidirected edges
-    for c in g[s]:
-        if c!=m and not (m in g2[c] and (2,0) in g2[c][m]):return False
+    for u in g[s]:
+        if u!=m and not (m in g2[u] and (2,0) in g2[u][m]):return False
 
     return True
 
