@@ -11,6 +11,7 @@ import itertools, copy
 import munkres
 import time
 import random
+import operator
 from comparison import graph2nx
 from networkx import strongly_connected_components
 
@@ -402,7 +403,7 @@ def checkable(g2):
         for n in d[e]:
             if not checks_ok(e,n,g,g2):
                 d[e].remove(n)
-                
+
     return d
 
 def inorder_check2(e1, e2, j1, j2, g2):
@@ -467,14 +468,14 @@ def check3(e1, e2, e3, j1, j2, j3, g2):
         mask1 = adder1(g,e1,c1)
         append_set1 = False
         for c2 in j2:
-            append_set2 = False                    
-            if checks_ok2(e2,c2,g,g2):                
+            append_set2 = False
+            if checks_ok2(e2,c2,g,g2):
                 mask2 = adder2(g,e2,c2)
                 for c3 in j3:
                     if checks_ok3(e3,c3,g,g2):
                         append_set1 = append_set2 = True
                         s3.add(c3)
-                remover2(g,e2,c2,mask2)                
+                remover2(g,e2,c2,mask2)
             if append_set2: s2.add(c2)
         if append_set1: s1.add(c1)
         remover1(g,e1,c1,mask1)
@@ -514,7 +515,7 @@ def maskaAedge(g,e,p):
 def maskaCedge(g,e,p):
     return [p[0] in g[e[1]], e[2] in g[p[0]],
             p[1] in g[e[2]], e[3] in g[p[1]]]
-    
+
 
 def add2edges(g,e,p):
     '''
@@ -821,10 +822,10 @@ def v2g22g1(g2, capsize=None):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
-    f = [(add2edges, del2edges),
-         (addavedge,delavedge),
-         (addacedge,delacedge),
-         (addaAedge,delaAedge),
+    f = [(add2edges,del2edges,mask2edges),
+         (addavedge,delavedge,maskavedge),
+         (addacedge,delacedge,maskaAedge),
+         (addaAedge,delaAedge,maskaCedge),
          (addapath,delapath)]
     c = [ok2add2edges,
          ok2addavedge,
@@ -832,30 +833,98 @@ def v2g22g1(g2, capsize=None):
          ok2addaAedge,
          ok2addapath]
 
+    def predictive_check(g,g2,ds,checks_ok, key):
+        s = set()
+        c = set().union(*[ds[x] for x in ds])
+        for u in c:
+            if not checks_ok(key,u,g,g2): continue
+            s.add(u)
+        return s
+
     @memo2 # memoize the search
-    def nodesearch(g, g2, order, inlist, s, cds):
+    def nodesearch(g, g2, order, inlist, s, cds, pc):
+
+        if order:
+            key = order.pop(0)
+            if pc:
+                tocheck = pc.intersection(cds[len(inlist)-1][inlist[0]])
+            else:
+                tocheck = cds[len(inlist)-1][inlist[0]]
+
+            adder, remover, masker = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]
+
+            if len(inlist) < len(cds)-1:
+                kk = order[0]
+                pc = predictive_check(g,g2,cds[len(inlist)],
+                                      c[edge_function_idx(kk)],kk)
+            else:
+                pc = set()
+
+            if len(tocheck) > 1:
+                for n in tocheck:
+                    if not checks_ok(key,n,g,g2): continue
+                    mask = masker(g,key,n)
+                    if not np.prod(mask):
+                        mask = adder(g,key,n)
+                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pc)
+                        if r and increment(r)==g2:
+                            s.add(g2num(r))
+                            if capsize and len(s)>capsize:
+                                raise ValueError('Too many elements')
+                        remover(g,key,n,mask)
+                    else:
+                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pc)
+                        if r and increment(r)==g2:
+                            s.add(g2num(r))
+                            if capsize and len(s)>capsize:
+                                raise ValueError('Too many elements')
+            elif tocheck:
+                (n,) = tocheck
+                mask = adder(g,key,n)
+                r = nodesearch(g,g2, order, [n]+inlist, s, cds, pc)
+                if r and increment(r) == g2:
+                    s.add(g2num(r))
+                    if capsize and len(s)>capsize:
+                        raise ValueError('Too many elements')
+                remover(g,key,n,mask)
+
+            order.insert(0,key)
+
+        else:
+            return g
+    @memo2 # memoize the search
+    def nodesearch0(g, g2, order, inlist, s, cds):
 
         if order:
             key = order.pop(0)
             tocheck = cds[len(inlist)-1][inlist[0]]
-
-            adder, remover = f[edge_function_idx(key)]
+            
+            adder, remover, masker = f[edge_function_idx(key)]
             checks_ok = c[edge_function_idx(key)]
 
             if len(tocheck) > 1:
                 for n in tocheck:
                     if not checks_ok(key,n,g,g2): continue
-                    mask = adder(g,key,n)
-                    r = nodesearch(g,g2,order, [n]+inlist, s, cds)
-                    if r and increment(r)==g2:
-                        s.add(g2num(r))
-                        if capsize and len(s)>capsize:
-                            raise ValueError('Too many elements')
-                    remover(g,key,n,mask)
+                    mask = masker(g,key,n)
+                    if not np.prod(mask):
+                        mask = adder(g,key,n)
+                        r = nodesearch0(g,g2,order, [n]+inlist, s, cds)
+                        if r and increment(r)==g2:
+                            s.add(g2num(r))
+                            if capsize and len(s)>capsize:
+                                raise ValueError('Too many elements')
+                        remover(g,key,n,mask)
+                    else:
+                        r = nodesearch0(g,g2,order, [n]+inlist, s, cds)
+                        if r and increment(r)==g2:
+                            s.add(g2num(r))
+                            if capsize and len(s)>capsize:
+                                raise ValueError('Too many elements')
             elif tocheck:
                 (n,) = tocheck
                 mask = adder(g,key,n)
-                r = nodesearch(g,g2, order, [n]+inlist, s, cds)
+                r = nodesearch0(g,g2, order, [n]+inlist, s, cds)
                 if r and increment(r) == g2:
                     s.add(g2num(r))
                     if capsize and len(s)>capsize:
@@ -881,7 +950,8 @@ def v2g22g1(g2, capsize=None):
 
     s = set()
     try:
-        nodesearch(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
+        nodesearch(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds, set())
+        #nodesearch0(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
     except ValueError, e:
         print e
         s.add(0)
@@ -1140,7 +1210,7 @@ def edge_increment_ok(s,m,e,g,g2):
         if (not s in g2[s] or not (0,1) in g2[s][s]):return False
     for u in g[m]:
         if not (u in g2[s] and (0,1) in g2[s][u]):return False
-        # bidirected edges        
+        # bidirected edges
         if u!=e and not (e in g2[u] and (2,0) in g2[u][e]):return False
     for u in g[e]:
         if not (u in g2[m] and (0,1) in g2[m][u]):return False
