@@ -187,7 +187,6 @@ def make_longpaths(g, el):
     l = []
     gc = copy.deepcopy(g)
     for i in range(16):
-
         k = try_till_path(gc,g)
         if len(k) < 5: break
         if k:
@@ -452,7 +451,6 @@ def check3(e1, e2, e3, j1, j2, j3, g2):
 
     adder1, remover1 = f[edge_function_idx(e1)]
     adder2, remover2 = f[edge_function_idx(e2)]
-    adder3, remover3 = f[edge_function_idx(e3)]
 
     checks_ok2 = c[edge_function_idx(e2)]
     checks_ok3 = c[edge_function_idx(e3)]
@@ -513,7 +511,12 @@ def maskaAedge(g,e,p):
 def maskaCedge(g,e,p):
     return [p[0] in g[e[1]], e[2] in g[p[0]],
             p[1] in g[e[2]], e[3] in g[p[1]]]
-
+def maskapath(g,e,p):
+    mask = []
+    for i in range(len(p)):
+        mask.append(p[i] in g[e[i+1]])
+        mask.append(e[i+2] in g[p[i]])
+    return mask
 
 def add2edges(g,e,p):
     '''
@@ -601,7 +604,7 @@ def cleanedges(e,p,g, mask):
         if not m[1]: g[p[i]].pop(e[i+2], None)
         i += 1
 
-def ok2addapath1(e,p,g,g2):
+def ok2addapath(e,p,g,g2):
     mask = []
     for i in range(len(p)):
         if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
@@ -611,17 +614,14 @@ def ok2addapath1(e,p,g,g2):
     cleanedges(e,p,g,mask)
     return True
 
-def ok2addapath(e,p,g,g2):
+def ok2addapath1(e,p,g,g2):
     for i in range(len(p)):
         if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
             return False
     return True
 
 def addapath(g,v,b):
-    mask = []
-    for i in range(len(b)):
-        mask.append(b[i] in g[v[i+1]])
-        mask.append(v[i+2] in g[b[i]])
+    mask = maskapath(g,v,b)
     s = set([(0,1)])
     for i in range(len(b)):
         g[v[i+1]][b[i]] = g[b[i]][v[i+2]] = s
@@ -824,7 +824,7 @@ def v2g22g1(g2, capsize=None):
          (addavedge,delavedge,maskavedge),
          (addacedge,delacedge,maskaAedge),
          (addaAedge,delaAedge,maskaCedge),
-         (addapath,delapath)]
+         (addapath,delapath,maskapath)]
     c = [ok2add2edges,
          ok2addavedge,
          ok2addacedge,
@@ -857,34 +857,51 @@ def v2g22g1(g2, capsize=None):
                                       c[edge_function_idx(kk)],kk)
             else:
                 pc = set()
+            for n in tocheck:
+                if not checks_ok(key,n,g,g2): continue
+                mask = masker(g,key,n)
+                if not np.prod(mask):
+                    mask = adder(g,key,n)
+                    r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
+                    if r and increment(r)==g2:
+                        s.add(g2num(r))
+                        if capsize and len(s)>capsize:
+                            raise ValueError('Too many elements')
+                    remover(g,key,n,mask)
+                else:
+                    r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
+                    if r and increment(r)==g2:
+                        s.add(g2num(r))
+                        if capsize and len(s)>capsize:
+                                raise ValueError('Too many elements')
 
-            if len(tocheck) > 1:
-                for n in tocheck:
-                    if not checks_ok(key,n,g,g2): continue
-                    mask = masker(g,key,n)
-                    if not np.prod(mask):
-                        mask = adder(g,key,n)
-                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-                        if r and increment(r)==g2:
-                            s.add(g2num(r))
-                            if capsize and len(s)>capsize:
-                                raise ValueError('Too many elements')
-                        remover(g,key,n,mask)
-                    else:
-                        r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-                        if r and increment(r)==g2:
-                            s.add(g2num(r))
-                            if capsize and len(s)>capsize:
-                                raise ValueError('Too many elements')
-            elif tocheck:
-                (n,) = tocheck
-                mask = adder(g,key,n)
-                r = nodesearch(g,g2, order, [n]+inlist, s, cds, pool, pc)
-                if r and increment(r) == g2:
-                    s.add(g2num(r))
-                    if capsize and len(s)>capsize:
-                        raise ValueError('Too many elements')
-                remover(g,key,n,mask)
+            # if len(tocheck) > 1:
+            #     for n in tocheck:
+            #         if not checks_ok(key,n,g,g2): continue
+            #         mask = masker(g,key,n)
+            #         if not np.prod(mask):
+            #             mask = adder(g,key,n)
+            #             r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
+            #             if r and increment(r)==g2:
+            #                 s.add(g2num(r))
+            #                 if capsize and len(s)>capsize:
+            #                     raise ValueError('Too many elements')
+            #             remover(g,key,n,mask)
+            #         else:
+            #             r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
+            #             if r and increment(r)==g2:
+            #                 s.add(g2num(r))
+            #                 if capsize and len(s)>capsize:
+            #                     raise ValueError('Too many elements')
+            # elif tocheck:
+            #     (n,) = tocheck
+            #     mask = adder(g,key,n)
+            #     r = nodesearch(g,g2, order, [n]+inlist, s, cds, pool, pc)
+            #     if r and increment(r) == g2:
+            #         s.add(g2num(r))
+            #         if capsize and len(s)>capsize:
+            #             raise ValueError('Too many elements')
+            #     remover(g,key,n,mask)
 
             order.insert(0,key)
 
@@ -1186,14 +1203,6 @@ def length_d_loopy_paths1(G, s, d, path=None, ok2loop=[]):
         candidates.extend(ext)
 
     return candidates
-
-def tr(G):                      # Transpose (rev. edges of) G
-    GT = {}
-    for u in G: GT[u] = []   # Get all the nodes in there
-    for u in G:
-        for v in G[u]:
-            GT[v].append(u)        # Add all reverse edges
-    return GT
 
 def edge_increment_ok(s,m,e,g,g2):
     """

@@ -5,7 +5,8 @@ from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
 import numpy as np
 import ipdb
-
+from comparison import nx2graph
+import networkx as nx
 #local
 import ecj
 import zickle as zkl
@@ -241,6 +242,16 @@ def ring(n):
         g[str(i)] = {str(i+1): set([(0,1)])}
     g[str(n)] = {'1': set([(0,1)])}
     return g
+def addAring(g):
+    for i in range(1,len(g)):
+        if str(i+1) in g[str(i)]:
+            g[str(i)][str(i+1)].add((0,1))
+        else:
+            g[str(i)][str(i+1)] = set([(0,1)])
+    if '1' in g[str(len(g))]:
+        g[str(len(g))]['1'].add((0,1))
+    else:
+        g[str(len(g))]['1'] = set([(0,1)])    
 
 def upairs(n,k):
     '''
@@ -301,3 +312,21 @@ def complement(g):
             sq[v][w].difference_update(g[v][w])
             if not sq[v][w]: sq[v].pop(w)                
     return sq
+
+
+def gtranspose(G):                      # Transpose (rev. edges of) G
+    GT = {u:{} for u in G}
+    for u in G:
+        for v in G[u]:
+            GT[v][u] = set([(0,1)])        # Add all reverse edges
+    return GT
+
+def scale_free(n, alpha=0.7, beta=0.25,
+               delta_in=0.2, delta_out=0.2):
+    g = nx.scale_free_graph(n, alpha=alpha,
+                            beta=beta,
+                            delta_in=delta_in, delta_out=delta_out)
+    g = nx2graph(g)
+    g = gtranspose(g)
+    addAring(g)
+    return g
