@@ -16,6 +16,9 @@ if socket.gethostname().split('.')[0] == 'leibnitz':
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=12
     PNUM=max((1,PNUM/INPNUM))
+elif socket.gethostname().split('.')[0] == 'hooke':
+    PNUM=3
+    PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
     # of cores minus 7% for breathing room
@@ -98,7 +101,7 @@ densities = {6: [0.2, 0.25, 0.3, 0.4, 0.5, 0.6],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [15]:
+for nodes in [20]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
