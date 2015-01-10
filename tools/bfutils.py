@@ -312,3 +312,11 @@ def complement(g):
             sq[v][w].difference_update(g[v][w])
             if not sq[v][w]: sq[v].pop(w)                
     return sq
+
+
+def gtranspose(G):                      # Transpose (rev. edges of) G
+    GT = {u:{} for u in G}
+    for u in G:
+        for v in G[u]:
+            GT[v][u] = set([(0,1)])        # Add all reverse edges
+    return GT
