@@ -17,7 +17,7 @@ elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=12
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'hooke':
-    PNUM=3
+    PNUM=21
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
@@ -67,8 +67,8 @@ def fan_wrapper(fold,n=10,k=10):
         try:
             g = bfutils.ringmore(n,k)
             gdens = traversal.density(g)
-            g2 = traversal.increment_u(g,g)
-            #g2 = bfutils.undersample(g,1)
+            #g2 = traversal.increment_u(g,g)
+            g2 = bfutils.undersample(g,2)
             def inside_wrapper():
                 scipy.random.seed()
                 startTime = int(round(time.time() * 1000))
@@ -101,7 +101,7 @@ densities = {6: [0.2, 0.25, 0.3, 0.4, 0.5, 0.6],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [20]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -112,10 +112,10 @@ for nodes in [20]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U333.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U333i_g3.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U333.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U333_g3.zkl')
