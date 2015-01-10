@@ -5,7 +5,8 @@ from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
 import numpy as np
 import ipdb
-
+from comparison import nx2graph
+import networkx as nx
 #local
 import ecj
 import zickle as zkl
@@ -241,6 +242,16 @@ def ring(n):
         g[str(i)] = {str(i+1): set([(0,1)])}
     g[str(n)] = {'1': set([(0,1)])}
     return g
+def addAring(g):
+    for i in range(1,len(g)):
+        if str(i+1) in g[str(i)]:
+            g[str(i)][str(i+1)].add((0,1))
+        else:
+            g[str(i)][str(i+1)] = set([(0,1)])
+    if '1' in g[str(len(g))]:
+        g[str(len(g))]['1'].add((0,1))
+    else:
+        g[str(len(g))]['1'] = set([(0,1)])    
 
 def upairs(n,k):
     '''
