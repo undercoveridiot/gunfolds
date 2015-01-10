@@ -320,3 +320,13 @@ def gtranspose(G):                      # Transpose (rev. edges of) G
         for v in G[u]:
             GT[v][u] = set([(0,1)])        # Add all reverse edges
     return GT
+
+def scale_free(n, alpha=0.7, beta=0.25,
+               delta_in=0.2, delta_out=0.2):
+    g = nx.scale_free_graph(n, alpha=alpha,
+                            beta=beta,
+                            delta_in=delta_in, delta_out=delta_out)
+    g = nx2graph(g)
+    g = gtranspose(g)
+    addAring(g)
+    return g
