@@ -70,6 +70,12 @@ def graph2nx(G):
     for v in G:
         g.add_edges_from([(v,x) for x in G[v] if (0,1) in G[v][x]])
     return g
+def nx2graph(G):
+    g = {str(n+1):{} for n in G}
+    for n in G:
+        g[str(n+1)] = {str(x+1):set([(0,1)]) for x in G[n]}
+    return g
+    
 def gcd4scc(SCC):
     g = graph2nx(SCC)
     return ecj.listgcd(map(lambda x: len(x)-1, nx.simple_cycles(g)))
