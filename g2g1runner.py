@@ -68,11 +68,16 @@ def fan_wrapper(fold,n=10,k=10):
             #g2 = bfutils.undersample(g,1)
             def inside_wrapper():
                 scipy.random.seed()
-                startTime = int(round(time.time() * 1000))
-                s = traversal.v2g22g1(g2, capsize=CAPSIZE)
-                endTime = int(round(time.time() * 1000))
-                print "{:2}: {:8} : {:4}  {:10} seconds".format(fold, round(gdens,3), len(s), round((endTime-startTime)/1000.,3))
-                output.put({'gt':g,'eq':s,'ms':endTime-startTime})
+                try:
+                    startTime = int(round(time.time() * 1000))
+                    s = traversal.v2g22g1(g2, capsize=CAPSIZE)
+                    endTime = int(round(time.time() * 1000))
+                    print "{:2}: {:8} : {:4}  {:10} seconds".\
+                        format(fold, round(gdens,3), len(s),
+                               round((endTime-startTime)/1000.,3))
+                    output.put({'gt':g,'eq':s,'ms':endTime-startTime})
+                except MemoryError:
+                    print 'memory error...'            
             pl = [Process(target=inside_wrapper) for x in range(INPNUM)]
             for e in pl: e.start()
             while True:
