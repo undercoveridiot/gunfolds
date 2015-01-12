@@ -98,9 +98,9 @@ def try_till_d_path(g,d,gt,order=None):
     i = 1
     while not k:
         if order:
-            k = [x for x in length_d_paths(g,order(i),d)] #next_or_none(length_d_paths(g,order(i),d))
+            k = [x for x in length_d_paths(g,order(i),d)]
         else:
-            k = [x for x in length_d_paths(g,str(i),d)] #next_or_none(length_d_paths(g,str(i),d))
+            k = [x for x in length_d_paths(g,str(i),d)]
         i += 1
         if i > len(g): return []
 
@@ -857,6 +857,7 @@ def v2g22g1(g2, capsize=None):
                                       c[edge_function_idx(kk)],kk)
             else:
                 pc = set()
+                
             for n in tocheck:
                 if not checks_ok(key,n,g,g2): continue
                 mask = masker(g,key,n)
@@ -874,34 +875,6 @@ def v2g22g1(g2, capsize=None):
                         s.add(g2num(r))
                         if capsize and len(s)>capsize:
                                 raise ValueError('Too many elements')
-
-            # if len(tocheck) > 1:
-            #     for n in tocheck:
-            #         if not checks_ok(key,n,g,g2): continue
-            #         mask = masker(g,key,n)
-            #         if not np.prod(mask):
-            #             mask = adder(g,key,n)
-            #             r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-            #             if r and increment(r)==g2:
-            #                 s.add(g2num(r))
-            #                 if capsize and len(s)>capsize:
-            #                     raise ValueError('Too many elements')
-            #             remover(g,key,n,mask)
-            #         else:
-            #             r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-            #             if r and increment(r)==g2:
-            #                 s.add(g2num(r))
-            #                 if capsize and len(s)>capsize:
-            #                     raise ValueError('Too many elements')
-            # elif tocheck:
-            #     (n,) = tocheck
-            #     mask = adder(g,key,n)
-            #     r = nodesearch(g,g2, order, [n]+inlist, s, cds, pool, pc)
-            #     if r and increment(r) == g2:
-            #         s.add(g2num(r))
-            #         if capsize and len(s)>capsize:
-            #             raise ValueError('Too many elements')
-            #     remover(g,key,n,mask)
 
             order.insert(0,key)
 
