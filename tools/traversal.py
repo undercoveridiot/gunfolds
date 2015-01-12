@@ -706,6 +706,54 @@ def memo2(func):
         return cache[s]               # Return the cached solution
     return wrap
 
+def edge_backtrack2g1(g2, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    single_cache = {}
+
+    #@memo # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            e = edges.pop()
+            ln = [n for n in g2]
+            for n in ln:
+                if (n,e) in single_cache: continue
+                mask = add2edges(g,e,n)
+                if isedgesubset(increment(g), g2):
+                    r = nodesearch(g,g2,edges,s)
+                    if r and increment(r)==g2:
+                        s.add(g2num(r))
+                        if capsize and len(s)>capsize:
+                            raise ValueError('Too many elements in eqclass')
+                del2edges(g,e,n,mask)
+            edges.append(e)
+        else:
+            return g
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    edges = edgelist(g2)
+    random.shuffle(edges)
+    g = cloneempty(g2)
+
+    for e in edges:
+        for n in g2:
+            mask = add2edges(g,e,n)
+            if not isedgesubset(increment(g), g2):
+                single_cache[(n,e)] = False
+            del2edges(g,e,n,mask)
+
+    s = set()
+    try:
+        nodesearch(g,g2,edges,s)
+    except ValueError:
+        s.add(0)
+    return s
+
 def g22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
