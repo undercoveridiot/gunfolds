@@ -98,9 +98,9 @@ def try_till_d_path(g,d,gt,order=None):
     i = 1
     while not k:
         if order:
-            k = [x for x in length_d_paths(g,order(i),d)] #next_or_none(length_d_paths(g,order(i),d))
+            k = [x for x in length_d_paths(g,order(i),d)]
         else:
-            k = [x for x in length_d_paths(g,str(i),d)] #next_or_none(length_d_paths(g,str(i),d))
+            k = [x for x in length_d_paths(g,str(i),d)]
         i += 1
         if i > len(g): return []
 
@@ -706,6 +706,54 @@ def memo2(func):
         return cache[s]               # Return the cached solution
     return wrap
 
+def edge_backtrack2g1(g2, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    single_cache = {}
+
+    #@memo # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            e = edges.pop()
+            ln = [n for n in g2]
+            for n in ln:
+                if (n,e) in single_cache: continue
+                mask = add2edges(g,e,n)
+                if isedgesubset(increment(g), g2):
+                    r = nodesearch(g,g2,edges,s)
+                    if r and increment(r)==g2:
+                        s.add(g2num(r))
+                        if capsize and len(s)>capsize:
+                            raise ValueError('Too many elements in eqclass')
+                del2edges(g,e,n,mask)
+            edges.append(e)
+        else:
+            return g
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    edges = edgelist(g2)
+    random.shuffle(edges)
+    g = cloneempty(g2)
+
+    for e in edges:
+        for n in g2:
+            mask = add2edges(g,e,n)
+            if not isedgesubset(increment(g), g2):
+                single_cache[(n,e)] = False
+            del2edges(g,e,n,mask)
+
+    s = set()
+    try:
+        nodesearch(g,g2,edges,s)
+    except ValueError:
+        s.add(0)
+    return s
+
 def g22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
@@ -857,6 +905,7 @@ def v2g22g1(g2, capsize=None):
                                       c[edge_function_idx(kk)],kk)
             else:
                 pc = set()
+                
             for n in tocheck:
                 if not checks_ok(key,n,g,g2): continue
                 mask = masker(g,key,n)
@@ -874,34 +923,6 @@ def v2g22g1(g2, capsize=None):
                         s.add(g2num(r))
                         if capsize and len(s)>capsize:
                                 raise ValueError('Too many elements')
-
-            # if len(tocheck) > 1:
-            #     for n in tocheck:
-            #         if not checks_ok(key,n,g,g2): continue
-            #         mask = masker(g,key,n)
-            #         if not np.prod(mask):
-            #             mask = adder(g,key,n)
-            #             r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-            #             if r and increment(r)==g2:
-            #                 s.add(g2num(r))
-            #                 if capsize and len(s)>capsize:
-            #                     raise ValueError('Too many elements')
-            #             remover(g,key,n,mask)
-            #         else:
-            #             r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-            #             if r and increment(r)==g2:
-            #                 s.add(g2num(r))
-            #                 if capsize and len(s)>capsize:
-            #                     raise ValueError('Too many elements')
-            # elif tocheck:
-            #     (n,) = tocheck
-            #     mask = adder(g,key,n)
-            #     r = nodesearch(g,g2, order, [n]+inlist, s, cds, pool, pc)
-            #     if r and increment(r) == g2:
-            #         s.add(g2num(r))
-            #         if capsize and len(s)>capsize:
-            #             raise ValueError('Too many elements')
-            #     remover(g,key,n,mask)
 
             order.insert(0,key)
 
