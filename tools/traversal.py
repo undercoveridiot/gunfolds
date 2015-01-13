@@ -870,8 +870,8 @@ def v2g22g1(g2, capsize=None):
 
     f = [(add2edges,del2edges,mask2edges),
          (addavedge,delavedge,maskavedge),
-         (addacedge,delacedge,maskaAedge),
-         (addaAedge,delaAedge,maskaCedge),
+         (addacedge,delacedge,maskaCedge),
+         (addaAedge,delaAedge,maskaAedge),
          (addapath,delapath,maskapath)]
     c = [ok2add2edges,
          ok2addavedge,
@@ -883,7 +883,6 @@ def v2g22g1(g2, capsize=None):
         s = set()
         for u in pool:
             if not checks_ok(key,u,g,g2): continue
-            if np.prod(masker(g,key,u)): continue
             s.add(u)
         return s
 
