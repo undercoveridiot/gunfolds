@@ -767,6 +767,12 @@ def g22g1(g2, capsize=None):
     @memo # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
+            if increment(g) == g2:
+                s.add(g2num(g))
+                if capsize and len(s)>capsize:
+                    raise ValueError('Too many elements')
+                return g
+            
             e = edges.pop()
             for n in g2:
 
@@ -774,15 +780,14 @@ def g22g1(g2, capsize=None):
                 if not edge_increment_ok(e[0],n,e[1],g,g2): continue
 
                 mask = add2edges(g,e,n)
-                r = nodesearch(g,g2,edges,s)
-                if r and increment(r)==g2:
-                    s.add(g2num(r))
-                    if capsize and len(s)>capsize:
-                        raise ValueError('Too many elements in eqclass')
+                nodesearch(g,g2,edges,s)
                 del2edges(g,e,n,mask)
 
             edges.append(e)
-        else:
+        elif increment(g)==g2:
+            s.add(g2num(g))
+            if capsize and len(s)>capsize:
+                raise ValueError('Too many elements in eqclass')            
             return g
 
     # find all directed g1's not conflicting with g2
