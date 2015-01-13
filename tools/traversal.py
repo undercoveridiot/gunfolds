@@ -888,8 +888,12 @@ def v2g22g1(g2, capsize=None):
 
     @memo2 # memoize the search
     def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
-        if increment(g) == g2: return g
         if order:
+            if increment(g) == g2:
+                s.add(g2num(g))
+                if capsize and len(s)>capsize:
+                    raise ValueError('Too many elements')
+                return g            
             key = order.pop(0)
             if pc:
                 tocheck = [x for x in pc if x in cds[len(inlist)-1][inlist[0]]]
@@ -910,16 +914,16 @@ def v2g22g1(g2, capsize=None):
                 if not checks_ok(key,n,g,g2): continue
                 masked = np.prod(masker(g,key,n))
                 if not masked: mask = adder(g,key,n)
-                r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-                if r and increment(r)==g2:
-                    s.add(g2num(r))
-                    if capsize and len(s)>capsize:
-                        raise ValueError('Too many elements')
+                nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
                 if not masked: remover(g,key,n,mask)
             order.insert(0,key)
 
-        else:
+        elif increment(g)==g2:
+            s.add(g2num(g))
+            if capsize and len(s)>capsize:
+                raise ValueError('Too many elements')            
             return g
+        
     @memo2 # memoize the search
     def nodesearch0(g, g2, order, inlist, s, cds):
 
