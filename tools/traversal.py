@@ -767,6 +767,11 @@ def g22g1(g2, capsize=None):
     @memo # memoize the search
     def nodesearch(g, g2, edges, s):
         if edges:
+            if increment(g) == g2:
+                s.add(g2num(g))
+                if capsize and len(s)>capsize:
+                    raise ValueError('Too many elements')
+                return g
             e = edges[0]
             for n in g2:
 
@@ -781,7 +786,10 @@ def g22g1(g2, capsize=None):
                         raise ValueError('Too many elements in eqclass')
                 del2edges(g,e,n,mask)
 
-        else:
+        elif increment(g)==g2:
+            s.add(g2num(g))
+            if capsize and len(s)>capsize:
+                raise ValueError('Too many elements in eqclass')
             return g
 
     # find all directed g1's not conflicting with g2
@@ -893,15 +901,12 @@ def v2g22g1(g2, capsize=None):
                 if capsize and len(s)>capsize:
                     raise ValueError('Too many elements')
                 return g
-            
+
             key = order[0]
             if pc:
                 tocheck = [x for x in pc if x in cds[len(inlist)-1][inlist[0]]]
             else:
                 tocheck = cds[len(inlist)-1][inlist[0]]
-
-            adder, remover, masker = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]
 
             if len(order) > 1:
                 kk = order[1]
@@ -910,6 +915,9 @@ def v2g22g1(g2, capsize=None):
             else:
                 pc = set()
 
+            adder, remover, masker = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]
+            
             for n in tocheck:
                 if not checks_ok(key,n,g,g2): continue
                 masked = np.prod(masker(g,key,n))
@@ -918,7 +926,7 @@ def v2g22g1(g2, capsize=None):
                 else:
                     mask = adder(g,key,n)
                     nodesearch(g,g2,order[1:], [n]+inlist, s, cds, pool, pc)
-                    remover(g,key,n,mask)            
+                    remover(g,key,n,mask)
 
         elif increment(g)==g2:
             s.add(g2num(g))
