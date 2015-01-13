@@ -1026,15 +1026,15 @@ def conformanceDS(g2, gg, order):
             CDS[x[1]][x[0]] = d
         else:
             CDS[x[1]][x[0]] = d
-
-    itr3 = [x for x in itertools.combinations(range(len(order)),3)]
-    for x in random.sample(itr3, min(10,np.int(comb(len(order),3)))):
-        s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
-                            pool[x[0]], pool[x[1]], pool[x[2]], g2)
-
-        pool[x[0]] = pool[x[0]].intersection(s1)
-        pool[x[1]] = pool[x[1]].intersection(s2)
-        pool[x[2]] = pool[x[2]].intersection(s3)
+    if density(g2) > 0.35:
+        itr3 = [x for x in itertools.combinations(range(len(order)),3)]
+        for x in random.sample(itr3, min(10,np.int(comb(len(order),3)))):
+            s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
+                                pool[x[0]], pool[x[1]], pool[x[2]], g2)
+            
+            pool[x[0]] = pool[x[0]].intersection(s1)
+            pool[x[1]] = pool[x[1]].intersection(s2)
+            pool[x[2]] = pool[x[2]].intersection(s3)
 
     return prune_sort_CDS(CDS, pool)
 
