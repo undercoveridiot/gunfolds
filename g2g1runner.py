@@ -102,14 +102,14 @@ densities = {6: [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55],
              10:[0.1, 0.15, 0.2, 0.25, 0.3],
              15:[0.25],#0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.1, 0.15, 0.2, 0.25, 0.3],
-	     25:[0.1],
+             25:[0.1],
              30:[0.1],
-	     35:[0.1],
+             35:[0.1],
              40:[0.1],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [8]:
+for nodes in [25]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -120,10 +120,10 @@ for nodes in [8]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_newp.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_newp_.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_newp.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_newp_.zkl')
