@@ -879,10 +879,11 @@ def v2g22g1(g2, capsize=None):
          ok2addaAedge,
          ok2addapath]
 
-    def predictive_check(g,g2,pool,checks_ok, key):
+    def predictive_check(g,g2,pool,checks_ok, masker, key):
         s = set()
         for u in pool:
             if not checks_ok(key,u,g,g2): continue
+            if np.prod(masker(g,key,u)): continue
             s.add(u)
         return s
 
@@ -902,7 +903,8 @@ def v2g22g1(g2, capsize=None):
             if len(inlist) < len(cds)-1:
                 kk = order[0]
                 pc = predictive_check(g,g2,pool[len(inlist)],
-                                      c[edge_function_idx(kk)],kk)
+                                      c[edge_function_idx(kk)],
+                                      f[edge_function_idx(kk)][2],kk)
             else:
                 pc = set()
                 
