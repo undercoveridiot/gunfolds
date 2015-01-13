@@ -1080,21 +1080,6 @@ def invertCDSelement(d_i):
                 d[v]=set([e])
     return d
 
-def oconformanceDS(g2, order):
-    gg = checkable(g2)
-    CDS = {}
-    CDS[0] = set(gg[order[0]])
-    for x in zip(range(len(order)),range(1,len(order))):
-        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
-                                     gg[order[x[0]]], gg[order[x[1]]], g2))
-        if not x[1] in CDS:
-            CDS[x[1]] = {}
-            CDS[x[1]][x[0]] = d
-        else:
-            CDS[x[1]][x[0]] = d
-
-    return pruneCDS(CDS)
-
 def conformant(cds, inlist):
 
     if inlist[len(inlist)-2] in cds[len(inlist)-1][0]:
@@ -1107,67 +1092,6 @@ def conformant(cds, inlist):
         else:
             return set()
     return s
-
-def oconformant(cds, inlist):
-    if inlist[len(inlist)-2] in cds[len(inlist)-1][0]:
-        s = cds[len(inlist)-1][0][inlist[len(inlist)-2]]
-    else:
-        return set()
-    for i in range(1,len(inlist)-1):
-        if inlist[len(inlist)-i-2] in cds[len(inlist)-1][i]:
-            s = s.intersection(cds[len(inlist)-1][i][inlist[len(inlist)-i-2]])
-        else:
-            return set()
-    return s
-
-def pruneCDS(cds, pool):
-    cds[0] = pool[0]
-    for i in range(1,len(pool)):
-        for j in cds[i].keys():
-            for e in pool[j].difference(cds[i][j].keys()):
-                cds[i][j].pop(e, None)
-    return cds
-
-
-def pruneCDS1(cds, pool):
-    cds[0] = pool[0]
-    #cds[0] = cds[0].intersection(cds[1][0].keys())
-    #for i in range(2, len(cds)):
-    return cds
-
-
-def cost_matrix(g2, order, cds=None):
-    gg = checkable(g2)
-    if cds==None: cds = conformanceDS(g2, order)
-    m = 100000.0*np.eye(len(order))
-    for x in itertools.combinations(range(len(order)),2):
-#        d = del_empty(inorder_check2(order[x[0]], order[x[1]],
-#                                     gg[order[x[0]]], gg[order[x[1]]], g2))
-        d = cds[x[1]][x[0]]
-        s = sum([len(d[k]) for k in d])
-        r = len(gg[order[x[0]]])*len(gg[order[x[1]]])
-        m[x[0],x[1]] = np.double(s)#/r
-        m[x[1],x[0]] = np.double(s)#/r
-    return m, cds
-
-def cost_path(p, W):
-    x = [0]+p[:-1]
-    return W[x,p]
-def path_weight(p, W):
-    return sum(cost_path(p,W))
-
-def new_order(g2, order, repeats = 100, cds=None):
-    M, cds = cost_matrix(g2,order,cds)
-    p = range(1,M.shape[0])
-    mnw = path_weight(p,M) #- 10*sum(np.diff(cost_path(p,M)))
-    mnp = p[:]
-    for i in range(repeats):
-        random.shuffle(p)
-        pw = path_weight(p,M) #- 10*sum(np.diff(cost_path(p,M)))
-        if pw < mnw:
-            mnw = pw
-            mnp = p[:]
-    return [order[i] for i in [0]+mnp], mnw, cds
 
 def length_d_paths(G, s, d):
     """
@@ -1186,57 +1110,16 @@ def length_d_paths(G, s, d):
     for u in recurse(G, s, d, [s]):
             yield u
 
-def subfinder(mylist, pattern):
-    matches = []
-    for i in range(len(mylist)):
-        if mylist[i] == pattern[0] and mylist[i:i+len(pattern)] == pattern:
-            matches.append((i,pattern))
-    return matches
-
-def make_triplets(path, selfloops):
-    tri = {}
-    for u in selfloops:
-        idx = path.index(u)
-        tri[u] = path[idx-1:idx+2]
-    return tri
-
-def length_d_loopy_paths1(G, s, d, path=None, ok2loop=[]):
-    """
-    Iterate over nodes in G reachable from s in exactly d steps
-    """
-    candidates = [x for x in length_d_paths(G,s,d)]
-    triplets = make_triplets(path, ok2loop)
-    for u in ok2loop:
-        ext = []
-        for p in candidates:
-            sub = subfinder(p, triplets[u])
-            if sub:
-                idx = sub[0][0]
-                ext.append(p[:idx+1]+[u,]+p[idx+1:-1])
-        candidates.extend(ext)
-
-    if path[0] in ok2loop:
-        ext = []
-        for p in candidates:
-            if p[:2]==path[:2]:
-                ext.append([p[0]]+p[:-1])
-        candidates.extend(ext)
-
-    if path[-1] in ok2loop:
-        ext = []
-        for p in candidates:
-            if p[-2:]==path[-2:]:
-                ext.append(p[1:]+[p[-1]])
-        candidates.extend(ext)
-
-    return candidates
-
 def edge_increment_ok(s,m,e,g,g2):
     """
     s - start,
     m - middle,
     e - end
     """
+    # bidirected edges
+    for u in g[s]:
+        if u!=m and not (m in g2[u] and (2,0) in g2[u][m]):return False
+    
     # directed edges
     if s == e:
         if not (m in g2[m] and (0,1) in g2[m][m]):return False
@@ -1253,10 +1136,6 @@ def edge_increment_ok(s,m,e,g,g2):
             return False
         if m in g[u] and not (e in g2[u] and (0,1) in g2[u][e]):
             return False
-
-    # bidirected edges
-    for u in g[s]:
-        if u!=m and not (m in g2[u] and (2,0) in g2[u][m]):return False
 
     return True
 
