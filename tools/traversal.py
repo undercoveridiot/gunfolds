@@ -879,7 +879,7 @@ def v2g22g1(g2, capsize=None):
          ok2addaAedge,
          ok2addapath]
 
-    def predictive_check(g,g2,pool,checks_ok, masker, key):
+    def predictive_check(g,g2,pool,checks_ok, key):
         s = set()
         for u in pool:
             if not checks_ok(key,u,g,g2): continue
@@ -888,7 +888,7 @@ def v2g22g1(g2, capsize=None):
 
     @memo2 # memoize the search
     def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
-
+        if increment(g) == g2: return g
         if order:
             key = order.pop(0)
             if pc:
@@ -902,29 +902,20 @@ def v2g22g1(g2, capsize=None):
             if len(inlist) < len(cds)-1:
                 kk = order[0]
                 pc = predictive_check(g,g2,pool[len(inlist)],
-                                      c[edge_function_idx(kk)],
-                                      f[edge_function_idx(kk)][2],kk)
+                                      c[edge_function_idx(kk)],kk)
             else:
                 pc = set()
                 
             for n in tocheck:
                 if not checks_ok(key,n,g,g2): continue
-                mask = masker(g,key,n)
-                if not np.prod(mask):
-                    mask = adder(g,key,n)
-                    r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-                    if r and increment(r)==g2:
-                        s.add(g2num(r))
-                        if capsize and len(s)>capsize:
-                            raise ValueError('Too many elements')
-                    remover(g,key,n,mask)
-                else:
-                    r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
-                    if r and increment(r)==g2:
-                        s.add(g2num(r))
-                        if capsize and len(s)>capsize:
-                                raise ValueError('Too many elements')
-
+                masked = np.prod(masker(g,key,n))
+                if not masked: mask = adder(g,key,n)
+                r = nodesearch(g,g2,order, [n]+inlist, s, cds, pool, pc)
+                if r and increment(r)==g2:
+                    s.add(g2num(r))
+                    if capsize and len(s)>capsize:
+                        raise ValueError('Too many elements')
+                if not masked: remover(g,key,n,mask)
             order.insert(0,key)
 
         else:
