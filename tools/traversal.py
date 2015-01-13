@@ -893,23 +893,22 @@ def v2g22g1(g2, capsize=None):
                 s.add(g2num(g))
                 if capsize and len(s)>capsize:
                     raise ValueError('Too many elements')
-                return g            
+                return g
+            
             key = order.pop(0)
             if pc:
                 tocheck = [x for x in pc if x in cds[len(inlist)-1][inlist[0]]]
             else:
                 tocheck = cds[len(inlist)-1][inlist[0]]
-
-            adder, remover, masker = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]
-
             if len(inlist) < len(cds)-1:
                 kk = order[0]
                 pc = predictive_check(g,g2,pool[len(inlist)],
                                       c[edge_function_idx(kk)],kk)
             else:
                 pc = set()
-                
+
+            adder, remover, masker = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]
             for n in tocheck:
                 if not checks_ok(key,n,g,g2): continue
                 masked = np.prod(masker(g,key,n))
@@ -921,16 +920,16 @@ def v2g22g1(g2, capsize=None):
         elif increment(g)==g2:
             s.add(g2num(g))
             if capsize and len(s)>capsize:
-                raise ValueError('Too many elements')            
+                raise ValueError('Too many elements')
             return g
-        
+
     @memo2 # memoize the search
     def nodesearch0(g, g2, order, inlist, s, cds):
 
         if order:
             key = order.pop(0)
             tocheck = cds[len(inlist)-1][inlist[0]]
-            
+
             adder, remover, masker = f[edge_function_idx(key)]
             checks_ok = c[edge_function_idx(key)]
 
@@ -1008,8 +1007,8 @@ def conformanceDS(g2, gg, order):
                                          pool[x[0]], pool[x[1]], g2)
 
         pool[x[0]] = pool[x[0]].intersection(s_i1)
-        pool[x[1]] = pool[x[1]].intersection(s_i2)        
-        
+        pool[x[1]] = pool[x[1]].intersection(s_i2)
+
         d = del_empty(d)
         if not x[1] in CDS:
             CDS[x[1]] = {}
