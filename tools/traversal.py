@@ -981,9 +981,10 @@ def v2g22g1(g2, capsize=None):
 
     startTime = int(round(time.time() * 1000))
     gg = checkable(g2)
-    idx = np.argsort([len(gg[x]) for x in gg])
+    
+    idx = np.argsort([len(gg[x]) for x in gg.keys()])
     keys = [gg.keys()[i] for i in idx]
-    #keys = [k for k in gg]
+
     cds, order, idx = conformanceDS(g2, gg, keys)
     endTime = int(round(time.time() * 1000))
     print "precomputed in {:10} seconds".format(round((endTime-startTime)/1000.,3))
@@ -1011,10 +1012,10 @@ def unionpool(idx, cds):
 def conformanceDS(g2, gg, order):
     CDS = {}
     pool = {}
-    
+
     CDS[0] = set(gg[order[0]])
     pool = [set(gg[order[i]]) for i in range(len(order))]
-
+    
     for x in itertools.combinations(range(len(order)),2):
 
         d, s_i1, s_i2 = inorder_check2(order[x[0]], order[x[1]],
