@@ -7,7 +7,7 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 3 # number of randomized starts per graph
+INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
@@ -67,13 +67,14 @@ def fan_wrapper(fold,n=10,k=10):
         try:
             g = bfutils.ringmore(n,k)
             gdens = traversal.density(g)
-            #g2 = traversal.increment_u(g,g)
-            g2 = bfutils.undersample(g,2)
+            g2 = traversal.increment_u(g,g)
+            #g2 = bfutils.undersample(g,2)
             def inside_wrapper():
                 scipy.random.seed()
                 try:
                     startTime = int(round(time.time() * 1000))
                     s = traversal.v2g22g1(g2, capsize=CAPSIZE)
+                    #s = traversal.edge_backtrack2g1(g2, capsize=CAPSIZE)
                     endTime = int(round(time.time() * 1000))
                     print "{:2}: {:8} : {:4}  {:10} seconds".\
                         format(fold, round(gdens,3), len(s),
@@ -96,8 +97,8 @@ def fan_wrapper(fold,n=10,k=10):
     for p in pl: p.join()
     return r
 
-densities = {6: [0.2, 0.25, 0.3],
-             8: [0.3],#0.15, 0.2, 0.25, 0.3],
+densities = {6: [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6],
+             8: [0.15, 0.2, 0.25, 0.3],
              10:[0.1, 0.15, 0.2, 0.25, 0.3],
              15:[0.25],#0.1, 0.15, 0.2, 0.25, 0.3],
              20:[0.2],#2, 0.25, 0.3],
@@ -106,7 +107,7 @@ densities = {6: [0.2, 0.25, 0.3],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [8]:
+for nodes in [40]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -117,10 +118,10 @@ for nodes in [8]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_U333i_g3.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_new.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_U333_g3.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_new.zkl')
