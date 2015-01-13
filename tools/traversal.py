@@ -981,7 +981,9 @@ def v2g22g1(g2, capsize=None):
 
     startTime = int(round(time.time() * 1000))
     gg = checkable(g2)
-    keys = [k for k in gg]
+    idx = np.argsort([len(gg[x]) for x in gg])
+    keys = [gg.keys()[i] for i in idx]
+    #keys = [k for k in gg]
     cds, order, idx = conformanceDS(g2, gg, keys)
     endTime = int(round(time.time() * 1000))
     print "precomputed in {:10} seconds".format(round((endTime-startTime)/1000.,3))
@@ -991,7 +993,7 @@ def v2g22g1(g2, capsize=None):
 
     s = set()
     try:
-        nodesearch(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds, order, set())
+        nodesearch(g, g2, [keys[i] for i in idx], ['0'], s, cds, order, set())
         #nodesearch0(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
     except ValueError, e:
         print e
@@ -1009,6 +1011,7 @@ def unionpool(idx, cds):
 def conformanceDS(g2, gg, order):
     CDS = {}
     pool = {}
+    
     CDS[0] = set(gg[order[0]])
     pool = [set(gg[order[i]]) for i in range(len(order))]
 
