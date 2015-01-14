@@ -39,7 +39,7 @@ def dict2graph(D):
     c = 0
     for v in D:
         nodes.append(v)
-    idx = np.argsortc([int(v) for v in nodes])
+    idx = np.argsort([int(v) for v in nodes])
     nodes = [nodes[i] for i in idx]
     for v in nodes:
         indices[v] = c
