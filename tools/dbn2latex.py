@@ -4,7 +4,7 @@ import scipy
 import sys
 import os
 import igraph
-
+import numpy as np
 
 # local packages
 import zickle
@@ -39,7 +39,8 @@ def dict2graph(D):
     c = 0
     for v in D:
         nodes.append(v)
-    nodes.sort()
+    idx = np.argsortc([int(v) for v in nodes])
+    nodes = [nodes[i] for i in idx]
     for v in nodes:
         indices[v] = c
         c +=1
@@ -77,13 +78,17 @@ def matrix_end():
 
 def matrix_grid(G,s,mname='generic',w_gap=0.5, h_gap=0.5, type="obs",stl=''):
     matrix_start(mname=mname,w_gap=w_gap,h_gap=h_gap,stl=stl)
-    keylist = G.keys(); keylist.sort()
+    keylist = G.keys();
+    idx = np.argsort([int(v) for v in keylist])
+    keylist = [keylist[i] for i in idx]
     for v in keylist:
         print " ","& ".join(["\\node["+type+"]{"+v+"};" for i in range(1,s)])+"\\\\"
     matrix_end()
 
 def matrix_edges(G,s,mname='generic'):
-    nodes = G.keys(); nodes.sort()
+    nodes = G.keys()
+    idx = np.argsort([int(v) for v in nodes])
+    nodes = [nodes[i] for i in idx]    
     for v in nodes:
         idx1 = nodes.index(v)+1
         for u in G[v]:
@@ -125,7 +130,9 @@ def cdbnprint(G,mtype="obs",bend=5,curve=5,R=1):
     output = StringIO.StringIO()
     BE = set()
     n = len(G)
-    nodes = G.keys(); nodes.sort()
+    nodes = G.keys()
+    idx = np.argsort([int(v) for v in nodes])
+    nodes = [nodes[i] for i in idx]
 
     g = dict2graph(ecj.cloneBfree(G))
     paintSCC(g,colors)
