@@ -517,6 +517,13 @@ def maskapath(g,e,p):
         mask.append(p[i] in g[e[i+1]])
         mask.append(e[i+2] in g[p[i]])
     return mask
+def maskaVpath(g,e,p):
+    mask = []
+    mask.append(p[0] in g[e[0]])    
+    for i in range(1,len(p)-1):
+        mask.append(p[i] in g[p[i-1]])
+    mask.append(e[1] in g[p[-1]])      
+    return mask
 
 def add2edges(g,e,p):
     '''
@@ -614,6 +621,16 @@ def ok2addapath(e,p,g,g2):
     cleanedges(e,p,g,mask)
     return True
 
+def ok2addaVpath(e,p,g,g2):
+    mask = []
+    for i in range(len(p)):
+        if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
+            cleanedges(e,p,g,mask)
+            return False
+        mask.append(add2edges(g,(e[i+1],e[i+2]),p[i]))
+    cleanedges(e,p,g,mask)
+    return True
+
 def ok2addapath1(e,p,g,g2):
     for i in range(len(p)):
         if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
@@ -621,6 +638,7 @@ def ok2addapath1(e,p,g,g2):
     return True
 
 def addapath(g,v,b):
+    print v,b
     mask = maskapath(g,v,b)
     s = set([(0,1)])
     for i in range(len(b)):
@@ -805,6 +823,69 @@ def g22g1(g2, capsize=None):
             if not isedgesubset(increment(g), g2):
                 single_cache[(n,e)] = False
             del2edges(g,e,n,mask)
+
+    s = set()
+    try:
+        nodesearch(g,g2,edges,s)
+    except ValueError:
+        s.add(0)
+    return s
+
+def backtrack_more(g2, rate=1, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    single_cache = {}
+    if rate == 1:
+        ln = [n for n in g2]
+    else:
+        ln = [x for x in itertools.permutations(g2.keys(),rate)] + [(n,n) for n in g2]
+
+    @memo # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            if increment(g) == g2:
+                s.add(g2num(g))
+                if capsize and len(s)>capsize:
+                    raise ValueError('Too many elements')
+                return g
+            e = edges[0]
+            for n in ln:
+
+                if (n,e) in single_cache: continue
+                if not ok2addapath(e,n,g,g2): continue
+
+                mask = addapath(g,e,n)
+                r = nodesearch(g,g2,edges[1:],s)
+                if r and increment(r)==g2:
+                    s.add(g2num(r))
+                    if capsize and len(s)>capsize:
+                        raise ValueError('Too many elements in eqclass')
+                del2edges(g,e,n,mask)
+
+        elif increment(g)==g2:
+            s.add(g2num(g))
+            if capsize and len(s)>capsize:
+                raise ValueError('Too many elements in eqclass')
+            return g
+
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    edges = edgelist(g2)
+    random.shuffle(edges)
+    g = cloneempty(g2)
+
+    for e in edges:
+        for n in ln:
+
+            mask = addapath(g,e,n)
+            if not isedgesubset(increment(g), g2):
+                single_cache[(n,e)] = False
+            delapath(g,e,n,mask)
 
     s = set()
     try:
