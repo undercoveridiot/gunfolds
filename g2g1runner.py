@@ -11,7 +11,7 @@ INPNUM = 3 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=60
+    PNUM=5
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=12
@@ -90,18 +90,18 @@ def fan_wrapper(fold,n=10,k=10):
         except MemoryError:
             print 'memory error... retrying'
             for p in pl:
-		p.terminate()
-		p.join()
+                p.terminate()
+                p.join()
             continue
         break
     for p in pl: p.join()
     return r
 
-densities = {6: [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55],
+densities = {6: [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6],
              8: [0.15, 0.2, 0.25, 0.3],
              10:[0.1, 0.15, 0.2, 0.25, 0.3],
              15:[0.25],#0.1, 0.15, 0.2, 0.25, 0.3],
-             20:[0.1, 0.15, 0.2, 0.25, 0.3],
+             20:[0.2],# 0.15, 0.2, 0.25, 0.3],
              25:[0.1],
              30:[0.1],
              35:[0.1],

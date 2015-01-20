@@ -203,7 +203,7 @@ def uniqseq(l):
     s = []
     ltr = map(lambda *a: list(a), *l)
     for i in range(len(ltr)):
-        s.append(len(unique(lts[i])))
+        s.append(len(np.unique(ltr[i])))
         
 def loadgraphs(fname):
     g = zkl.load(fname)
