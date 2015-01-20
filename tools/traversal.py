@@ -1,6 +1,6 @@
 import sys
 sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
-from bfutils import increment_u, g2num, num2CG
+from bfutils import increment_u, g2num, num2CG, undersample
 from functools import wraps
 from scipy.misc import comb
 import numpy as np
@@ -517,6 +517,12 @@ def maskapath(g,e,p):
         mask.append(p[i] in g[e[i+1]])
         mask.append(e[i+2] in g[p[i]])
     return mask
+def maskaVpath(g,e,p):
+    mask = []
+    mask.extend([p[0] in g[e[0]], e[1] in g[p[-1]]])
+    for i in range(1,len(p)):
+        mask.append(p[i] in g[p[i-1]])
+    return mask
 
 def add2edges(g,e,p):
     '''
@@ -603,6 +609,16 @@ def cleanedges(e,p,g, mask):
         if not m[0]: g[e[i+1]].pop(p[i], None)
         if not m[1]: g[p[i]].pop(e[i+2], None)
         i += 1
+def cleanVedges(g, e,p, mask):
+
+    if mask:
+        if not mask[0]: g[e[0]].pop(p[0], None)
+        if not mask[1]: g[p[-1]].pop(e[1], None)
+
+        i = 0    
+        for m in mask[2:]:
+            if not m: g[p[i]].pop(p[i+1], None)
+            i += 1
 
 def ok2addapath(e,p,g,g2):
     mask = []
@@ -614,6 +630,20 @@ def ok2addapath(e,p,g,g2):
     cleanedges(e,p,g,mask)
     return True
 
+def ok2addaVpath(e,p,g,g2):
+    mask = addaVpath(g,e,p)
+    if not isedgesubset(undersample(g,2), g2):
+        cleanVedges(g,e,p,mask)
+        return False
+    #l = [e[0]] + list(p) + [e[1]]
+    #for i in range(len(l)-2):
+        #if not edge_increment_ok(l[i],l[i+1],l[i+2],g,g2):
+        #    cleanVedges(g,e,p,mask)
+        #    return False
+        #mask.extend(add2edges(g,(l[i],l[i+2]),l[i+1]))
+    cleanVedges(g,e,p,mask)
+    return True
+
 def ok2addapath1(e,p,g,g2):
     for i in range(len(p)):
         if not edge_increment_ok(e[i+1],p[i],e[i+2],g,g2):
@@ -621,12 +651,25 @@ def ok2addapath1(e,p,g,g2):
     return True
 
 def addapath(g,v,b):
+
     mask = maskapath(g,v,b)
     s = set([(0,1)])
     for i in range(len(b)):
         g[v[i+1]][b[i]] = g[b[i]][v[i+2]] = s
 
     return mask
+
+def addaVpath(g,v,b):
+    mask = maskaVpath(g,v,b)
+
+    s = set([(0,1)])
+    l = [v[0]] + list(b) + [v[1]]
+    for i in range(len(l)-1):
+        g[l[i]][l[i+1]] = s
+    return mask
+
+def delaVpath(g, v, b, mask):
+    cleanVedges(g, v, b, mask)
 
 def delapath(g, v, b, mask):
     for i in range(len(b)):
@@ -780,10 +823,6 @@ def g22g1(g2, capsize=None):
 
                 mask = add2edges(g,e,n)
                 r = nodesearch(g,g2,edges[1:],s)
-                if r and increment(r)==g2:
-                    s.add(g2num(r))
-                    if capsize and len(s)>capsize:
-                        raise ValueError('Too many elements in eqclass')
                 del2edges(g,e,n,mask)
 
         elif increment(g)==g2:
@@ -805,6 +844,65 @@ def g22g1(g2, capsize=None):
             if not isedgesubset(increment(g), g2):
                 single_cache[(n,e)] = False
             del2edges(g,e,n,mask)
+
+    s = set()
+    try:
+        nodesearch(g,g2,edges,s)
+    except ValueError:
+        s.add(0)
+    return s
+
+def backtrack_more(g2, rate=1, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    single_cache = {}
+    if rate == 1:
+        ln = [n for n in g2]
+    else:
+        ln = [x for x in itertools.permutations(g2.keys(),rate)] + [(n,n) for n in g2]
+
+    @memo # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            if undersample(g,rate) == g2:
+                s.add(g2num(g))
+                if capsize and len(s)>capsize:
+                    raise ValueError('Too many elements')
+                return g
+            e = edges[0]
+            for n in ln:
+
+                if (n,e) in single_cache: continue
+                if not ok2addaVpath(e,n,g,g2): continue
+
+                mask = addaVpath(g,e,n)
+                r = nodesearch(g,g2,edges[1:],s)
+                delaVpath(g,e,n,mask)
+
+        elif undersample(g,rate)==g2:
+            s.add(g2num(g))
+            if capsize and len(s)>capsize:
+                raise ValueError('Too many elements in eqclass')
+            return g
+
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    edges = edgelist(g2)
+    random.shuffle(edges)
+    g = cloneempty(g2)
+
+    for e in edges:
+        for n in ln:
+
+            mask = addaVpath(g,e,n)
+            if not isedgesubset(undersample(g,rate), g2):
+                single_cache[(n,e)] = False
+            delaVpath(g,e,n,mask)
 
     s = set()
     try:
@@ -917,7 +1015,7 @@ def v2g22g1(g2, capsize=None):
 
             adder, remover, masker = f[edge_function_idx(key)]
             checks_ok = c[edge_function_idx(key)]
-            
+
             for n in tocheck:
                 if not checks_ok(key,n,g,g2): continue
                 masked = np.prod(masker(g,key,n))
@@ -981,7 +1079,7 @@ def v2g22g1(g2, capsize=None):
 
     startTime = int(round(time.time() * 1000))
     gg = checkable(g2)
-    
+
     idx = np.argsort([len(gg[x]) for x in gg.keys()])
     keys = [gg.keys()[i] for i in idx]
 
@@ -1015,7 +1113,7 @@ def conformanceDS(g2, gg, order):
 
     CDS[0] = set(gg[order[0]])
     pool = [set(gg[order[i]]) for i in range(len(order))]
-    
+
     for x in itertools.combinations(range(len(order)),2):
 
         d, s_i1, s_i2 = inorder_check2(order[x[0]], order[x[1]],
@@ -1035,7 +1133,7 @@ def conformanceDS(g2, gg, order):
         for x in random.sample(itr3, min(10,np.int(comb(len(order),3)))):
             s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
                                 pool[x[0]], pool[x[1]], pool[x[2]], g2)
-            
+
             pool[x[0]] = pool[x[0]].intersection(s1)
             pool[x[1]] = pool[x[1]].intersection(s2)
             pool[x[2]] = pool[x[2]].intersection(s3)
@@ -1123,7 +1221,7 @@ def edge_increment_ok(s,m,e,g,g2):
     # bidirected edges
     for u in g[s]:
         if u!=m and not (m in g2[u] and (2,0) in g2[u][m]):return False
-    
+
     # directed edges
     if s == e:
         if not (m in g2[m] and (0,1) in g2[m][m]):return False
