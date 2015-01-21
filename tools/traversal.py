@@ -403,22 +403,24 @@ def checkable(g2):
 
     return d
 
-def inorder_check2(e1, e2, j1, j2, g2):
+def inorder_check2(e1, e2, j1, j2, g2, f=[], c=[]):
     g = cloneempty(g2) # the graph to be used for checking
 
-    f = [(add2edges, del2edges),
-         (addavedge,delavedge),
-         (addacedge,delacedge),
-         (addaAedge,delaAedge),
-         (addapath,delapath)]
+    if f==[]:
+        f = [(add2edges,del2edges,mask2edges),
+             (addavedge,delavedge,maskavedge),
+             (addacedge,delacedge,maskaCedge),
+             (addaAedge,delaAedge,maskaAedge),
+             (addapath,delapath,maskapath)]
+        
+    if c==[]:
+        c = [ok2add2edges,
+             ok2addavedge,
+             ok2addacedge,
+             ok2addaAedge,
+             ok2addapath]
 
-    c = [ok2add2edges,
-         ok2addavedge,
-         ok2addacedge,
-         ok2addaAedge,
-         ok2addapath]
-
-    adder, remover = f[edge_function_idx(e1)]
+    adder, remover, masker = f[edge_function_idx(e1)]
     checks_ok = c[edge_function_idx(e2)]
 
     d = {}
@@ -435,22 +437,23 @@ def inorder_check2(e1, e2, j1, j2, g2):
         if d[c1]: s1.add(c1)
     return d,s1,s2
 
-def check3(e1, e2, e3, j1, j2, j3, g2):
+def check3(e1, e2, e3, j1, j2, j3, g2, f=[], c=[]):
     g = cloneempty(g2) # the graph to be used for checking
-    f = [(add2edges, del2edges),
-         (addavedge,delavedge),
-         (addacedge,delacedge),
-         (addaAedge,delaAedge),
-         (addapath,delapath)]
+    if f==[]:
+        f = [(add2edges,del2edges,mask2edges),
+             (addavedge,delavedge,maskavedge),
+             (addacedge,delacedge,maskaCedge),
+             (addaAedge,delaAedge,maskaAedge),
+             (addapath,delapath,maskapath)]
+    if c==[]:
+        c = [ok2add2edges,
+             ok2addavedge,
+             ok2addacedge,
+             ok2addaAedge,
+             ok2addapath]
 
-    c = [ok2add2edges,
-         ok2addavedge,
-         ok2addacedge,
-         ok2addaAedge,
-         ok2addapath]
-
-    adder1, remover1 = f[edge_function_idx(e1)]
-    adder2, remover2 = f[edge_function_idx(e2)]
+    adder1, remover1, masker1 = f[edge_function_idx(e1)]
+    adder2, remover2, masker2 = f[edge_function_idx(e2)]
 
     checks_ok2 = c[edge_function_idx(e2)]
     checks_ok3 = c[edge_function_idx(e3)]
@@ -1099,6 +1102,87 @@ def v2g22g1(g2, capsize=None):
         s.add(0)
     return s
 
+def backtrack_more2(g2, rate=2, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    f = [(addaVpath,delaVpath,maskaVpath)]
+    c = [ok2addaVpath]
+
+    def predictive_check(g,g2,pool,checks_ok, key):
+        s = set()
+        for u in pool:
+            if not checks_ok(key,u,g,g2): continue
+            s.add(u)
+        return s
+
+    @memo2 # memoize the search
+    def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
+        if order:
+            if undersample(g,rate) == g2:
+                s.add(g2num(g))
+                if capsize and len(s)>capsize:
+                    raise ValueError('Too many elements')
+                return g
+
+            key = order[0]
+            if pc:
+                tocheck = [x for x in pc if x in cds[len(inlist)-1][inlist[0]]]
+            else:
+                tocheck = cds[len(inlist)-1][inlist[0]]
+
+            if len(order) > 1:
+                kk = order[1]
+                pc = predictive_check(g,g2,pool[len(inlist)],
+                                      c[edge_function_idx(kk)],kk)
+            else:
+                pc = set()
+
+            adder, remover, masker = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]
+
+            for n in tocheck:
+                if not checks_ok(key,n,g,g2): continue
+                masked = np.prod(masker(g,key,n))
+                if masked:
+                    nodesearch(g,g2,order[1:], [n]+inlist, s, cds, pool, pc)
+                else:
+                    mask = adder(g,key,n)
+                    nodesearch(g,g2,order[1:], [n]+inlist, s, cds, pool, pc)
+                    remover(g,key,n,mask)
+
+        elif undersample(g,rate)==g2:
+            s.add(g2num(g))
+            if capsize and len(s)>capsize:
+                raise ValueError('Too many elements')
+            return g
+
+    # find all directed g1's not conflicting with g2
+
+    startTime = int(round(time.time() * 1000))
+    ln = [x for x in itertools.permutations(g2.keys(),rate)] + \
+         [(n,n) for n in g2]
+    gg = {x:ln for x in edgelist(g2)}
+    keys = gg.keys()
+    cds, order, idx = conformanceDS(g2, gg, gg.keys(), f=f, c=c)
+    endTime = int(round(time.time() * 1000))
+    print "precomputed in {:10} seconds".format(round((endTime-startTime)/1000.,3))
+    if 0 in [len(x) for x in order]:
+        return set()
+    g = cloneempty(g2)
+
+    s = set()
+    try:
+        nodesearch(g, g2, [keys[i] for i in idx], ['0'], s, cds, order, set())
+    except ValueError, e:
+        print e
+        s.add(0)
+    return s
+
 
 def unionpool(idx, cds):
     s = set()
@@ -1107,7 +1191,7 @@ def unionpool(idx, cds):
             s = s.union(cds[idx][u][v])
     return s
 
-def conformanceDS(g2, gg, order):
+def conformanceDS(g2, gg, order, f=[], c=[]):
     CDS = {}
     pool = {}
 
@@ -1117,7 +1201,8 @@ def conformanceDS(g2, gg, order):
     for x in itertools.combinations(range(len(order)),2):
 
         d, s_i1, s_i2 = inorder_check2(order[x[0]], order[x[1]],
-                                         pool[x[0]], pool[x[1]], g2)
+                                       pool[x[0]], pool[x[1]],
+                                       g2, f=f, c=c)
 
         pool[x[0]] = pool[x[0]].intersection(s_i1)
         pool[x[1]] = pool[x[1]].intersection(s_i2)
@@ -1132,7 +1217,8 @@ def conformanceDS(g2, gg, order):
         itr3 = [x for x in itertools.combinations(range(len(order)),3)]
         for x in random.sample(itr3, min(10,np.int(comb(len(order),3)))):
             s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
-                                pool[x[0]], pool[x[1]], pool[x[2]], g2)
+                                pool[x[0]], pool[x[1]], pool[x[2]],
+                                g2, f=f, c=c)
 
             pool[x[0]] = pool[x[0]].intersection(s1)
             pool[x[1]] = pool[x[1]].intersection(s2)
