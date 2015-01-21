@@ -412,7 +412,7 @@ def inorder_check2(e1, e2, j1, j2, g2, f=[], c=[]):
              (addacedge,delacedge,maskaCedge),
              (addaAedge,delaAedge,maskaAedge),
              (addapath,delapath,maskapath)]
-        
+
     if c==[]:
         c = [ok2add2edges,
              ok2addavedge,
@@ -618,7 +618,7 @@ def cleanVedges(g, e,p, mask):
         if not mask[0]: g[e[0]].pop(p[0], None)
         if not mask[1]: g[p[-1]].pop(e[1], None)
 
-        i = 0    
+        i = 0
         for m in mask[2:]:
             if not m: g[p[i]].pop(p[i+1], None)
             i += 1
