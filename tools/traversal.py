@@ -1,6 +1,6 @@
 import sys
 sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
-from bfutils import increment_u, g2num, num2CG, undersample
+from bfutils import increment_u, g2num, num2CG, undersample, complement
 from functools import wraps
 from scipy.misc import comb
 import numpy as np
@@ -412,7 +412,7 @@ def inorder_check2(e1, e2, j1, j2, g2, f=[], c=[]):
              (addacedge,delacedge,maskaCedge),
              (addaAedge,delaAedge,maskaAedge),
              (addapath,delapath,maskapath)]
-        
+
     if c==[]:
         c = [ok2add2edges,
              ok2addavedge,
@@ -502,8 +502,35 @@ def inorder_checks(g2, gg):
 
 def cloneempty(g): return {n:{} for n in g} # return a graph with no edges
 
+def ok2addanedge1(s, e, g, g2,rate=1):
+    """
+    s - start,
+    e - end
+    """
+    # directed edges
+    for u in g:
+        if s in g[u] and not (e in g2[u] and (0,1) in g2[u][e]):
+            return False
+    for u in g[e]: # s -> Ch(e)
+        if not (u in g2[s] and (0,1) in g2[s][u]):return False
+    # bidirected edges
+    for u in g[s]: # e <-> Ch(s)
+        if u!=e and not (u in g2[e] and (2,0) in g2[e][u]):return False
+    return True
+
+def ok2addanedge2(s, e, g, g2, rate=1):
+    mask = addanedge(g,(s,e))
+    value = undersample(g,rate) == g2
+    delanedge(g,(s,e),mask)
+    return value
+    
+def ok2addanedge(s, e, g, g2, rate=1):
+    f = [ok2addanedge1, ok2addanedge2]
+    return f[min([1,rate-1])](s,e,g,g2,rate=rate)
+
 def ok2add2edges(e,p,g,g2): return edge_increment_ok(e[0],p,e[1],g,g2)
 
+def maskanedge(g,e): return [e[1] in g[e[0]]]
 def mask2edges(g,e,p): return [p in g[e[0]], e[1] in g[p]]
 def maskavedge(g,e,p):
     return [p[0] in g[e[0]], p[1] in g[e[0]],
@@ -526,6 +553,20 @@ def maskaVpath(g,e,p):
     for i in range(1,len(p)):
         mask.append(p[i] in g[p[i-1]])
     return mask
+
+def addanedge(g,e):
+    '''
+    add edge e[0] -> e[1] to g
+    '''
+    mask = maskanedge(g,e)
+    g[e[0]][e[1]] =  set([(0,1)])
+    return mask
+def delanedge(g,e,mask):
+    '''
+    delete edge e[0] -> e[1] from g if it was not there before
+    '''
+    if not mask[0]: g[e[0]].pop(e[1], None)
+
 
 def add2edges(g,e,p):
     '''
@@ -618,7 +659,7 @@ def cleanVedges(g, e,p, mask):
         if not mask[0]: g[e[0]].pop(p[0], None)
         if not mask[1]: g[p[-1]].pop(e[1], None)
 
-        i = 0    
+        i = 0
         for m in mask[2:]:
             if not m: g[p[i]].pop(p[i+1], None)
             i += 1
@@ -752,6 +793,38 @@ def memo2(func):
         return cache[s]               # Return the cached solution
     return wrap
 
+
+def supergraphs_in_eq(g, g2, rate=1):
+    '''Find  all supergraphs of g  that are also in  the same equivalence
+    class with respect to g2 and the rate.
+    Currently works only for undersample by 1
+    '''
+    if undersample(g,rate) != g2:
+        raise ValueError('g is not in equivalence class of g2')
+
+    s = set()
+
+    def addnodes(g,g2,edges):
+        if edges:
+            masks  = []
+            for e in edges:
+                if ok2addanedge(e[0],e[1],g,g2,rate=rate):
+                    masks.append(True)
+                else:
+                    masks.append(False)
+            nedges = [edges[i] for i in range(len(edges)) if masks[i]]
+            n = len(nedges)
+            if n:
+                for i in range(n):
+                    mask = addanedge(g,nedges[i])
+                    s.add(g2num(g))
+                    addnodes(g,g2,nedges[:i]+nedges[i+1:])
+                    delanedge(g,nedges[i],mask)
+
+    edges = edgelist(complement(g))
+    addnodes(g,g2,edges)
+    return s
+    
 def edge_backtrack2g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
@@ -1001,6 +1074,7 @@ def v2g22g1(g2, capsize=None):
                 s.add(g2num(g))
                 if capsize and len(s)>capsize:
                     raise ValueError('Too many elements')
+                s.update(supergraphs_in_eq(g, g2))
                 return g
 
             key = order[0]
@@ -1127,6 +1201,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
                 s.add(g2num(g))
                 if capsize and len(s)>capsize:
                     raise ValueError('Too many elements')
+                s.update(supergraphs_in_eq(g, g2, rate=rate))                
                 return g
 
             key = order[0]
