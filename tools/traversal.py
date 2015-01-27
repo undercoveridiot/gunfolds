@@ -804,7 +804,7 @@ def memo2(func):
         return cache[s]               # Return the cached solution
     return wrap
 
-def eqsearch(g, g2, rate=1):
+def eqsearch(g2, rate=1):
     '''Find  all  g  that are also in  the equivalence
     class with respect to g2 and the rate.
     '''
@@ -829,6 +829,7 @@ def eqsearch(g, g2, rate=1):
                     addnodes(g,g2,nedges[:i]+nedges[i+1:])
                     delanedge(g,nedges[i],mask)
 
+    g = cloneempty(g2)
     edges = edgelist(complement(g))
     addnodes(g,g2,edges)
     return s
