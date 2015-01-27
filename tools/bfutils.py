@@ -4,7 +4,7 @@ from itertools import permutations
 from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
 import numpy as np
-import ipdb
+#import ipdb
 from comparison import nx2graph
 import networkx as nx
 #local
