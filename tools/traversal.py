@@ -5,7 +5,7 @@ from functools import wraps
 from scipy.misc import comb
 import numpy as np
 import random
-import ipdb
+#import ipdb
 import ecj
 import itertools, copy
 import time
@@ -523,10 +523,21 @@ def ok2addanedge2(s, e, g, g2, rate=1):
     value = undersample(g,rate) == g2
     delanedge(g,(s,e),mask)
     return value
+
+def ok2addanedge_sub(s, e, g, g2, rate=1):
+    mask = addanedge(g,(s,e))
+    value = issubset(undersample(g,rate),g2)
+    delanedge(g,(s,e),mask)
+    return value
     
 def ok2addanedge(s, e, g, g2, rate=1):
     f = [ok2addanedge1, ok2addanedge2]
     return f[min([1,rate-1])](s,e,g,g2,rate=rate)
+    
+def ok2addanedge_(s, e, g, g2, rate=1):
+    f = [ok2addanedge1, ok2addanedge_sub]
+    return f[min([1,rate-1])](s,e,g,g2,rate=rate)
+
 
 def ok2add2edges(e,p,g,g2): return edge_increment_ok(e[0],p,e[1],g,g2)
 
@@ -792,6 +803,35 @@ def memo2(func):
             cache[s] = func(*args)    # Compute & cache the solution
         return cache[s]               # Return the cached solution
     return wrap
+
+def eqsearch(g, g2, rate=1):
+    '''Find  all  g  that are also in  the equivalence
+    class with respect to g2 and the rate.
+    '''
+
+    s = set()
+
+    def addnodes(g,g2,edges):
+        if edges:
+            masks  = []
+            for e in edges:
+                if ok2addanedge1(e[0],e[1],g,g2,rate=rate):
+                    masks.append(True)
+                else:
+                    masks.append(False)
+            nedges = [edges[i] for i in range(len(edges)) if masks[i]]
+            n = len(nedges)
+            if n:
+                for i in range(n):
+                    mask = addanedge(g,nedges[i])
+                    if undersample(g,rate) == g2:
+                        s.add(g2num(g))
+                    addnodes(g,g2,nedges[:i]+nedges[i+1:])
+                    delanedge(g,nedges[i],mask)
+
+    edges = edgelist(complement(g))
+    addnodes(g,g2,edges)
+    return s
 
 
 def supergraphs_in_eq(g, g2, rate=1):
@@ -1074,7 +1114,7 @@ def v2g22g1(g2, capsize=None):
                 s.add(g2num(g))
                 if capsize and len(s)>capsize:
                     raise ValueError('Too many elements')
-                s.update(supergraphs_in_eq(g, g2))
+                #s.update(supergraphs_in_eq(g, g2))
                 return g
 
             key = order[0]
