@@ -81,7 +81,8 @@ def fan_wrapper(fold,n=10,k=10):
                                round((endTime-startTime)/1000.,3))
                     output.put({'gt':g,'eq':s,'ms':endTime-startTime})
                 except MemoryError:
-                    print 'memory error...'            
+                    print 'memory error...'
+		    raise            
             pl = [Process(target=inside_wrapper) for x in range(INPNUM)]
             for e in pl: e.start()
             while True:
@@ -109,7 +110,7 @@ densities = {6: [0.2, 0.25, 0.3, 0.35],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [15]:
+for nodes in [40]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
