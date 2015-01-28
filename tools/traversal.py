@@ -526,14 +526,14 @@ def ok2addanedge2(s, e, g, g2, rate=1):
 
 def ok2addanedge_sub(s, e, g, g2, rate=1):
     mask = addanedge(g,(s,e))
-    value = issubset(undersample(g,rate),g2)
+    value = isedgesubset(undersample(g,rate),g2)
     delanedge(g,(s,e),mask)
     return value
-    
+
 def ok2addanedge(s, e, g, g2, rate=1):
     f = [ok2addanedge1, ok2addanedge2]
     return f[min([1,rate-1])](s,e,g,g2,rate=rate)
-    
+
 def ok2addanedge_(s, e, g, g2, rate=1):
     f = [ok2addanedge1, ok2addanedge_sub]
     return f[min([1,rate-1])](s,e,g,g2,rate=rate)
@@ -794,6 +794,16 @@ def memo(func):
         return cache[s]               # Return the cached solution
     return wrap
 
+def memo1(func):
+    cache = {}                        # Stored subproblem solutions
+    @wraps(func)                      # Make wrap look like func
+    def wrap(*args):                  # The memoized wrapper
+        s = gsig(args[0])             # Signature: g
+        if s not in cache:            # Not already computed?
+            cache[s] = func(*args)    # Compute & cache the solution
+        return cache[s]               # Return the cached solution
+    return wrap
+
 def memo2(func):
     cache = {}                        # Stored subproblem solutions
     @wraps(func)                      # Make wrap look like func
@@ -801,7 +811,7 @@ def memo2(func):
         s = signature(args[0],args[2])# Signature: g and edges
         if s not in cache:            # Not already computed?
             cache[s] = func(*args)    # Compute & cache the solution
-        return cache[s]               # Return the cached solution
+        return set()#cache[s]               # Return the cached solution
     return wrap
 
 def eqsearch(g2, rate=1):
@@ -810,12 +820,14 @@ def eqsearch(g2, rate=1):
     '''
 
     s = set()
+    noop = set()
 
+    @memo1
     def addnodes(g,g2,edges):
         if edges:
             masks  = []
             for e in edges:
-                if ok2addanedge1(e[0],e[1],g,g2,rate=rate):
+                if ok2addanedge_(e[0],e[1],g,g2,rate=rate):
                     masks.append(True)
                 else:
                     masks.append(False)
@@ -824,10 +836,15 @@ def eqsearch(g2, rate=1):
             if n:
                 for i in range(n):
                     mask = addanedge(g,nedges[i])
-                    if undersample(g,rate) == g2:
-                        s.add(g2num(g))
+                    if undersample(g,rate) == g2: s.add(g2num(g))
                     addnodes(g,g2,nedges[:i]+nedges[i+1:])
                     delanedge(g,nedges[i],mask)
+                return s
+            else:
+                return noop
+        else:
+            return noop
+
 
     g = cloneempty(g2)
     edges = edgelist(complement(g))
@@ -865,7 +882,7 @@ def supergraphs_in_eq(g, g2, rate=1):
     edges = edgelist(complement(g))
     addnodes(g,g2,edges)
     return s
-    
+
 def edge_backtrack2g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
@@ -1242,7 +1259,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
                 s.add(g2num(g))
                 if capsize and len(s)>capsize:
                     raise ValueError('Too many elements')
-                s.update(supergraphs_in_eq(g, g2, rate=rate))                
+                s.update(supergraphs_in_eq(g, g2, rate=rate))
                 return g
 
             key = order[0]
