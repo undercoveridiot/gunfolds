@@ -182,3 +182,29 @@ def ringarcs(g,n):
     return g
 def ringmore(n,m):
     return ringarcs(ring(n),m)
+
+
+# Justin's ternary representation: 1 = directed edge; 2 = bidirected; 3 = both
+def justin2graph(g):
+    r = {}
+    d = {1: set([(0,1)]),
+         2: set([(2,0)]),
+         3: set([(0,1),(2,0)]) }
+    for head in g:
+        r[head] = {}
+        for tail in g[head]:
+            r[head][tail] = d[g[head][tail]]
+    return r
+
+def graph2justin(g):
+    r = {}
+    for head in g:
+        r[head] = {}
+        for tail in g[head]:
+            if g[head][tail] == set([(0,1)]):
+                r[head][tail] = 1
+            elif g[head][tail] == set([(2,0)]):
+                r[head][tail] = 2
+            elif g[head][tail] == set([(0,1),(2,0)]):
+                r[head][tail] = 3
+    return r
