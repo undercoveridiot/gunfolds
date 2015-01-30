@@ -4,6 +4,8 @@ sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
 
 import ecj, bfutils
 import random as std_random
+from numpy.random import randint
+import numpy as np
 import scipy
 import networkx as nx
 import igraph
@@ -165,7 +167,7 @@ def addAring(g):
     else:
         g[str(len(g))]['1'] = set([(0,1)])    
 
-        def upairs(n,k):
+def upairs(n,k):
     '''
     n unique nonsequential pairs
     '''
