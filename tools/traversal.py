@@ -1,6 +1,7 @@
-import sys
-sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
-from bfutils import increment_u, g2num, num2CG, undersample, complement
+import sys,os
+sys.path.append(os.path.expanduser('~/splis/soft/src/dev/craft/gunfolds/tools/'))
+from graphkit import complement
+from bfutils import increment_u, g2num, num2CG, undersample
 from functools import wraps
 from scipy.misc import comb
 import numpy as np
