@@ -10,7 +10,6 @@ from progressbar import ProgressBar, Percentage, \
 from scipy import linalg, optimize
 import numpy as np
 import scipy
-from matplotlib.mlab import amap
 
 def symchol(M): # symbolic Cholesky
     B = SparseMatrix(M)
@@ -141,6 +140,8 @@ def transitionMarix2(cg, minstrength=0.1):
         A[edges] = sampleWeights(edges[0].shape[0], minstrength=minstrength)
         c += 1
         l = linalg.eig(A)[0]
+        if c>pbar.maxval:
+            raise ValueError
         pbar.update(c)
     pbar.finish()
     return A
@@ -162,7 +163,7 @@ def getAgraph(n, mp=2, st=0.5):
         try:
             A = transitionMarix2(G, minstrength=st)
             keeptrying = False
-        except ValueError:
+        except ValueError as e:
             print "!!! Unable to find strong links for a stable matrix !!!"
             print "*** trying a different graph"
     return {'graph':      G,
@@ -250,6 +251,11 @@ def data2AB(data,x0=None):
     A,B = x2M(o[0], np.double(A), np.double(B), a_idx, b_idx)
     B = B+B.T
     return  A,B
+
+def amap(f, a):
+     a = a.reshape(-1)
+     for i, v in enumerate(a):
+         a[i] = f(v)
 
 def AB2intAB(A,B, th=0.07):
     A[amap(lambda x: abs(x) > th, A)] = 1
