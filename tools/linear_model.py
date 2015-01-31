@@ -1,5 +1,5 @@
 import sys,os
-TOOLSPATH='~/splis/soft/src/dev/craft/gunfolds/tools/'
+TOOLSPATH='~/soft/src/dev/craft/gunfolds/tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
 import ecj, bfutils
@@ -10,7 +10,6 @@ from progressbar import ProgressBar, Percentage, \
 from scipy import linalg, optimize
 import numpy as np
 import scipy
-from statsmodels.tsa.api import VAR, SVAR
 from matplotlib.mlab import amap
 
 def symchol(M): # symbolic Cholesky
@@ -242,7 +241,7 @@ def data2AB(data,x0=None):
         s = x0.shape
         x = x0
     except AttributeError:
-        x = scipy.randn(K)
+        x = scipy.rand(K)
     o = optimize.fmin_bfgs(nllf2, x,
                            args=(np.double(A), np.double(B),
                                  YY,XX,YX,T,a_idx, b_idx),
