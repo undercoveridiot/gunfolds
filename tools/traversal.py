@@ -5,7 +5,7 @@ import numpy as np
 import itertools, copy, time
 import random
 import sys,os
-TOOLSPATH='~/splis/soft/src/dev/craft/gunfolds/tools/'
+TOOLSPATH='~/soft/src/dev/craft/gunfolds/tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
 # local packages
