@@ -1,5 +1,6 @@
-import sys
-sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
+import sys,os
+TOOLSPATH='~/splis/soft/src/dev/craft/gunfolds/tools/'
+sys.path.append(os.path.expanduser(TOOLSPATH))
 
 import ecj, bfutils
 import graphkit as gk
