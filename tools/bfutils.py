@@ -5,12 +5,11 @@ from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
 import numpy as np
 #import ipdb
-from comparison import nx2graph
 import networkx as nx
 #local
 import ecj
 import zickle as zkl
-from comparison import num2CG
+from comparison import num2CG, nx2graph
 
 def directed_inc(G,D):
     G_un = {}
@@ -39,6 +38,34 @@ def bidirected_inc(G,D):
             else:
                 G[pair[0]][pair[1]] = set([(2,0)])
     return G
+def increment(g):
+    '''
+    undersample g by 2
+    only works for g1 to g2 directed
+    '''
+    r = {n:{} for n in g}
+
+    for n in g:
+        for h in g[n]:
+            for e in g[h]:
+                if not e in r[n]:
+                    r[n][e] = set([(0,1)])
+
+    for n in g:
+        for pair in itertools.combinations(g[n],2):
+
+            if pair[1] in r[pair[0]]:
+                r[pair[0]][pair[1]].add((2,0))
+            else:
+                r[pair[0]][pair[1]] = set([(2,0)])
+
+            if pair[0] in r[pair[1]]:
+                r[pair[1]][pair[0]].add((2,0))
+            else:
+                r[pair[1]][pair[0]] = set([(2,0)])
+
+    return r
+
 def increment_u(G_star, G_u):
     # directed edges
     G_un = directed_inc(G_star,G_u)
@@ -274,45 +301,6 @@ def ringmore(n,m):
 # talking about extra edges on top of the ring
 def dens2edgenum(d, n=10): return int(d*n**2)-n
 def edgenum2dens(e, n=10): return np.double(e+n)/n**2
-
-import traversal
-def checker(n,ee):
-    g = ringmore(n,ee)
-    g2 = traversal.increment(g)
-    d = traversal.checkable(g2)
-    t = [len(d[x]) for x in d]
-    r = []
-    n = len(g2)
-    ee= len(traversal.edgelist(g2))
-    for i in range(1,len(t)):
-        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
-    return r
-
-def fordens(n,denslist):
-    rl={}
-    for d in denslist:
-        ee = dens2edgenum(d,n)
-        l=[checker(n,ee)[-1] for i in range(100)]
-        rl[d] = (round(scipy.mean(l),3),round(scipy.std(l),3))
-    return rl
-
-def superclique(n):
-    g = {}
-    for i in range(n):
-        g[str(i+1)] = {str(j+1):set([(0,1),(2,0)])
-                       for j in range(n) if j!=i}
-        g[str(i+1)][str(i+1)] = set([(0,1)])
-    return g
-
-def complement(g):
-    n = len(g)
-    sq = superclique(n)
-    for v in g:
-        for w in g[v]:
-            sq[v][w].difference_update(g[v][w])
-            if not sq[v][w]: sq[v].pop(w)                
-    return sq
-
 
 def gtranspose(G):                      # Transpose (rev. edges of) G
     GT = {u:{} for u in G}

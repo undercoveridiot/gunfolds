@@ -10,9 +10,29 @@ import scipy
 import networkx as nx
 import igraph
 
+def edgelist(g): # directed
+    '''
+    return a list of tuples for edges of g
+    '''
+    l = []
+    for n in g:
+        l.extend([(n,e) for e in g[n] if (0,1) in g[n][e]])
+    return l
+
+def edgenumber(g):
+    return sum([sum([len(g[y][x]) for x in g[y]]) for y in g])
+
+def bedgelist(g): # bidirected edge list with flips
+    l = []
+    for n in g:
+        l.extend([tuple(sorted((n,e))) for e in g[n] if (2,0) in g[n][e]])
+    l = list(set(l))
+    l = l + map(lambda x: (x[1],x[0]), l)
+    return l
+
 def rnd_edges(n):
     """ generate a random uniformly distributed mask
-    """    
+    """
     rnum = std_random.getrandbits(n**2)
     l = list(bin(rnum)[2:])
     l = ['0' for i in range(0,n**2 - len(l))] + l
@@ -56,7 +76,7 @@ def sp_rnd_edges(n, maxindegree=5):
 def sp_rnd_dbn(n, maxindegree=3):
     '''
     a sparse random DBN graph
-    '''    
+    '''
     l = sp_rnd_edges(n)
     return list2dbn(l)
 
@@ -123,14 +143,14 @@ def superclique(n):
         g[str(i+1)][str(i+1)] = set([(0,1)])
     return g
 
-def complement(g):
-    n = len(g)
-    sq = superclique(n)
-    for v in g:
-        for w in g[v]:
-            sq[v][w].difference_update(g[v][w])
-            if not sq[v][w]: sq[v].pop(w)                
-    return sq
+# def complement(g):
+#     n = len(g)
+#     sq = superclique(n)
+#     for v in g:
+#         for w in g[v]:
+#             sq[v][w].difference_update(g[v][w])
+#             if not sq[v][w]: sq[v].pop(w)
+#     return sq
 
 def gtranspose(G):                      # Transpose (rev. edges of) G
     GT = {u:{} for u in G}
@@ -165,7 +185,7 @@ def addAring(g):
     if '1' in g[str(len(g))]:
         g[str(len(g))]['1'].add((0,1))
     else:
-        g[str(len(g))]['1'] = set([(0,1)])    
+        g[str(len(g))]['1'] = set([(0,1)])
 
 def upairs(n,k):
     '''
@@ -210,3 +230,21 @@ def graph2justin(g):
             elif g[head][tail] == set([(0,1),(2,0)]):
                 r[head][tail] = 3
     return r
+
+def OCE(g1,g2):
+    '''
+    omission/commision error of g1 referenced to g2
+    '''
+    s1 = set(edgelist(g1))
+    s2 = set(edgelist(g2))
+    omitted = len(s2 - s1)
+    comitted = len(s1 - s2)
+
+    s1 = set(bedgelist(g1))
+    s2 = set(bedgelist(g2))
+    bomitted = len(s2 - s1)
+    bcomitted = len(s1 - s2)
+    
+    return {'directed': (omitted, comitted),
+            'bidirected': (bomitted, bcomitted)}
+            

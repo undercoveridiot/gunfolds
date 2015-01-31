@@ -1,6 +1,5 @@
 import sys,os
 sys.path.append(os.path.expanduser('~/splis/soft/src/dev/craft/gunfolds/tools/'))
-from graphkit import complement
 from bfutils import increment_u, g2num, num2CG, undersample
 from functools import wraps
 from scipy.misc import comb
@@ -13,34 +12,8 @@ import time
 import random
 from comparison import graph2nx
 from networkx import strongly_connected_components
-
-def increment(g):
-    '''
-    undersample g by 2
-    only works for g1 to g2 directed
-    '''
-    r = {n:{} for n in g}
-
-    for n in g:
-        for h in g[n]:
-            for e in g[h]:
-                if not e in r[n]:
-                    r[n][e] = set([(0,1)])
-
-    for n in g:
-        for pair in itertools.combinations(g[n],2):
-
-            if pair[1] in r[pair[0]]:
-                r[pair[0]][pair[1]].add((2,0))
-            else:
-                r[pair[0]][pair[1]] = set([(2,0)])
-
-            if pair[0] in r[pair[1]]:
-                r[pair[1]][pair[0]].add((2,0))
-            else:
-                r[pair[1]][pair[0]] = set([(2,0)])
-
-    return r
+from graphkit import edgelist, bedgelist
+from bfutils import increment, ringmore, complement
 
 
 def isedgesubset(g2star,g2):
@@ -56,26 +29,6 @@ def isedgesubset(g2star,g2):
             else:
                     return False
     return True
-
-def edgelist(g): # directed
-    '''
-    return a list of tuples for edges of g
-    '''
-    l = []
-    for n in g:
-        l.extend([(n,e) for e in g[n] if (0,1) in g[n][e]])
-    return l
-
-def edgenumber(g):
-    return sum([sum([len(g[y][x]) for x in g[y]]) for y in g])
-
-def bedgelist(g): # bidirected edge list with flips
-    l = []
-    for n in g:
-        l.extend([tuple(sorted((n,e))) for e in g[n] if (2,0) in g[n][e]])
-    l = list(set(l))
-    l = l + map(lambda x: (x[1],x[0]), l)
-    return l
 
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
@@ -176,6 +129,7 @@ def childrenedges(n,c,el,bl):
     for e in r: c.remove(e)
     return l
 
+# an empty fork is a for without the bidirected edge
 def make_emptyforks(n,c,el,bl):
     return forks(n,c,el,bl,doempty=lambda x,y: not x in y)
 def make_fullforks(n,c,el,bl):
@@ -359,6 +313,44 @@ def checkApath(p, g2):
         l.extend([tuple(x) for x in length_d_loopy_paths(g2, n, d, p[1:])])
     #k = prunepaths_1D(g2, p, l)
     return l
+
+def checker(n,ee):
+    g = ringmore(n,ee)
+    g2 = increment(g)
+    d = checkable(g2)
+    t = [len(d[x]) for x in d]
+    r = []
+    n = len(g2)
+    ee= len(edgelist(g2))
+    for i in range(1,len(t)):
+        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
+    return r
+
+def fordens(n,denslist):
+    rl={}
+    for d in denslist:
+        ee = dens2edgenum(d,n)
+        l=[checker(n,ee)[-1] for i in range(100)]
+        rl[d] = (round(scipy.mean(l),3),round(scipy.std(l),3))
+    return rl
+
+def superclique(n):
+    g = {}
+    for i in range(n):
+        g[str(i+1)] = {str(j+1):set([(0,1),(2,0)])
+                       for j in range(n) if j!=i}
+        g[str(i+1)][str(i+1)] = set([(0,1)])
+    return g
+
+def complement(g):
+    n = len(g)
+    sq = superclique(n)
+    for v in g:
+        for w in g[v]:
+            sq[v][w].difference_update(g[v][w])
+            if not sq[v][w]: sq[v].pop(w)                
+    return sq
+
 
 
 def isedge(v):  return len(v) == 2 # a->b
