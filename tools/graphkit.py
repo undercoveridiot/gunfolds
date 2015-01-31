@@ -1,6 +1,7 @@
 # tools to construct (random) graphs
-import sys
-sys.path.append('/home/splis/soft/src/dev/craft/gunfolds/tools/')
+import sys,os
+TOOLSPATH='~/soft/src/dev/craft/gunfolds/tools/'
+sys.path.append(os.path.expanduser(TOOLSPATH))
 
 import ecj, bfutils
 import random as std_random
