@@ -1,6 +1,6 @@
 from networkx import strongly_connected_components
 from functools import wraps
-from scipy.misc import comb
+import scipy
 import numpy as np
 import itertools, copy, time
 import random
@@ -318,6 +318,47 @@ def isvedge(v): return len(v) == 3 # b<-a->c
 def isCedge(v): return len(v) == 4 and v[0] == '0' # a->b->c
 def isAedge(v): return len(v) == 4 and v[0] == '1'# a->c<-b
 def isApath(v):  return len(v) >= 4 and v[0] == '2'# a->b->...->z
+
+def checker(n,ee):
+    g = bfu.ringmore(n,ee)
+    g2 = bfu.increment(g)
+    d = checkable(g2)
+    t = [len(d[x]) for x in d]
+    r = []
+    n = len(g2)
+    ee= len(gk.edgelist(g2))
+    for i in range(1,len(t)):
+        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
+    return r
+
+def checkerDS(n,ee):
+    g = bfu.ringmore(n,ee)
+    g2 = bfu.increment(g)
+    gg = checkable(g2)
+    d,p,idx = conformanceDS(g2,gg,gg.keys())
+    t = [len(x) for x in p]
+    r = []
+    n = len(g2)
+    ee= len(gk.edgelist(g2))
+    for i in range(1,len(t)):
+        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
+    return r
+
+def fordens(n,denslist, repeats=100):
+    rl={}
+    for d in denslist:
+        ee = bfu.dens2edgenum(d,n)
+        l=[checker(n,ee)[-1] for i in range(repeats)]
+        rl[d] = (round(scipy.mean(l),3),round(scipy.std(l),3))
+    return rl
+
+def fordensDS(n,denslist, repeats=100):
+    rl={}
+    for d in denslist:
+        ee = bfu.dens2edgenum(d,n)
+        l=[checkerDS(n,ee)[-1] for i in range(repeats)]
+        rl[d] = (round(scipy.mean(l),3),round(scipy.std(l),3))
+    return rl
 
 def checkable(g2):
     d = {}
@@ -1302,7 +1343,7 @@ def conformanceDS(g2, gg, order, f=[], c=[]):
             CDS[x[1]][x[0]] = d
     if density(g2) > 0.35:
         itr3 = [x for x in itertools.combinations(range(len(order)),3)]
-        for x in random.sample(itr3, min(10,np.int(comb(len(order),3)))):
+        for x in random.sample(itr3, min(10,np.int(scipy.misc.comb(len(order),3)))):
             s1, s2, s3 = check3(order[x[0]], order[x[1]], order[x[2]],
                                 pool[x[0]], pool[x[1]], pool[x[2]],
                                 g2, f=f, c=c)
