@@ -114,7 +114,7 @@ def transitionMarix(cg, minstrength=0.1):
     A[edges] = randweights(edges[0].shape[0], c=minstrength)
     l = linalg.eig(A)[0]
     c = 0
-    pbar = ProgressBar(widgets=['Something: ', Percentage(), ' '], maxval=10000).start()    
+    pbar = ProgressBar(widgets=['Searching for weights: ', Percentage(), ' '], maxval=10000).start()    
     while max(l*scipy.conj(l)) > 1:
         A[edges] = randweights(edges[0].shape[0], c=c)
         c += 1
@@ -135,7 +135,7 @@ def transitionMarix2(cg, minstrength=0.1):
     A[edges] = sampleWeights(edges[0].shape[0], minstrength=minstrength)
     l = linalg.eig(A)[0]
     c = 0
-    pbar = ProgressBar(widgets=['Something: ', Percentage(), ' '], maxval=10000).start()
+    pbar = ProgressBar(widgets=['Searching for weights: ', Percentage(), ' '], maxval=10000).start()
     while max(l*scipy.conj(l)) > 1:
         A[edges] = sampleWeights(edges[0].shape[0], minstrength=minstrength)
         c += 1
@@ -246,7 +246,7 @@ def data2AB(data,x0=None):
     o = optimize.fmin_bfgs(nllf2, x,
                            args=(np.double(A), np.double(B),
                                  YY,XX,YX,T,a_idx, b_idx),
-                           gtol=1e-12,
+                           gtol=1e-12, maxiter=10000,
                            disp=False, full_output=True)
     A,B = x2M(o[0], np.double(A), np.double(B), a_idx, b_idx)
     B = B+B.T
