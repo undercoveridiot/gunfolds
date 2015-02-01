@@ -1,5 +1,5 @@
 import scipy
-from itertools import permutations
+import itertools
 #from progressbar import ProgressBar, Percentage
 from multiprocessing import Pool,Array,Process,Manager
 from numpy.random import randint
@@ -32,7 +32,7 @@ def bidirected_inc(G,D):
                 G[w][p] = set([(2,0)])
         # new bidirected edges
         l = [e for e in D[w] if (0,1) in D[w][e]]
-        for pair in permutations(l,2):
+        for pair in itertools.permutations(l,2):
             if pair[1] in G[pair[0]]:
                 G[pair[0]][pair[1]].add((2,0))
             else:
