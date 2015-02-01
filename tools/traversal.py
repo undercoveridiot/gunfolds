@@ -1052,7 +1052,7 @@ def vg22g1(g2, capsize=None):
 def edge_function_idx(edge):
     return min(4,len(edge))-2+min(max(3,len(edge))-3,1)*int(edge[0])
 
-def v2g22g1(g2, capsize=None):
+def v2g22g1(g2, capsize=None, verbose=True):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
@@ -1173,7 +1173,8 @@ def v2g22g1(g2, capsize=None):
 
     cds, order, idx = conformanceDS(g2, gg, keys)
     endTime = int(round(time.time() * 1000))
-    print "precomputed in {:10} seconds".format(round((endTime-startTime)/1000.,3))
+    if verbose:
+        print "precomputed in {:10} seconds".format(round((endTime-startTime)/1000.,3))
     if 0 in [len(x) for x in order]:
         return set()
     g = cloneempty(g2)
