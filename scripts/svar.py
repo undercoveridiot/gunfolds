@@ -15,7 +15,7 @@ import bfutils as bfu
 import graphkit as gk
 import zickle as zkl
 
-NOISE_STD = '1.0'
+NOISE_STD = '0.5'
 DEPTH=5
 PARALLEL=True
 INPNUM = 1 # number of randomized starts per graph
@@ -115,14 +115,15 @@ def wrapper(fold,n=10,dens=0.1):
                         timeout_duration=20)
             sst -= 0.01
         g = r['graph']
-        true_g2 = bfu.undersample(g, rate-1)
+        true_g2 = bfu.undersample(g, rate-1)        
         data = lm.drawsamplesLG(r['transition'], samples=20000,
                                 nstd=np.double(NOISE_STD))
         data = data[:,10000:]
         startTime = int(round(time.time() * 1000))
         g2 = lm.data2graph(data[:,::2])
-        #s = examine_bidirected_flips(g2, depth=DEPTH)
-        s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
+        print gk.OCE(g2,true_g2)
+        s = examine_bidirected_flips(g2, depth=DEPTH)
+        #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
         endTime = int(round(time.time() * 1000))
     print ''
     oce = [gk.OCE(bfu.num2CG(x,n),g) for x in s]

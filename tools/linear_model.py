@@ -88,7 +88,7 @@ def nllf2(x, A, B, YY, XX, YX, T, aidx, bidx): # negative log likelihood
     AYX = np.dot(A, YX.T)
     S = YY - AYX - AYX.T + np.dot(np.dot(A,XX), A.T)
     ldB = T*np.log(abs(1./linalg.det(B)))
-    return ldB + 0.5*np.dot(np.dot(B.T, B).T.flat,S.flat)
+    return 0.5*np.dot(np.dot(B.T, B).T.flat,S.flat) # + ldB
     #return ldB + 0.5*np.trace( np.dot(np.dot(B.T, B), S))
 
 def VARbic(nllf, K, T):
@@ -256,7 +256,7 @@ def amap(f, a):
      v = np.vectorize(f)
      return v(a)
  
-def AB2intAB(A,B, th=0.07):
+def AB2intAB(A,B, th=0.09):
     A[amap(lambda x: abs(x) > th, A)] = 1
     A[amap(lambda x: abs(x) < 1, A)] = 0
     B[amap(lambda x: abs(x) > th, B)] = 1
