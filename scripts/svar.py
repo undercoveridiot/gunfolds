@@ -122,8 +122,8 @@ def wrapper(fold,n=10,dens=0.1):
         startTime = int(round(time.time() * 1000))
         g2 = lm.data2graph(data[:,::2])
         print gk.OCE(g2,true_g2)
-        s = examine_bidirected_flips(g2, depth=DEPTH)
-        #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
+        #s = examine_bidirected_flips(g2, depth=DEPTH)
+        s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
         endTime = int(round(time.time() * 1000))
     print ''
     oce = [gk.OCE(bfu.num2CG(x,n),g) for x in s]
