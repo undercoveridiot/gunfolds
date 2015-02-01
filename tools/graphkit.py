@@ -3,7 +3,10 @@ import sys,os
 TOOLSPATH='~/soft/src/dev/craft/gunfolds/tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
-import ecj, bfutils
+import ecj
+import bfutils as bfu
+import traversal as trv
+
 import random as std_random
 import numpy as np
 import scipy
@@ -248,24 +251,3 @@ def OCE(g1,g2):
     
     return {'directed': (omitted, comitted),
             'bidirected': (bomitted, bcomitted)}
-            
-
-def checker(n,ee):
-    g = bfu.ringmore(n,ee)
-    g2 = bfu.increment(g)
-    d = checkable(g2)
-    t = [len(d[x]) for x in d]
-    r = []
-    n = len(g2)
-    ee= len(gk.edgelist(g2))
-    for i in range(1,len(t)):
-        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
-    return r
-
-def fordens(n,denslist):
-    rl={}
-    for d in denslist:
-        ee = dens2edgenum(d,n)
-        l=[checker(n,ee)[-1] for i in range(100)]
-        rl[d] = (round(scipy.mean(l),3),round(scipy.std(l),3))
-    return rl
