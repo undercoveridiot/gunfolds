@@ -110,6 +110,7 @@ def wrapper(fold,n=10,dens=0.1):
         print 'o',
         sys.stdout.flush()
         sst = 0.5
+        r = None        
         while not r:
             r = timeout(lm.getAring, args=(n, dens, sst),
                         timeout_duration=20)
