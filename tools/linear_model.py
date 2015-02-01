@@ -246,7 +246,7 @@ def data2AB(data,x0=None):
     o = optimize.fmin_bfgs(nllf2, x,
                            args=(np.double(A), np.double(B),
                                  YY,XX,YX,T,a_idx, b_idx),
-                           gtol=1e-12, maxiter=10000,
+                           gtol=1e-12, maxiter=500,
                            disp=False, full_output=True)
     A,B = x2M(o[0], np.double(A), np.double(B), a_idx, b_idx)
     B = B+B.T
