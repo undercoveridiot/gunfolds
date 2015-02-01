@@ -253,10 +253,9 @@ def data2AB(data,x0=None):
     return  A,B
 
 def amap(f, a):
-     a = a.reshape(-1)
-     for i, v in enumerate(a):
-         a[i] = f(v)
-
+     v = np.vectorize(f)
+     return v(a)
+ 
 def AB2intAB(A,B, th=0.07):
     A[amap(lambda x: abs(x) > th, A)] = 1
     A[amap(lambda x: abs(x) < 1, A)] = 0
