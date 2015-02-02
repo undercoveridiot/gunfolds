@@ -15,8 +15,8 @@ import bfutils as bfu
 import graphkit as gk
 import zickle as zkl
 
-NOISE_STD = '0.5'
-DEPTH=5
+NOISE_STD = '1.'
+DEPTH=2
 PARALLEL=True
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
@@ -105,6 +105,7 @@ def wrapper(fold,n=10,dens=0.1):
 
     r = None
     s = set()
+    counter = 0
     while not s:
         scipy.random.seed()        
         print 'o',
@@ -112,9 +113,10 @@ def wrapper(fold,n=10,dens=0.1):
         sst = 0.5
         r = None        
         while not r:
-            r = timeout(lm.getAring, args=(n, dens, sst),
-                        timeout_duration=20)
-            sst -= 0.01
+            r = timeout(lm.getAring, args=(n, dens, sst, False),
+                        timeout_duration=60)
+            sst -= 0.05
+            if sst < 0: break
         g = r['graph']
         true_g2 = bfu.undersample(g, rate-1)        
         data = lm.drawsamplesLG(r['transition'], samples=20000,
@@ -124,8 +126,11 @@ def wrapper(fold,n=10,dens=0.1):
         g2 = lm.data2graph(data[:,::2])
         print gk.OCE(g2,true_g2)
         #s = examine_bidirected_flips(g2, depth=DEPTH)
-        s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
+        #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
+        s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
+        if -1 in s: s=set()
         endTime = int(round(time.time() * 1000))
+        counter += 1
     print ''
     oce = [gk.OCE(bfu.num2CG(x,n),g) for x in s]
     cum_oce = [sum(x['directed'])+sum(x['bidirected']) for x in oce]
@@ -137,40 +142,65 @@ def wrapper(fold,n=10,dens=0.1):
             'eq':s,
             'OCE':oce[idx],
             'estimate': g2,
+            'graphs_tried': counter,
             'strength':sst+0.01,
             'ms':endTime-startTime}
 
+
+def wrapgen(fold,n=10,dens=0.1):
+    scipy.random.seed()
+    curr_proc=current_process()
+    curr_proc.daemon=False
+    output = Queue()
+    rate = 2
+
+    r = None
+    s = set()
+    counter = 0
+    sst = 0.5
+    r = None        
+    while not r:
+        r = timeout(lm.getAring, args=(n, dens, sst, False),
+                    timeout_duration=60)
+        sst -= 0.01
+        if sst < 0: break
+    return r
+
 densities = {6: [0.25, 0.3, 0.35],
              8: [0.15, 0.2, 0.25, 0.3],
-             10:[0.1, 0.15, 0.2, 0.25, 0.3],
+             10:[0.15, 0.25, 0.3],
              15:[0.1, 0.15, 0.2],
              20:[0.1],
              25:[0.1],
              30:[0.1],
              35:[0.1]}
 
-for nodes in [8]:
+wrp = wrapgen
+
+for nodes in [10]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
         print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'OCE', 'time')
 
         if PARALLEL:
-            errors = pool.map(functools.partial(wrapper, n=nodes,
+            errors = pool.map(functools.partial(wrp, n=nodes,
                                                 dens=dens),
                               range(REPEATS))
         else:
             errors = []
             for i in range(REPEATS):
-                errors.append(wrapper(i,n=nodes,dens=dens))
-
+                errors.append(wrp(i,n=nodes,dens=dens))
+        print 'computed'
         z[dens] = errors
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'noise_'+NOISE_STD+'_OCE.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_OCE_model_.zkl')                 
+#                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_model.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'noise_'+NOISE_STD+'_OCE.zkl')
+#    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_noise_'+NOISE_STD+'_OCE_model.zkl'
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_OCE_model_.zkl')
