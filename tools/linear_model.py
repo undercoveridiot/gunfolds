@@ -4,6 +4,7 @@ sys.path.append(os.path.expanduser(TOOLSPATH))
 
 import ecj, bfutils
 import graphkit as gk
+import warnings
 from sympy.matrices import SparseMatrix
 from progressbar import ProgressBar, Percentage, \
     Bar, RotatingMarker, ETA, FileTransferSpeed
@@ -129,7 +130,7 @@ def sampleWeights(n, minstrength=0.1):
     r = s*r
     return r
 
-def transitionMarix2(cg, minstrength=0.1):
+def transitionMatrix2(cg, minstrength=0.1):
     A = gk.CG2adj(cg)
     edges = scipy.where(A==1)
     A[edges] = sampleWeights(edges[0].shape[0], minstrength=minstrength)
@@ -146,7 +147,7 @@ def transitionMarix2(cg, minstrength=0.1):
     pbar.finish()
     return A
 
-def transitionMarix3(cg, x0=None, minstrength=3):
+def transitionMatrix3(cg, x0=None, minstrength=3):
     A = gk.CG2adj(cg)
     edges = scipy.where(A==1)
 
