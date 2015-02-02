@@ -88,7 +88,7 @@ def nllf2(x, A, B, YY, XX, YX, T, aidx, bidx): # negative log likelihood
     AYX = np.dot(A, YX.T)
     S = YY - AYX - AYX.T + np.dot(np.dot(A,XX), A.T)
     ldB = T*np.log(abs(1./linalg.det(B)))
-    return 0.5*np.dot(np.dot(B.T, B).T.flat,S.flat) # + ldB
+    return 0.5*np.dot(np.dot(B.T, B).T.flat,S.flat) + ldB
     #return ldB + 0.5*np.trace( np.dot(np.dot(B.T, B), S))
 
 def VARbic(nllf, K, T):
@@ -124,7 +124,7 @@ def transitionMarix(cg, minstrength=0.1):
     return A
 
 def sampleWeights(n, minstrength=0.1):
-    r = scipy.rand(n)
+    r = scipy.randn(n)
     s = minstrength/np.min(np.abs(r))
     r = s*r
     return r
@@ -146,6 +146,29 @@ def transitionMarix2(cg, minstrength=0.1):
     pbar.finish()
     return A
 
+def transitionMarix3(cg, x0=None, minstrength=3):
+    A = gk.CG2adj(cg)
+    edges = scipy.where(A==1)
+
+    try:
+        s = x0.shape
+        x = x0
+    except AttributeError:
+        x = scipy.rand(len(edges[0]))
+        
+    def objective(x):
+        A[edges] = np.real(x)
+        l = linalg.eig(A)[0]
+        m = max(l*scipy.conj(l))
+        n = linalg.norm(minstrength*np.ones(x.shape)-x)
+        return (m-0.85)*(m-0.85) + 0.1*n#(n-minstrength)*(n-minstrength)
+
+    o = optimize.fmin_bfgs(objective, x,
+                           gtol=1e-12, maxiter=500,
+                           disp=False, full_output=True)
+    A[edges]=o[0]
+    return A
+
 def drawsamplesLG(A, nstd=0.1, samples=100):
     n = A.shape[0]
     data = scipy.zeros([n, samples])
@@ -156,7 +179,7 @@ def drawsamplesLG(A, nstd=0.1, samples=100):
     return data
 
 
-def getAgraph(n, mp=2, st=0.5):
+def getAgraph(n, mp=2, st=0.5, verbose=True):
     keeptrying = True
     while keeptrying:
         G = gk.rnd_CG(n, maxindegree=mp, force_connected=True)
@@ -164,23 +187,25 @@ def getAgraph(n, mp=2, st=0.5):
             A = transitionMarix2(G, minstrength=st)
             keeptrying = False
         except ValueError as e:
-            print "!!! Unable to find strong links for a stable matrix !!!"
-            print "*** trying a different graph"
+            if verbose:
+                print "!!! Unable to find strong links for a stable matrix !!!"
+                print "*** trying a different graph"
     return {'graph':      G,
             'transition': A,
             'converges':  len(bfutils.call_undersamples(G))}
 
-def getAring(n, density=0.1, st=0.5):
+def getAring(n, density=0.1, st=0.5, verbose=True):
     keeptrying = True
     plusedges = bfutils.dens2edgenum(density,n)
     while keeptrying:
         G = gk.ringmore(n, plusedges)
         try:
-            A = transitionMarix2(G, minstrength=st)
+            A = transitionMarix3(G, minstrength=st)
             keeptrying = False
         except ValueError:
-            print "!!! Unable to find strong links for a stable matrix !!!"
-            print "*** trying a different graph"
+            if verbose:
+                print "!!! Unable to find strong links for a stable matrix !!!"
+                print "*** trying a different graph"
     return {'graph':      G,
             'transition': A,
             'converges':  len(bfutils.call_undersamples(G))}
