@@ -160,7 +160,7 @@ def wrapgen(fold,n=10,dens=0.1):
         print r
         sst -= 0.01
         if sst < 0: break
-    print 'model '+str(fold)+' found '+st(r)
+    print 'model '+str(fold)+' found '+str(r)
     sys.stdout.flush()    
     return r
 
