@@ -165,7 +165,7 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
 
     o = np.zeros(len(edges))
     with warnings.catch_warnings():
-        warnings.filterwarnings('error',message='ComplexWarning')
+        warnings.filterwarnings('error',message='*ComplexWarning*')
         while np.min(np.abs(o[0])) < minstrength:
             rpt = True            
             while rpt:
