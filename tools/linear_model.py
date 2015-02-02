@@ -147,7 +147,7 @@ def transitionMatrix2(cg, minstrength=0.1):
     pbar.finish()
     return A
 
-def transitionMatrix3(cg, x0=None, minstrength=3):
+def transitionMatrix3(cg, x0=None, minstrength=0.1):
     A = gk.CG2adj(cg)
     edges = scipy.where(A==1)
 
@@ -155,18 +155,31 @@ def transitionMatrix3(cg, x0=None, minstrength=3):
         s = x0.shape
         x = x0
     except AttributeError:
-        x = scipy.rand(len(edges[0]))
-        
+        x = scipy.randn(len(edges[0]))
+    
     def objective(x):
         A[edges] = np.real(x)
         l = linalg.eig(A)[0]
         m = max(l*scipy.conj(l))
-        n = linalg.norm(minstrength*np.ones(x.shape)-x)
-        return (m-0.85)*(m-0.85) + 0.1*n#(n-minstrength)*(n-minstrength)
+        return (m-0.9)*(m-0.9)
 
-    o = optimize.fmin_bfgs(objective, x,
-                           gtol=1e-12, maxiter=500,
-                           disp=False, full_output=True)
+    o = np.zeros(len(edges))
+    c = 0
+    with warnings.catch_warnings():
+        warnings.filterwarnings('error')
+        while np.min(np.abs(o[0])) < minstrength:
+            rpt = True            
+            while rpt:
+                try:        
+                    o = optimize.fmin_bfgs(objective, x,
+                                           gtol=1e-12, maxiter=500,
+                                           disp=False, full_output=True)
+                    rpt = False
+                except ComplexWarning:
+                    print 'complex!'
+                    x = scipy.randn(len(edges[0]))            
+                    rpt = True
+        warnings.filterwarnings('default')
     A[edges]=o[0]
     return A
 
@@ -201,7 +214,7 @@ def getAring(n, density=0.1, st=0.5, verbose=True):
     while keeptrying:
         G = gk.ringmore(n, plusedges)
         try:
-            A = transitionMarix3(G, minstrength=st)
+            A = transitionMatrix3(G, minstrength=st)
             keeptrying = False
         except ValueError:
             if verbose:
@@ -260,7 +273,7 @@ def data2AB(data,x0=None):
     B = np.ones((n,n))
     np.fill_diagonal(B,0)
     B[np.triu_indices(n)] = 0
-    K = scipy.sum(abs(A)+abs(B))
+    K = np.int(scipy.sum(abs(A)+abs(B)))
     a_idx = np.where(A != 0)
     b_idx = np.where(B != 0)
     np.fill_diagonal(B,1)    
@@ -268,7 +281,7 @@ def data2AB(data,x0=None):
         s = x0.shape
         x = x0
     except AttributeError:
-        x = scipy.rand(K)
+        x = scipy.randn(K)
     o = optimize.fmin_bfgs(nllf2, x,
                            args=(np.double(A), np.double(B),
                                  YY,XX,YX,T,a_idx, b_idx),
