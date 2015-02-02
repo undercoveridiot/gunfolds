@@ -109,7 +109,7 @@ def randweights(n, c=0.1, factor=9):
         rw[idx] = rw[idx]+scipy.sign(rw[idx])*c*factor
     return rw
 
-def transitionMarix(cg, minstrength=0.1):
+def transitionMatrix(cg, minstrength=0.1):
     A = gk.CG2adj(cg)
     edges = scipy.where(A==1)
     A[edges] = randweights(edges[0].shape[0], c=minstrength)
