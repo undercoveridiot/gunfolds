@@ -156,26 +156,27 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
         x = x0
     except AttributeError:
         x = scipy.randn(len(edges[0]))
-    
+
     def objective(x):
         A[edges] = np.real(x)
         l = linalg.eig(A)[0]
-        m = np.max(l*scipy.conj(l))-0.9
-        n = np.min(np.abs(x))-minstrength
-        return m*m - n*n
-
+        m = np.max(l*scipy.conj(l))-0.8
+        n = np.min(np.min(np.abs(x)),minstrength)-minstrength
+        return m*m - 0.1*n*n
+    
     o = np.zeros(len(edges))
     while np.min(np.abs(o[0])) < minstrength:
         rpt = True            
         while rpt:
             try:        
                 o = optimize.fmin_bfgs(objective, x,
-                                       gtol=1e-12, maxiter=500,
+                                       gtol=1e-10, maxiter=500,
                                        disp=False, full_output=True)
                 rpt = False
             except Warning:
                 x = scipy.randn(len(edges[0]))            
                 rpt = True
+
     A[edges]=np.real(o[0])
     return A
 
