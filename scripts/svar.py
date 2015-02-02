@@ -17,7 +17,7 @@ import zickle as zkl
 
 NOISE_STD = '1.'
 DEPTH=2
-PARALLEL=True
+PARALLEL=False
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
@@ -149,15 +149,10 @@ def wrapper(fold,n=10,dens=0.1):
 
 def wrapgen(fold,n=10,dens=0.1):
     scipy.random.seed()
-    curr_proc=current_process()
-    curr_proc.daemon=False
-    output = Queue()
     rate = 2
 
-    r = None
     s = set()
-    counter = 0
-    sst = 0.5
+    sst = 1.2
     r = None        
     while not r:
         r = timeout(lm.getAring, args=(n, dens, sst, False),
@@ -168,7 +163,7 @@ def wrapgen(fold,n=10,dens=0.1):
 
 densities = {6: [0.25, 0.3, 0.35],
              8: [0.15, 0.2, 0.25, 0.3],
-             10:[0.15, 0.25, 0.3],
+             10:[.1, 0.15, 0.25, 0.3],
              15:[0.1, 0.15, 0.2],
              20:[0.1],
              25:[0.1],
