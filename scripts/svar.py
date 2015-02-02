@@ -152,18 +152,18 @@ def wrapgen(fold,n=10,dens=0.1):
     rate = 2
 
     s = set()
-    sst = 1.2
+    sst = 0.06
     r = None        
     while not r:
         r = timeout(lm.getAring, args=(n, dens, sst, False),
-                    timeout_duration=60)
+                    timeout_duration=5)
         sst -= 0.01
         if sst < 0: break
     return r
 
 densities = {6: [0.25, 0.3, 0.35],
              8: [0.15, 0.2, 0.25, 0.3],
-             10:[.1, 0.15, 0.25, 0.3],
+             10:[0.15, 0.25, 0.3],
              15:[0.1, 0.15, 0.2],
              20:[0.1],
              25:[0.1],
