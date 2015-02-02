@@ -14,6 +14,21 @@ import graphkit as gk
 import comparison
 import ecj
 
+
+def isedgesubsetD(g2star,g2):
+    '''
+    check if g2star edges are a subset of those of g2
+    '''
+    for n in g2star:
+        for h in g2star[n]:
+            if (0,1) in g2star[n][h]:
+                if h in g2[n]:
+                    if not (0,1) in g2[n][h]:
+                        return False
+                else:
+                    return False
+    return True
+
 def isedgesubset(g2star,g2):
     '''
     check if g2star edges are a subset of those of g2
@@ -328,7 +343,7 @@ def checker(n,ee):
     n = len(g2)
     ee= len(gk.edgelist(g2))
     for i in range(1,len(t)):
-        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
+        r.append(sum(np.log10(t[:i])) - ee*np.log10(n))
     return r
 
 def checkerDS(n,ee):
@@ -341,7 +356,7 @@ def checkerDS(n,ee):
     n = len(g2)
     ee= len(gk.edgelist(g2))
     for i in range(1,len(t)):
-        r.append(sum(scipy.log(t[:i])) - ee*scipy.log(n))
+        r.append(sum(np.log10(t[:i])) - ee*np.log10(n))
     return r
 
 def fordens(n,denslist, repeats=100):
@@ -355,6 +370,7 @@ def fordens(n,denslist, repeats=100):
 def fordensDS(n,denslist, repeats=100):
     rl={}
     for d in denslist:
+        print d
         ee = bfu.dens2edgenum(d,n)
         l=[checkerDS(n,ee)[-1] for i in range(repeats)]
         rl[d] = (round(scipy.mean(l),3),round(scipy.std(l),3))
@@ -915,6 +931,56 @@ def edge_backtrack2g1(g2, capsize=None):
         for n in g2:
             mask = add2edges(g,e,n)
             if not isedgesubset(bfu.increment(g), g2):
+                single_cache[(n,e)] = False
+            del2edges(g,e,n,mask)
+
+    s = set()
+    try:
+        nodesearch(g,g2,edges,s)
+    except ValueError:
+        s.add(0)
+    return s
+
+def edge_backtrack2g1_directed(g2, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if ecj.isSclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    single_cache = {}
+
+    def edgeset(g):
+        return set(gk.edgelist(g))
+    @memo # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            e = edges.pop()
+            ln = [n for n in g2]
+            for n in ln:
+                if (n,e) in single_cache: continue
+                mask = add2edges(g,e,n)
+                if isedgesubsetD(bfu.increment(g), g2):
+                    r = nodesearch(g,g2,edges,s)
+                    if r and edgeset(bfu.increment(r))==edgeset(g2):
+                        s.add(bfu.g2num(r))
+                        if capsize and len(s)>capsize:
+                            raise ValueError('Too many elements in eqclass')
+                del2edges(g,e,n,mask)
+            edges.append(e)
+        else:
+            return g
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    edges = gk.edgelist(g2)
+    random.shuffle(edges)
+    g = cloneempty(g2)
+
+    for e in edges:
+        for n in g2:
+            mask = add2edges(g,e,n)
+            if not isedgesubsetD(bfu.increment(g), g2):
                 single_cache[(n,e)] = False
             del2edges(g,e,n,mask)
 
