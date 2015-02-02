@@ -160,8 +160,8 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
     def objective(x):
         A[edges] = np.real(x)
         l = linalg.eig(A)[0]
-        m = max(l*scipy.conj(l))
-        return (m-0.9)*(m-0.9)
+        m = max(l*scipy.conj(l))-0.9
+        return m*m
 
     o = np.zeros(len(edges))
     c = 0
@@ -175,8 +175,7 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
                                            gtol=1e-12, maxiter=500,
                                            disp=False, full_output=True)
                     rpt = False
-                except ComplexWarning:
-                    print 'complex!'
+                except Warning:
                     x = scipy.randn(len(edges[0]))            
                     rpt = True
         warnings.filterwarnings('default')
