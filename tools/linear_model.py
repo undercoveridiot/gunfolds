@@ -160,25 +160,23 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
     def objective(x):
         A[edges] = np.real(x)
         l = linalg.eig(A)[0]
-        m = max(l*scipy.conj(l))-0.9
-        return m*m
+        m = np.max(l*scipy.conj(l))-0.9
+        n = np.min(np.abs(x))-minstrength
+        return m*m - n*n
 
     o = np.zeros(len(edges))
-    with warnings.catch_warnings():
-        warnings.filterwarnings('error',message='*ComplexWarning*')
-        while np.min(np.abs(o[0])) < minstrength:
-            rpt = True            
-            while rpt:
-                try:        
-                    o = optimize.fmin_bfgs(objective, x,
-                                           gtol=1e-12, maxiter=500,
-                                           disp=False, full_output=True)
-                    rpt = False
-                except Warning:
-                    x = scipy.randn(len(edges[0]))            
-                    rpt = True
-        warnings.filterwarnings('default')
-    A[edges]=o[0]
+    while np.min(np.abs(o[0])) < minstrength:
+        rpt = True            
+        while rpt:
+            try:        
+                o = optimize.fmin_bfgs(objective, x,
+                                       gtol=1e-12, maxiter=500,
+                                       disp=False, full_output=True)
+                rpt = False
+            except Warning:
+                x = scipy.randn(len(edges[0]))            
+                rpt = True
+    A[edges]=np.real(o[0])
     return A
 
 def drawsamplesLG(A, nstd=0.1, samples=100):

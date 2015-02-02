@@ -15,7 +15,7 @@ import bfutils as bfu
 import graphkit as gk
 import zickle as zkl
 
-NOISE_STD = '1.'
+NOISE_STD = '0.5'
 DEPTH=2
 PARALLEL=True
 INPNUM = 1 # number of randomized starts per graph
@@ -72,7 +72,7 @@ def examine_bidirected_flips(g2, depth=0):
                 return s
             else:
                 if depth: examine_bidirected_flips(g2, depth=depth-1)
-            if s: return s                
+            if s: return s
             g2[be[0]][be[1]].add((2,0))
             g2[be[1]][be[0]].add((2,0))
         else:
@@ -98,27 +98,20 @@ def examine_bidirected_flips(g2, depth=0):
 
 def wrapper(fold,n=10,dens=0.1):
     scipy.random.seed()
-    curr_proc=current_process()
-    curr_proc.daemon=False
-    output = Queue()
     rate = 2
 
     r = None
     s = set()
     counter = 0
     while not s:
-        scipy.random.seed()        
+        scipy.random.seed()
         print 'o',
         sys.stdout.flush()
         sst = 0.5
-        r = None        
-        while not r:
-            r = timeout(lm.getAring, args=(n, dens, sst, False),
-                        timeout_duration=60)
-            sst -= 0.05
-            if sst < 0: break
+        d = zkl.load('leibnitz_nodes_'+str(n)+'_OCE_model_.zkl')
+        r = d[dens][fold]
         g = r['graph']
-        true_g2 = bfu.undersample(g, rate-1)        
+        true_g2 = bfu.undersample(g, rate-1)
         data = lm.drawsamplesLG(r['transition'], samples=20000,
                                 nstd=np.double(NOISE_STD))
         data = data[:,10000:]
@@ -126,10 +119,13 @@ def wrapper(fold,n=10,dens=0.1):
         g2 = lm.data2graph(data[:,::2])
         print gk.OCE(g2,true_g2)
         #s = examine_bidirected_flips(g2, depth=DEPTH)
-        #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
-        s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
+        s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
+        #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
         if -1 in s: s=set()
         endTime = int(round(time.time() * 1000))
+        if counter > 2:
+            print 'not found'
+            return None
         counter += 1
     print ''
     oce = [gk.OCE(bfu.num2CG(x,n),g) for x in s]
@@ -153,29 +149,32 @@ def wrapgen(fold,n=10,dens=0.1):
 
     s = set()
     sst = 0.06
-    r = None        
+    r = None
     while not r:
         r = timeout(lm.getAring, args=(n, dens, sst, False),
-                    timeout_duration=10)
-        print r
-        sst -= 0.01
+                    timeout_duration=3)
+        print sst,
+        if sst < 0.03:
+            sst -= 0.002
+        else:
+            sst -= 0.01
         if sst < 0: break
-    print 'model '+str(fold)+' found '+str(r)
-    sys.stdout.flush()    
+    print 'model '+str(fold)+' found \n'+str(r['transition'].round(2))
+    sys.stdout.flush()
     return r
 
 densities = {6: [0.25, 0.3, 0.35],
              8: [0.15, 0.2, 0.25, 0.3],
-             10:[0.15, 0.25, 0.3],
+             10:[0.1, 0.15, 0.25, 0.3],
              15:[0.1, 0.15, 0.2],
              20:[0.1],
              25:[0.1],
              30:[0.1],
              35:[0.1]}
 
-wrp = wrapgen
+wrp = wrapper
 
-for nodes in [10]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -192,13 +191,10 @@ for nodes in [10]:
         print 'computed'
         z[dens] = errors
         zkl.save(z[dens],
-                 socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_OCE_model_.zkl')                 
-#                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_model.zkl')
+                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-#    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_noise_'+NOISE_STD+'_OCE_model.zkl'
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_OCE_model_.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_noise_'+NOISE_STD+'_OCE_v2g22g1.zkl')
