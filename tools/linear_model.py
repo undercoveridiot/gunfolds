@@ -175,7 +175,6 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
                                            disp=False, full_output=True)
                     rpt = False
                 except Warning:
-                    print 'complex!'
                     x = scipy.randn(len(edges[0]))            
                     rpt = True
         warnings.filterwarnings('default')
