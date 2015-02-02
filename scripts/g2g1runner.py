@@ -1,13 +1,13 @@
 import sys, os
 sys.path.append('./tools/')
-import traversal, bfutils
+import traversal, bfutils, graphkit
 from multiprocessing import Pool,Process, Queue, cpu_count, current_process
 import functools
 import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 1 # number of randomized starts per graph
+INPNUM = 3 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
@@ -31,7 +31,7 @@ def wrapper(fold, n=10, k=10):
     while True:
         try:
             g = bfutils.ringmore(n,k)
-            g2 = traversal.increment_u(g,g)
+            g2 = bfutils.increment_u(g,g)
             print fold,': ',traversal.density(g),':',
             startTime = int(round(time.time() * 1000))
             s = traversal.g22g1(g2, capsize=CAPSIZE)
@@ -67,7 +67,7 @@ def fan_wrapper(fold,n=10,k=10):
         try:
             g = bfutils.ringmore(n,k)
             gdens = traversal.density(g)
-            g2 = traversal.increment_u(g,g)
+            g2 = bfutils.increment_u(g,g)
             #g2 = bfutils.undersample(g,2)
             def inside_wrapper():
                 scipy.random.seed()
@@ -100,9 +100,9 @@ def fan_wrapper(fold,n=10,k=10):
 
 densities = {6: [0.2, 0.25, 0.3, 0.35],
              8: [0.3],
-             10:[0.1, 0.15, 0.2, 0.25, 0.3],
-             15:[0.25, 0.3],
-             20:[0.2],# 0.15, 0.2, 0.25, 0.3],
+             10:[0.1],# 0.15, 0.2, 0.25, 0.3],
+             15:[0.1],#0.25, 0.3],
+             20:[0.1],# 0.15, 0.2, 0.25, 0.3],
              25:[0.1],
              30:[0.1],
              35:[0.1],
@@ -110,7 +110,7 @@ densities = {6: [0.2, 0.25, 0.3, 0.35],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [40]:
+for nodes in [35]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
