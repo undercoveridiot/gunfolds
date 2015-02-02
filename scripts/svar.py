@@ -157,6 +157,7 @@ def wrapgen(fold,n=10,dens=0.1):
     while not r:
         r = timeout(lm.getAring, args=(n, dens, sst, False),
                     timeout_duration=5)
+        print r, sst
         sst -= 0.01
         if sst < 0: break
     return r
@@ -172,7 +173,7 @@ densities = {6: [0.25, 0.3, 0.35],
 
 wrp = wrapgen
 
-for nodes in [10]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
