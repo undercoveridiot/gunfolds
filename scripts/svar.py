@@ -15,11 +15,13 @@ import bfutils as bfu
 import graphkit as gk
 import zickle as zkl
 
-NOISE_STD = '0.5'
+NOISE_STD = '1.0'
 DEPTH=2
+SAMPLESIZE=500
+COEFF=10.0
 PARALLEL=True
 INPNUM = 1 # number of randomized starts per graph
-CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
+CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
     PNUM=60
@@ -107,14 +109,25 @@ def wrapper(fold,n=10,dens=0.1):
         scipy.random.seed()
         print 'o',
         sys.stdout.flush()
-        sst = 0.5
-        d = zkl.load('leibnitz_nodes_'+str(n)+'_OCE_model_.zkl')
-        r = d[dens][fold]
+        sst = 0.06
+        r = None
+        while not r:
+            r = timeout(lm.getAring, args=(n, dens, sst, False),
+                        timeout_duration=5)
+            print sst,
+            if sst < 0.03:
+                sst -= 0.001
+            else:
+                sst -= 0.01
+            if sst < 0: sst = 0.02
+        
+        #d = zkl.load('leibnitz_nodes_'+str(n)+'_OCE_model_.zkl')
+        #r = d[dens][fold]
         g = r['graph']
         true_g2 = bfu.undersample(g, rate-1)
         data = lm.drawsamplesLG(r['transition'], samples=20000,
                                 nstd=np.double(NOISE_STD))
-        data = data[:,10000:]
+        data = data[:,10000:10000+SAMPLESIZE*2]
         startTime = int(round(time.time() * 1000))
         g2 = lm.data2graph(data[:,::2])
         print gk.OCE(g2,true_g2)
@@ -123,9 +136,9 @@ def wrapper(fold,n=10,dens=0.1):
         #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
         if -1 in s: s=set()
         endTime = int(round(time.time() * 1000))
-        if counter > 2:
-            print 'not found'
-            return None
+        #if counter > 3:
+        #    print 'not found'
+        #    return None
         counter += 1
     print ''
     oce = [gk.OCE(bfu.num2CG(x,n),g) for x in s]
@@ -134,9 +147,14 @@ def wrapper(fold,n=10,dens=0.1):
     print "{:2}: {:8} : {:4}  {:10} seconds".\
           format(fold, round(dens,3), cum_oce[idx],
                  round((endTime-startTime)/1000.,3))
+    np.set_printoptions(formatter={'float': lambda x: format(x, '6.3f')+", "})
+    print r['transition'].round(2)
+    np.set_printoptions()
+    
     return {'gt':r,
             'eq':s,
             'OCE':oce[idx],
+            'tries_till_found': counter,
             'estimate': g2,
             'graphs_tried': counter,
             'strength':sst+0.01,
@@ -163,7 +181,7 @@ def wrapgen(fold,n=10,dens=0.1):
     sys.stdout.flush()
     return r
 
-densities = {6: [0.25, 0.3, 0.35],
+densities = {6: [0.25, 0.3],
              8: [0.15, 0.2, 0.25, 0.3],
              10:[0.1, 0.15, 0.25, 0.3],
              15:[0.1, 0.15, 0.2],
@@ -174,7 +192,7 @@ densities = {6: [0.25, 0.3, 0.35],
 
 wrp = wrapper
 
-for nodes in [8]:
+for nodes in [6]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -191,10 +209,10 @@ for nodes in [8]:
         print 'computed'
         z[dens] = errors
         zkl.save(z[dens],
-                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE.zkl')
+                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_noise_'+NOISE_STD+'_OCE_v2g22g1.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_noise_'+NOISE_STD+'_OCE_g2g1.zkl')
