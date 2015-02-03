@@ -251,3 +251,9 @@ def OCE(g1,g2):
     
     return {'directed': (omitted, comitted),
             'bidirected': (bomitted, bcomitted)}
+
+def cerror(d):
+    return d['OCE']['directed'][1]/np.double(len(d['gt']['graph'])**2-len(gk.edgelist(d['gt']['graph'])))
+
+def oerror(d):
+    return d['OCE']['directed'][0]/np.double(len(gk.edgelist(d['gt']['graph'])))
