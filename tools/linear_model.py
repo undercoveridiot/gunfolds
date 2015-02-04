@@ -174,11 +174,8 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
                                            gtol=1e-10, maxiter=1000,
                                            disp=False, full_output=True)
                     rpt = False
-                except linalg.LinAlgError as err:
-                    if 'SVD did not converge' in err.message:
-                        rpt = True
-                    else:
-                        raise
+                except:
+                    rpt = True
             except Warning:
                 x = scipy.randn(len(edges[0]))            
                 rpt = True
