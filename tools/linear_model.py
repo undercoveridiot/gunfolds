@@ -168,11 +168,14 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
     while np.min(np.abs(o[0])) < minstrength:
         rpt = True            
         while rpt:
-            try:        
-                o = optimize.fmin_bfgs(objective, x,
-                                       gtol=1e-10, maxiter=500,
-                                       disp=False, full_output=True)
-                rpt = False
+            try:
+                try:
+                    o = optimize.fmin_bfgs(objective, x,
+                                           gtol=1e-10, maxiter=500,
+                                           disp=False, full_output=True)
+                    rpt = False
+                except linalg.LinAlgError:
+                    rpt = True
             except Warning:
                 x = scipy.randn(len(edges[0]))            
                 rpt = True
