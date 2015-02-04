@@ -37,25 +37,21 @@ def dpc(data, pval=0.05):
     def bindependent(y, x, parents=[], pval=pval):
         return cind_(y, x, condset=parents, pval=pval, shift=n)
 
-
     def prune(elist, mask, g):
         for e in mask:
             g[e[0]][e[1]].remove((0,1))
             elist.remove(e)
-        for v in g:
-            g[v] = {w:g[v][w] for w in g[v] if g[v][w]}
+        gk.clean_leaf_nodes(g)
 
     g  = gk.superclique(n)
     gtr= bfu.gtranspose(g)
-    
+
     el = gk.edgelist(g)
     for counter in range(n):
         to_remove = []
         for e in el:
             ppp = [int(k)-1 for k in gtr[e[1]] if k != e[0]]
-            ind = cindependent(e[1], e[0], counter,
-                               parents=ppp,
-                               pval=pval)
+            ind = cindependent(e[1], e[0], counter, parents=ppp, pval=pval)
             if ind:
                 to_remove.append(e)
                 gtr[e[1]].pop(e[0],None)
@@ -64,11 +60,10 @@ def dpc(data, pval=0.05):
     bel = [map(lambda k: str(k+1), x) for x in iter.combinations(range(n),2)]
     for e in bel:
         ppp = list(set(gtr[e[0]].keys()) | set(gtr[e[1]].keys()))
-        ppp = map(lambda x: int(x)-1,ppp)
+        ppp = map(lambda x: int(x)-1, ppp)
         if bindependent(e[0], e[1], parents=ppp, pval=pval):
             g[e[0]][e[1]].remove((2,0))
-            g[e[1]][e[0]].remove((2,0))            
+            g[e[1]][e[0]].remove((2,0))
+    gk.clean_leaf_nodes(g)
 
-    for v in g: g[v] = {w:g[v][w] for w in g[v] if g[v][w]}
-            
     return g
