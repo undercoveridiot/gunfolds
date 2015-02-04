@@ -252,6 +252,9 @@ def OCE(g1,g2):
     return {'directed': (omitted, comitted),
             'bidirected': (bomitted, bcomitted)}
 
+def clean_leaf_nodes(g):
+    for v in g: g[v] = {w:g[v][w] for w in g[v] if g[v][w]}        
+
 def cerror(d):
     return d['OCE']['directed'][1]/np.double(len(d['gt']['graph'])**2-len(edgelist(d['gt']['graph'])))
 
