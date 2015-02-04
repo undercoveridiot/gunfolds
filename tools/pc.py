@@ -9,46 +9,66 @@ import zickle as zkl
 import numpy as np
 import itertools as iter
 import statsmodels.api as sm
+import ipdb
 
-def dpc(data):
+
+def independent(y,X,condset=[], pval=0.05):
+        X  = sm.add_constant(X)
+        est  = sm.OLS(y,X).fit()
+        return est.pvalues[1] > pval
+
+
+def dpc(data, pval=0.05):
     n = data.shape[0]
     data = np.asarray(np.r_[data[:,:-1],data[:,1:]])
 
 
-    def cindependent(y,x, condset=[], pval=0.05):
+    def cind_(y,x, condset=[], pval=pval, shift=0):
         yd = data[n+int(y)-1,:].T
-        if condset: condset=map(lambda k: int(k)-1,condset)
-        X  = data[[int(x)-1]+condset,:].T
-        X  = sm.add_constant(X)
-        est  = sm.OLS(yd,X).fit()
-        return est.pvalues[0] > pval
+        X  = data[[shift+int(x)-1]+condset,:].T
+        return independent(yd, X, condset=condset,pval=pval)
+
+    def cindependent(y, x, counter, parents=[], pval=pval):
+        for S in [j for j in iter.combinations(parents,counter)]:
+            if cind_(y, x, condset=list(S), pval=pval):
+                return True
+        return False
+
+    def bindependent(y, x, parents=[], pval=pval):
+        return cind_(y, x, condset=parents, pval=pval, shift=n)
+
 
     def prune(elist, mask, g):
         for e in mask:
             g[e[0]][e[1]].remove((0,1))
             elist.remove(e)
-        to_remove = []
         for v in g:
-            g[v] = {w for w in g[v] if g[v]}
+            g[v] = {w:g[v][w] for w in g[v] if g[v][w]}
 
     g  = gk.superclique(n)
     gtr= bfu.gtranspose(g)
+    
     el = gk.edgelist(g)
-
-    counter = 0
-    to_remove = []
-    while counter <= n-2:
-        print el
+    for counter in range(n):
+        to_remove = []
         for e in el:
-            ind = False
-            for S in [j for j in iter.combinations(
-                    [k for k in gtr[e[1]] if e[0] != k],counter)]:
-                if cindependent(e[1], e[0], condset=list(S)):
-                    ind = True
-                    break
+            ppp = [int(k)-1 for k in gtr[e[1]] if k != e[0]]
+            ind = cindependent(e[1], e[0], counter,
+                               parents=ppp,
+                               pval=pval)
             if ind:
                 to_remove.append(e)
                 gtr[e[1]].pop(e[0],None)
-        counter += 1
         prune(el, to_remove, g)
+
+    bel = [map(lambda k: str(k+1), x) for x in iter.combinations(range(n),2)]
+    for e in bel:
+        ppp = list(set(gtr[e[0]].keys()) | set(gtr[e[1]].keys()))
+        ppp = map(lambda x: int(x)-1,ppp)
+        if bindependent(e[0], e[1], parents=ppp, pval=pval):
+            g[e[0]][e[1]].remove((2,0))
+            g[e[1]][e[0]].remove((2,0))            
+
+    for v in g: g[v] = {w:g[v][w] for w in g[v] if g[v][w]}
+            
     return g
