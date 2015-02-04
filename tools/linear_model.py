@@ -155,7 +155,7 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
         s = x0.shape
         x = x0
     except AttributeError:
-        x = scipy.randn(len(edges[0]))
+        x = scipy.rand(len(edges[0]))
 
     def objective(x):
         A[edges] = np.real(x)
