@@ -18,7 +18,7 @@ import zickle as zkl
 import pc
 import pylab as plt
 
-NOISE_STD = '1.'
+NOISE_STD = '1.0'
 DEPTH=2
 BURNIN=1000
 SAMPLESIZE=1000
@@ -27,16 +27,16 @@ INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=10
+    PNUM=40
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
-    PNUM=12
+    PNUM=21
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'saturn':
     PNUM=12
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'hooke':
-    PNUM=21
+    PNUM=12
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
@@ -113,7 +113,7 @@ def wrapper(fold,n=10,dens=0.1):
     counter = 0
     while not s:
         scipy.random.seed()
-        sst = 0.2
+        sst = 0.3
         r = None
         while not r:
             r = lm.getAring(n, dens, sst, False)
@@ -142,9 +142,10 @@ def wrapper(fold,n=10,dens=0.1):
             print gk.OCE(g2,true_g2)
             #s = examine_bidirected_flips(g2, depth=DEPTH)
             #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
-            s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
-            #s = timeout(trv.edge_backtrack2g1_directed, args=(g2,CAPSIZE),
-            #            timeout_duration=100, default=set())
+            #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
+            s = timeout(trv.edge_backtrack2g1_directed,
+                        args=(g2,CAPSIZE),
+                        timeout_duration=1000, default=set())
             print 'o',
             sys.stdout.flush()
             if -1 in s: s=set()
@@ -196,8 +197,8 @@ def wrapgen(fold,n=10,dens=0.1):
 
 densities = {6: [0.25, 0.3],
              8: [0.15, 0.2, 0.25, 0.3],
-             10:[0.1, 0.15, 0.25, 0.3],
-             15:[0.1, 0.15, 0.2],
+             10:[.15, .2],
+             15:[0.1],
              20:[0.1],
              25:[0.1],
              30:[0.1],
@@ -205,7 +206,7 @@ densities = {6: [0.25, 0.3],
 
 wrp = wrapper
 
-for nodes in [8]:
+for nodes in [10]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
