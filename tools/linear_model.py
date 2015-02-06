@@ -59,7 +59,7 @@ def npG2SVAR(G):
     A = [[0]*n]*n
     B = [[0]*n]*n
     for i in range(n): B[i][i] = 1
-    
+
     for v in G:
         if G[v]:
             directed = [w for w in G[v] if (0,1) in G[v][w]]
@@ -74,7 +74,7 @@ def npG2SVAR(G):
 def x2M(x, A, B, aidx, bidx):
     A[aidx] = x[:len(aidx[0])]
     B[bidx] = x[len(aidx[0]):]
-    #B[(bidx[1],bidx[0])] = x[len(aidx[0]):]    
+    #B[(bidx[1],bidx[0])] = x[len(aidx[0]):]
     return A, B
 
 def nllf(x, A, B, Y, aidx, bidx): # negative log likelihood
@@ -115,13 +115,13 @@ def transitionMatrix(cg, minstrength=0.1):
     A[edges] = randweights(edges[0].shape[0], c=minstrength)
     l = linalg.eig(A)[0]
     c = 0
-    pbar = ProgressBar(widgets=['Searching for weights: ', Percentage(), ' '], maxval=10000).start()    
+    pbar = ProgressBar(widgets=['Searching for weights: ', Percentage(), ' '], maxval=10000).start()
     while max(l*scipy.conj(l)) > 1:
         A[edges] = randweights(edges[0].shape[0], c=c)
         c += 1
         l = linalg.eig(A)[0]
         pbar.update(c)
-    pbar.finish()        
+    pbar.finish()
     return A
 
 def sampleWeights(n, minstrength=0.1):
@@ -160,29 +160,52 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
     def objective(x):
         A[edges] = np.real(x)
         l = linalg.eig(A)[0]
-        m = np.max(l*scipy.conj(l))-0.8
+        m = np.max(np.real(l*scipy.conj(l)))-0.99
         n = np.min(np.min(np.abs(x)),minstrength)-minstrength
-        return m*m - 0.1*n*n
-    
+        return m*m + 0.1*n*n
+
     o = np.zeros(len(edges))
-    while np.min(np.abs(o[0])) < minstrength:
-        rpt = True            
+    while np.min(np.abs(o[0])) < 0.8*minstrength:
+        rpt = True
         while rpt:
             try:
                 try:
                     o = optimize.fmin_bfgs(objective, x,
-                                           gtol=1e-10, maxiter=1000,
+                                           gtol=1e-10, maxiter=100,
                                            disp=False, full_output=True)
-                    rpt = False
+                    A[edges]=np.real(o[0])
+                    l = linalg.eig(A)[0]
+                    if np.max(np.real(l*scipy.conj(l))) < 1:
+                        rpt = False
                 except:
                     rpt = True
             except Warning:
-                x = scipy.randn(len(edges[0]))            
+                x = scipy.randn(len(edges[0]))
                 rpt = True
-
     A[edges]=np.real(o[0])
     return A
 
+def transitionMatrix4(g, minstrength=0.1, flat=False):
+    A = gk.CG2adj(g)
+    edges = np.where(A==1)
+    alpha = 0.73
+    s = 2.0
+    while s > 1.:
+        if flat:
+            x = np.ones(len(edges[0]))            
+        else:
+            x = scipy.randn(len(edges[0]))
+        A[edges] = x
+        l = linalg.eig(A)[0]
+        s = l[0]*scipy.conj(l[0])
+        A = A/(alpha*np.real(s))
+        x = A[edges]
+        delta = minstrength/np.min(np.abs(x))
+        A[edges] = delta * x
+        l = linalg.eig(A)[0]
+        s = l[0]*scipy.conj(l[0])        
+    return A
+    
 def drawsamplesLG(A, nstd=0.1, samples=100):
     n = A.shape[0]
     data = scipy.zeros([n, samples])
@@ -214,7 +237,7 @@ def getAring(n, density=0.1, st=0.5, verbose=True):
     while keeptrying:
         G = gk.ringmore(n, plusedges)
         try:
-            A = transitionMatrix3(G, minstrength=st)
+            A = transitionMatrix4(G, minstrength=st, flat=False)
             keeptrying = False
         except ValueError:
             if verbose:
@@ -268,7 +291,7 @@ def data2AB(data,x0=None):
     T = data.shape[1]
     YY = np.dot(data[:,1:],data[:,1:].T)
     XX = np.dot(data[:,:-1],data[:,:-1].T)
-    YX = np.dot(data[:,1:],data[:,:-1].T)    
+    YX = np.dot(data[:,1:],data[:,:-1].T)
     A = np.ones((n,n))
     B = np.ones((n,n))
     np.fill_diagonal(B,0)
@@ -276,7 +299,7 @@ def data2AB(data,x0=None):
     K = np.int(scipy.sum(abs(A)+abs(B)))
     a_idx = np.where(A != 0)
     b_idx = np.where(B != 0)
-    np.fill_diagonal(B,1)    
+    np.fill_diagonal(B,1)
     try:
         s = x0.shape
         x = x0
@@ -294,7 +317,7 @@ def data2AB(data,x0=None):
 def amap(f, a):
      v = np.vectorize(f)
      return v(a)
- 
+
 def AB2intAB(A,B, th=0.09):
     A[amap(lambda x: abs(x) > th, A)] = 1
     A[amap(lambda x: abs(x) < 1, A)] = 0
@@ -314,7 +337,7 @@ def intAB2graph(A,B):
         for j in range(n):
             if B[j,i] and j!=i:
                 if str(j+1) in g[str(i+1)]:
-                    g[str(i+1)][str(j+1)].add((2,0))                    
+                    g[str(i+1)][str(j+1)].add((2,0))
                 else:
                     g[str(i+1)][str(j+1)] = set([(2,0)])
     return g
