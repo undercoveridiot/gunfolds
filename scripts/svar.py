@@ -1,4 +1,5 @@
 import signal
+import pprint
 import time, socket
 import numpy as np
 import scipy
@@ -15,16 +16,18 @@ import bfutils as bfu
 import graphkit as gk
 import zickle as zkl
 import pc
+import pylab as plt
 
 NOISE_STD = '1.'
 DEPTH=2
+BURNIN=1000
 SAMPLESIZE=1000
 PARALLEL=True
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=40
+    PNUM=10
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=12
@@ -110,12 +113,12 @@ def wrapper(fold,n=10,dens=0.1):
     counter = 0
     while not s:
         scipy.random.seed()
-        sst = 0.06
+        sst = 0.2
         r = None
         while not r:
-            r = timeout(lm.getAring, args=(n, dens, sst, False),
-                        timeout_duration=5)
+            r = lm.getAring(n, dens, sst, False)
             print sst,
+            sys.stdout.flush()            
             if sst < 0.03:
                 sst -= 0.001
             else:
@@ -126,12 +129,15 @@ def wrapper(fold,n=10,dens=0.1):
         #r = d[dens][fold]
         g = r['graph']
         true_g2 = bfu.undersample(g, rate-1)
-        data = lm.drawsamplesLG(r['transition'], samples=20000,
+        data = lm.drawsamplesLG(r['transition'], samples=BURNIN+SAMPLESIZE*2,
                                 nstd=np.double(NOISE_STD))
-        data = data[:,10000:10000+SAMPLESIZE*2]
+        data = data[:,BURNIN:]
+        if np.max(data) > 1000.:
+            pprint.pprint(r['transition'],width=200)            
+            #raise ValueError
         startTime = int(round(time.time() * 1000))
-        #g2 = lm.data2graph(data[:,::2])
-        g2 = pc.dpc(data[:,::2], pval=0.05)
+        g2 = lm.data2graph(data[:,::2])
+        #g2 = pc.dpc(data[:,::2], pval=0.05)
         if trv.density(g2) < 0.7:
             print gk.OCE(g2,true_g2)
             #s = examine_bidirected_flips(g2, depth=DEPTH)
@@ -189,7 +195,7 @@ def wrapgen(fold,n=10,dens=0.1):
     return r
 
 densities = {6: [0.25, 0.3],
-             8: [.3],#0.15, 0.2, 0.25, 0.3],
+             8: [0.15, 0.2, 0.25, 0.3],
              10:[0.1, 0.15, 0.25, 0.3],
              15:[0.1, 0.15, 0.2],
              20:[0.1],
@@ -216,10 +222,10 @@ for nodes in [8]:
         print 'computed'
         z[dens] = errors
         zkl.save(z[dens],
-                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_b_pc.zkl')
+                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_b_svar.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_noise_'+NOISE_STD+'_OCE_b_pc.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_noise_'+NOISE_STD+'_OCE_b_svar.zkl')
