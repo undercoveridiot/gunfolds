@@ -188,22 +188,23 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
 def transitionMatrix4(g, minstrength=0.1, flat=False):
     A = gk.CG2adj(g)
     edges = np.where(A==1)
-    alpha = 0.73
     s = 2.0
-    while s > 1.:
+    while s > 1.0:
         if flat:
             x = np.ones(len(edges[0]))            
         else:
             x = scipy.randn(len(edges[0]))
         A[edges] = x
         l = linalg.eig(A)[0]
-        s = l[0]*scipy.conj(l[0])
-        A = A/(alpha*np.real(s))
+        s = np.max(np.real(l*scipy.conj(l)))
+        alpha = np.random.rand()*(0.99-0.8)+0.8
+        A = A/(alpha*s)
         x = A[edges]
         delta = minstrength/np.min(np.abs(x))
-        A[edges] = delta * x
+        A[edges] = delta*x        
+        #A[edges] = np.asarray([np.sign(k)*max(minstrength,np.abs(k)) for k in x])
         l = linalg.eig(A)[0]
-        s = l[0]*scipy.conj(l[0])        
+        s = np.max(np.real(l*scipy.conj(l)))
     return A
     
 def drawsamplesLG(A, nstd=0.1, samples=100):
@@ -237,7 +238,7 @@ def getAring(n, density=0.1, st=0.5, verbose=True):
     while keeptrying:
         G = gk.ringmore(n, plusedges)
         try:
-            A = transitionMatrix4(G, minstrength=st, flat=False)
+            A = transitionMatrix4(G, minstrength=st)
             keeptrying = False
         except ValueError:
             if verbose:
