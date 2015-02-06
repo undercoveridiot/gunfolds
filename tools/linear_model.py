@@ -159,10 +159,13 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
 
     def objective(x):
         A[edges] = np.real(x)
+        print 'o'
         l = linalg.eig(A)[0]
-        m = np.max(l*scipy.conj(l))-0.8
-        n = np.min(np.min(np.abs(x)),minstrength)-minstrength
-        return m*m - 0.1*n*n
+        print 'linalg'
+        m = np.max(l*np.conj(l))-0.99
+        print m**2
+        #n = np.min(np.min(np.abs(x)),minstrength)-minstrength
+        return m**2 #+ 0.01*n*n
     
     o = np.zeros(len(edges))
     while np.min(np.abs(o[0])) < minstrength:
@@ -170,9 +173,8 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
         while rpt:
             try:
                 try:
-                    o = optimize.fmin_bfgs(objective, x,
-                                           gtol=1e-10, maxiter=1000,
-                                           disp=False, full_output=True)
+                    o = optimize.fmin_cg(objective, x,
+                                           gtol=1e-2, maxiter=10)
                     rpt = False
                 except:
                     rpt = True
