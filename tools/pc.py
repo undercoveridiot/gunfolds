@@ -47,7 +47,7 @@ def dpc(data, pval=0.05):
     gtr= bfu.gtranspose(g)
 
     el = gk.edgelist(g)
-    for counter in range(n):
+    for counter in range(n-2):
         to_remove = []
         for e in el:
             ppp = [int(k)-1 for k in gtr[e[1]] if k != e[0]]
