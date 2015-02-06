@@ -185,10 +185,11 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
     A[edges]=np.real(o[0])
     return A
 
-def transitionMatrix4(g, minstrength=0.1, flat=False):
+def transitionMatrix4(g, minstrength=0.1, flat=False, maxtries=1000):
     A = gk.CG2adj(g)
     edges = np.where(A==1)
     s = 2.0
+    c = 0
     while s > 1.0:
         if flat:
             x = np.ones(len(edges[0]))            
@@ -205,6 +206,9 @@ def transitionMatrix4(g, minstrength=0.1, flat=False):
         #A[edges] = np.asarray([np.sign(k)*max(minstrength,np.abs(k)) for k in x])
         l = linalg.eig(A)[0]
         s = np.max(np.real(l*scipy.conj(l)))
+        c += 1
+        if c > maxtries:
+            return None
     return A
     
 def drawsamplesLG(A, nstd=0.1, samples=100):
@@ -239,7 +243,7 @@ def getAring(n, density=0.1, st=0.5, verbose=True):
         G = gk.ringmore(n, plusedges)
         try:
             A = transitionMatrix4(G, minstrength=st)
-            keeptrying = False
+            if A: keeptrying = False
         except ValueError:
             if verbose:
                 print "!!! Unable to find strong links for a stable matrix !!!"
