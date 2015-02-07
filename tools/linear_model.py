@@ -155,7 +155,8 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
         s = x0.shape
         x = x0
     except AttributeError:
-        x = scipy.rand(len(edges[0]))
+        A = initRandomMatrix(A, edges)
+        x = A[edges]
 
     def objective(x):
         A[edges] = np.real(x)
@@ -185,30 +186,52 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
     A[edges]=np.real(o[0])
     return A
 
+def initRandomMatrix(A, edges, maxtries=100, flat=False, stable=True):
+    s = 2.0
+
+    def init():
+        if flat:
+            x = np.ones(len(edges[0]))
+        else:
+            x = np.random.beta(0.5,0.5,len(edges[0]))*3-1.5
+            #x = np.sign(scipy.randn(len(edges[0])))*scipy.rand(len(edges[0]))
+            #x = np.sign(scipy.randn(len(edges[0])))*scipy.ones(len(edges[0]))
+        return x
+
+    def eigenvalue(A):
+        l = linalg.eig(A)[0]
+        s = np.max(np.real(l*scipy.conj(l)))
+        return s
+
+    x = init()
+    A[edges] = x
+    s = eigenvalue(A)
+    alpha = np.random.rand()*(0.99-0.8)+0.8
+    A = A/(alpha*s)
+    s = eigenvalue(A)
+
+    return A
+
 def transitionMatrix4(g, minstrength=0.1, flat=False, maxtries=1000):
     A = gk.CG2adj(g)
     edges = np.where(A==1)
     s = 2.0
     c = 0
+    pbar = ProgressBar(widgets=['Searching for weights: ', Percentage(), ' '], maxval=maxtries).start()
     while s > 1.0:
-        if flat:
-            x = np.ones(len(edges[0]))
-        else:
-            x = scipy.randn(len(edges[0]))
-        A[edges] = x
-        l = linalg.eig(A)[0]
-        s = np.max(np.real(l*scipy.conj(l)))
-        alpha = np.random.rand()*(0.99-0.8)+0.8
-        A = A/(alpha*s)
+        minstrength -=0.001
+        A = initRandomMatrix(A, edges)
         x = A[edges]
         delta = minstrength/np.min(np.abs(x))
         A[edges] = delta*x
-        #A[edges] = np.asarray([np.sign(k)*max(minstrength,np.abs(k)) for k in x])
         l = linalg.eig(A)[0]
         s = np.max(np.real(l*scipy.conj(l)))
         c += 1
         if c > maxtries:
             return None
+        pbar.update(c)
+    pbar.finish()
+
     return A
 
 def drawsamplesLG(A, nstd=0.1, samples=100):
