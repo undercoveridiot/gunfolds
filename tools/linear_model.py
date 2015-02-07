@@ -178,6 +178,7 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
                     l = linalg.eig(A)[0]
                     if np.max(np.real(l*scipy.conj(l))) < 1:
                         rpt = False
+
                 except:
                     rpt = True
             except Warning:
