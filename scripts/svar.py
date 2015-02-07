@@ -27,7 +27,7 @@ INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=40
+    PNUM=12
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=21
@@ -113,7 +113,7 @@ def wrapper(fold,n=10,dens=0.1):
     counter = 0
     while not s:
         scipy.random.seed()
-        sst = 0.3
+        sst = 0.5
         r = None
         while not r:
             r = lm.getAring(n, dens, sst, False)
@@ -124,7 +124,7 @@ def wrapper(fold,n=10,dens=0.1):
             else:
                 sst -= 0.01
             if sst < 0: sst = 0.02
-
+        #pprint.pprint(r['transition'].round(2),width=200)            
         #d = zkl.load('leibnitz_nodes_'+str(n)+'_OCE_model_.zkl')
         #r = d[dens][fold]
         g = r['graph']
@@ -133,7 +133,7 @@ def wrapper(fold,n=10,dens=0.1):
                                 nstd=np.double(NOISE_STD))
         data = data[:,BURNIN:]
         if np.max(data) > 1000.:
-            pprint.pprint(r['transition'],width=200)            
+            pprint.pprint(r['transition'].round(2),width=200)            
             #raise ValueError
         startTime = int(round(time.time() * 1000))
         g2 = lm.data2graph(data[:,::2])
@@ -141,11 +141,11 @@ def wrapper(fold,n=10,dens=0.1):
         if trv.density(g2) < 0.7:
             print gk.OCE(g2,true_g2)
             #s = examine_bidirected_flips(g2, depth=DEPTH)
-            #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
+            s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
             #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
-            s = timeout(trv.edge_backtrack2g1_directed,
-                        args=(g2,CAPSIZE),
-                        timeout_duration=1000, default=set())
+            #s = timeout(trv.edge_backtrack2g1_directed,
+            #            args=(g2,CAPSIZE),
+            #            timeout_duration=1000, default=set())
             print 'o',
             sys.stdout.flush()
             if -1 in s: s=set()
@@ -162,7 +162,7 @@ def wrapper(fold,n=10,dens=0.1):
           format(fold, round(dens,3), cum_oce[idx],
                  round((endTime-startTime)/1000.,3))
     np.set_printoptions(formatter={'float': lambda x: format(x, '6.3f')+", "})
-    print r['transition'].round(2)
+    pprint.pprint(r['transition'].round(2))
     np.set_printoptions()
 
     return {'gt':r,
@@ -197,7 +197,7 @@ def wrapgen(fold,n=10,dens=0.1):
 
 densities = {6: [0.25, 0.3],
              8: [0.15, 0.2, 0.25, 0.3],
-             10:[.15, .2],
+             10:[.3],
              15:[0.1],
              20:[0.1],
              25:[0.1],
@@ -206,7 +206,7 @@ densities = {6: [0.25, 0.3],
 
 wrp = wrapper
 
-for nodes in [10]:
+for nodes in [20]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -223,10 +223,10 @@ for nodes in [10]:
         print 'computed'
         z[dens] = errors
         zkl.save(z[dens],
-                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_b_svar.zkl')
+                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_v2_svar_beta.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_noise_'+NOISE_STD+'_OCE_b_svar.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_noise_'+NOISE_STD+'_OCE_v2_svar_beta.zkl')
