@@ -187,16 +187,30 @@ def transitionMatrix3(cg, x0=None, minstrength=0.1):
     A[edges]=np.real(o[0])
     return A
 
-def initRandomMatrix(A, edges, maxtries=100, flat=False, stable=True):
+def initRandomMatrix(A, edges, maxtries=100, distribution='beta', stable=True):
+    '''
+    possible distributions:
+    flat
+    flatsigned
+    beta
+    normal
+    uniform
+    '''
     s = 2.0
 
     def init():
-        if flat:
+        if distribution=='flat':
             x = np.ones(len(edges[0]))
+        elif distribution=='flatsigned':
+            x = np.sign(scipy.randn(len(edges[0])))*scipy.ones(len(edges[0]))
+        elif distribution=='beta':
+            x = np.random.beta(0.5,0.5,len(edges[0]))*3-1.5            
+        elif distribution=='normal':
+            x = scipy.randn(len(edges[0]))
+        elif distribution=='uniform':
+            x = np.sign(scipy.randn(len(edges[0])))*scipy.rand(len(edges[0]))
         else:
-            x = np.random.beta(0.5,0.5,len(edges[0]))*3-1.5
-            #x = np.sign(scipy.randn(len(edges[0])))*scipy.rand(len(edges[0]))
-            #x = np.sign(scipy.randn(len(edges[0])))*scipy.ones(len(edges[0]))
+             raise ValueError('Wrong option!')   
         return x
 
     def eigenvalue(A):
@@ -213,20 +227,23 @@ def initRandomMatrix(A, edges, maxtries=100, flat=False, stable=True):
 
     return A
 
-def transitionMatrix4(g, minstrength=0.1, flat=False, maxtries=1000):
+def transitionMatrix4(g, minstrength=0.1, distribution='normal', maxtries=1000):
     A = gk.CG2adj(g)
     edges = np.where(A==1)
     s = 2.0
     c = 0
-    pbar = ProgressBar(widgets=['Searching for weights: ', Percentage(), ' '], maxval=maxtries).start()
+    pbar = ProgressBar(widgets=['Searching for weights: ',
+                                Percentage(), ' '],
+                       maxval=maxtries).start()
     while s > 1.0:
-        minstrength -=0.001
-        A = initRandomMatrix(A, edges)
+        minstrength -= 0.001
+        A = initRandomMatrix(A, edges, distribution=distribution)
         x = A[edges]
         delta = minstrength/np.min(np.abs(x))
         A[edges] = delta*x
         l = linalg.eig(A)[0]
         s = np.max(np.real(l*scipy.conj(l)))
+        print s
         c += 1
         if c > maxtries:
             return None
