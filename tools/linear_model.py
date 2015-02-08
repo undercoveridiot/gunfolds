@@ -243,7 +243,6 @@ def transitionMatrix4(g, minstrength=0.1, distribution='normal', maxtries=1000):
         A[edges] = delta*x
         l = linalg.eig(A)[0]
         s = np.max(np.real(l*scipy.conj(l)))
-        print s
         c += 1
         if c > maxtries:
             return None
@@ -277,13 +276,13 @@ def getAgraph(n, mp=2, st=0.5, verbose=True):
             'transition': A,
             'converges':  len(bfutils.call_undersamples(G))}
 
-def getAring(n, density=0.1, st=0.5, verbose=True):
+def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
     keeptrying = True
     plusedges = bfutils.dens2edgenum(density,n)
     while keeptrying:
         G = gk.ringmore(n, plusedges)
         try:
-            A = transitionMatrix4(G, minstrength=st)
+            A = transitionMatrix4(G, minstrength=st, distribution=dist)
             try:
                 s = A.shape
                 keeptrying = False
