@@ -18,7 +18,9 @@ d10_01 = {0.15: zkl.load(l[0]),
           0.25: zkl.load(l[2])}
 
 d01 = zkl.load('neptune_nodes_8_samples_1000_noise_0.1_OCE_b_svar.zkl')
-d10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flat.zkl')
+#d10 = zkl.load('saturn_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flatsigned.zkl')
+d10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_beta.zkl')
+#xd10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flat.zkl')
 
 
 def estOE(d):

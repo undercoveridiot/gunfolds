@@ -23,7 +23,7 @@ def listplot(fname, mname='JJ', stl='', width=5):
     l = zkl.load(fname)
     y = min(width,len(l))
     x = np.int(np.ceil(len(l)/float(y)))
-    d2l.matrix_list(l,y,x,R=3, w_gap=1, h_gap=2, mname=mname, stl=stl)
+    d2l.matrix_list(l,y,x,R=5, w_gap=1, h_gap=2, mname=mname, stl=stl)
 
 
 g = {'1': {'2': set([(0, 1)]), '7': set([(0, 1)])},
@@ -64,7 +64,7 @@ g = {'1': {'2':set([(0,1)])},
 }
 #d2l.matrix_fold(g,2,1,R=5, w_gap=1, h_gap=2, mname='TT1')
 
-listplot('list.zkl')
+listplot('list.zkl', width=2)
 
 sys.stdout = sys.__stdout__              # remember to reset sys.stdout!
 foo.flush()
