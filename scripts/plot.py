@@ -5,14 +5,17 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 sys.path.append('./tools/')
-densities = [0.1]#0.2, 0.25, 0.3, 0.35]
+densities = [.15, 0.2, 0.25, 0.3, 0.35]
+
+def gettimes(d):
+    t = [x['ms'] for x in d]
+    time  = map(lambda x: x/1000./60., t)
+    return time
 
 def getalltimes(data, densities=densities):
     alltimes = []
-    for dens in densities:
-        t = [x['ms'] for x in data[dens]]
-        time  = map(lambda x: x/1000./60., t)
-        alltimes.append(time)
+    for dens in densities:        
+        alltimes.append(gettimes(data[dens]))
     return alltimes
 
 def timesfromfile(fname):
@@ -24,7 +27,18 @@ def timesfromfile(fname):
 
 #alltimes_old = timesfromfile("hooke_nodes_10_newp_.zkl")
 #alltimes_old = timesfromfile("hooke_nodes_6_g32g1_.zkl")
-alltimes_new = timesfromfile("leibnitz_nodes_35_newp_.zkl")
+#alltimes_new = timesfromfile("leibnitz_nodes_35_newp_.zkl")
+
+l = ['leibnitz_nodes_15_density_0.1_newp_.zkl',
+     'leibnitz_nodes_20_density_0.1_newp_.zkl',
+     'leibnitz_nodes_25_density_0.1_newp_.zkl',
+     'leibnitz_nodes_30_density_0.1_newp_.zkl',
+     'leibnitz_nodes_35_density_0.1_newp_.zkl']
+
+alltimes_new = []
+for fname in l:
+    d = zkl.load(fname)
+    alltimes_new.append(gettimes(d))
 
 shift = 0.15
 wds = 0.3
@@ -39,7 +53,7 @@ plt.figure(figsize=[10,2])
 #               **{'positions':np.arange(len(densities))-shift,
 #                  'label':'naive approach'})
 
-g = sb.boxplot(alltimes_new,names=map(lambda x: str(int(x*100))+"%",
+g = sb.boxplot(alltimes_new,names=map(lambda x: str(int(x*100))+"",
                                       densities),
                widths=wds, color="Blues",fliersize=fliersz,
                linewidth=lwd,
