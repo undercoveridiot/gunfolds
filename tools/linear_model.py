@@ -5,12 +5,14 @@ sys.path.append(os.path.expanduser(TOOLSPATH))
 import ecj, bfutils
 import graphkit as gk
 import warnings
+from statsmodels.tsa.api import VAR
 from sympy.matrices import SparseMatrix
 from progressbar import ProgressBar, Percentage, \
     Bar, RotatingMarker, ETA, FileTransferSpeed
 from scipy import linalg, optimize
 import numpy as np
 import scipy
+import ipdb
 
 def symchol(M): # symbolic Cholesky
     B = SparseMatrix(M)
@@ -342,19 +344,26 @@ def data2AB(data,x0=None):
     YY = np.dot(data[:,1:],data[:,1:].T)
     XX = np.dot(data[:,:-1],data[:,:-1].T)
     YX = np.dot(data[:,1:],data[:,:-1].T)
-    A = np.ones((n,n))
+    
+    model = VAR(data.T)
+    r = model.fit(1)
+    A = r.coefs[0,:,:]
+    
+    #A = np.ones((n,n))
     B = np.ones((n,n))
     np.fill_diagonal(B,0)
     B[np.triu_indices(n)] = 0
-    K = np.int(scipy.sum(abs(A)+abs(B)))
+    K = np.int(scipy.sum(abs(B)))#abs(A)+abs(B)))
+    
     a_idx = np.where(A != 0)
     b_idx = np.where(B != 0)
     np.fill_diagonal(B,1)
+
     try:
         s = x0.shape
         x = x0
     except AttributeError:
-        x = scipy.randn(K)
+        x = np.r_[A.flatten(),scipy.randn(K)]
     o = optimize.fmin_bfgs(nllf2, x,
                            args=(np.double(A), np.double(B),
                                  YY,XX,YX,T,a_idx, b_idx),
