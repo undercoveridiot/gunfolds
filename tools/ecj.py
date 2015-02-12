@@ -347,16 +347,6 @@ def undersample(G,d,bid=True):
                         N[v].update({u:set([(edge_type['bidirected'],0)])})
     return N
 
-def adj2graph(A):
-    names = [str(i) for i in range(1,A.shape[0]+1)]
-    G = {}
-    for name in names:
-        G[name] = {}
-    for i in range(0,A.shape[0]):
-        for name in map(str, scipy.where(A[i,:]==1)[0]+1):
-            G[str(i+1)][name]=set([(0,1)])
-    return G
-
 import itertools as itt
 def exist_equal_paths(h,G,a,b):
     Sa, Sb, Dff = set(), set(), set()
