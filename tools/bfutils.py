@@ -110,6 +110,23 @@ def adj2graph(A):
             G[str(i+1)][name]=set([(0,1)])
     return G
 
+def adjs2graph(A,B):
+    names = [str(i) for i in range(1,A.shape[0]+1)]
+    G = {}
+    for name in names:
+        G[name] = {}
+    for i in range(A.shape[0]):
+        for name in map(str, np.where(A[i,:]==1)[0]+1):
+            G[str(i+1)][name]=set([(0,1)])
+    for i in range(B.shape[0]):
+        for j in range(B.shape[1]):
+            if B[i,j]:
+                if str(j+1) in G[str(i+1)]:
+                    G[str(i+1)][str(j+1)].add((2,0))
+                else:
+                    G[str(i+1)][str(j+1)] = set([(2,0)])                    
+    return G
+
 # tried mutable ctypes buffer - not faster :(
 def graph2str(G):
     n = len(G)
