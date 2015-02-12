@@ -100,6 +100,16 @@ def graph2badj(G):
         A[int(v)-1,[int(w)-1 for w in G[v] if (2,0) in G[v][w] ]] = 1
     return A
 
+def adj2graph(A):
+    names = [str(i) for i in range(1,A.shape[0]+1)]
+    G = {}
+    for name in names:
+        G[name] = {}
+    for i in range(0,A.shape[0]):
+        for name in map(str, np.where(A[i,:]==1)[0]+1):
+            G[str(i+1)][name]=set([(0,1)])
+    return G
+
 # tried mutable ctypes buffer - not faster :(
 def graph2str(G):
     n = len(G)
