@@ -92,43 +92,6 @@ def find_nearest_reachable(g2, max_depth=4):
             return set()
         step += 1
 
-def examine_bidirected_flips(g2, depth=0):
-    s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
-    if s: return s
-    bedges = gk.bedgelist(g2)
-    all_bedges = [x for x in itertools.combinations(g2,2)]
-    for be in all_bedges:
-        if be in bedges:
-            g2[be[0]][be[1]].remove((2,0))
-            g2[be[1]][be[0]].remove((2,0))
-            s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
-            if s:
-                return s
-            else:
-                if depth: examine_bidirected_flips(g2, depth=depth-1)
-            if s: return s
-            g2[be[0]][be[1]].add((2,0))
-            g2[be[1]][be[0]].add((2,0))
-        else:
-            mask = [be[1] in g2[be[0]], be[0] in g2[be[1]]]
-            if mask[0]:
-                g2[be[0]][be[1]].add((2,0))
-            else:
-                g2[be[0]][be[1]] = set([(2,0)])
-            if mask[1]:
-                g2[be[1]][be[0]].add((2,0))
-            else:
-                g2[be[1]][be[0]] = set([(2,0)])
-            s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
-            if s:
-                return s
-            else:
-                if depth:
-                    s = examine_bidirected_flips(g2, depth=depth-1)
-            if s: return s
-            g2[be[0]][be[1]].remove((2,0))
-            g2[be[1]][be[0]].remove((2,0))
-    return s
 
 def wrapper(fold,n=10,dens=0.1):
     scipy.random.seed()
@@ -236,7 +199,7 @@ densities = {6: [0.25, 0.3, 0.35, 0.4],
 
 wrp = wrapper
 
-for nodes in [20]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -246,6 +209,7 @@ for nodes in [20]:
             errors = pool.map(functools.partial(wrp, n=nodes,
                                                 dens=dens),
                               range(REPEATS))
+            print 'done'
         else:
             errors = []
             for i in range(REPEATS):
