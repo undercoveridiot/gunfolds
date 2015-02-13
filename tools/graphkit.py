@@ -56,7 +56,7 @@ def list2CG(l):
     """
     n = scipy.sqrt(len(l))
     l = scipy.reshape(map(int, l), [n, n])
-    G = ecj.adj2graph(l)
+    G = bfu.adj2graph(l)
     return G
 
 def rnd_dbn(n): return list2dbn(rnd_edges(n))
@@ -86,11 +86,11 @@ def sp_rnd_dbn(n, maxindegree=3):
 
 def emptyG(n):
     A = [[0 for j in range(n)] for i in range(n)]
-    return ecj.adj2graph(np.asarray(A))
+    return bfu.adj2graph(np.asarray(A))
 
 def fullG(n):
     A = [[1 for j in range(n)] for i in range(n)]
-    return ecj.adj2graph(np.asarray(A))
+    return bfu.adj2graph(np.asarray(A))
 
 
 def CG2uCG(cg):
