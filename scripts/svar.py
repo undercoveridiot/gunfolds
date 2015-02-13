@@ -11,6 +11,8 @@ sys.path.append(os.path.expanduser(TOOLSPATH))
 import copy
 
 from multiprocessing import Pool,Process, Queue, cpu_count, current_process
+from progressbar import ProgressBar, Percentage, \
+    Bar, RotatingMarker, ETA, FileTransferSpeed
 import linear_model as lm
 import traversal as trv
 import bfutils as bfu
@@ -21,7 +23,7 @@ import pylab as plt
 
 NOISE_STD = '0.1'
 DEPTH=2
-DIST='beta'
+DIST='flatsigned'
 BURNIN=1000
 SAMPLESIZE=1000
 PARALLEL=True
@@ -86,14 +88,15 @@ def find_nearest_reachable(g2, max_depth=4):
     v = bfu.g2vec(g2)
     while True:
         l = hamming_neighbors(v,step)
+        pbar = ProgressBar(widgets=['neighbors checked: ', Percentage(), ' '], maxval=len(l)).start()
+        c = 0
         for e in l:
             g = bfu.vec2g(e,n)
-            startTime = int(round(time.time() * 1000))            
             s = trv.v2g22g1(g, capsize=CAPSIZE, verbose=False)
-            endTime = int(round(time.time() * 1000))
-            print "{:10} seconds".\
-                  format(round((endTime-startTime)/1000.,3))            
             if s: return s
+            pbar.update(c)
+            c += 1
+        pbar.finish()            
         if step > max_depth:
             return set()
         step += 1
@@ -138,7 +141,7 @@ def wrapper(fold,n=10,dens=0.1):
         if trv.density(g2) < 0.7:
             print gk.OCE(g2,true_g2)
             #s = examine_bidirected_flips(g2, depth=DEPTH)
-            s = find_nearest_reachable(g2, max_depth=2)
+            s = find_nearest_reachable(g2, max_depth=4)
             #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
             #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
             #s = timeout(trv.v2g22g1,
@@ -205,7 +208,7 @@ densities = {6: [0.25, 0.3, 0.35, 0.4],
 
 wrp = wrapper
 
-for nodes in [8]:
+for nodes in [10]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
