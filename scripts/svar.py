@@ -8,6 +8,7 @@ import progressbar as pb
 import sys,os
 TOOLSPATH='~/soft/src/dev/craft/gunfolds/tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
+import copy
 
 from multiprocessing import Pool,Process, Queue, cpu_count, current_process
 import linear_model as lm
@@ -20,10 +21,11 @@ import pylab as plt
 
 NOISE_STD = '0.1'
 DEPTH=2
-DIST='flatsigned'
+DIST='beta'
 BURNIN=1000
 SAMPLESIZE=1000
 PARALLEL=True
+POSTFIX='_H'
 EST = 'svar'
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
@@ -71,8 +73,8 @@ def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
 def hamming_neighbors(v, step):
     l = []
     for e in itertools.combinations(range(len(v)),step):
-        b = copy(v)
-        for i in e: v[i] = int(not b[i])
+        b = copy.copy(v)
+        for i in e: b[i] = int(not b[i])
         l.append(b)
     return l
 
@@ -81,12 +83,16 @@ def find_nearest_reachable(g2, max_depth=4):
     if s: return s
     step = 1
     n = len(g2)
-    v = g2vec(g2)
+    v = bfu.g2vec(g2)
     while True:
         l = hamming_neighbors(v,step)
         for e in l:
-            g = vec2g(e,n)
+            g = bfu.vec2g(e,n)
+            startTime = int(round(time.time() * 1000))            
             s = trv.v2g22g1(g, capsize=CAPSIZE, verbose=False)
+            endTime = int(round(time.time() * 1000))
+            print "{:10} seconds".\
+                  format(round((endTime-startTime)/1000.,3))            
             if s: return s
         if step > max_depth:
             return set()
@@ -154,9 +160,9 @@ def wrapper(fold,n=10,dens=0.1):
     print "{:2}: {:8} : {:4}  {:10} seconds".\
           format(fold, round(dens,3), cum_oce[idx],
                  round((endTime-startTime)/1000.,3))
-    np.set_printoptions(formatter={'float': lambda x: format(x, '6.3f')+", "})
-    pprint.pprint(r['transition'].round(2))
-    np.set_printoptions()
+    #np.set_printoptions(formatter={'float': lambda x: format(x, '6.3f')+", "})
+    #pprint.pprint(r['transition'].round(2))
+    #np.set_printoptions()
 
     return {'gt':r,
             'eq':s,
@@ -217,10 +223,10 @@ for nodes in [8]:
         print 'computed'
         z[dens] = errors
         zkl.save(z[dens],
-                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_b_'+EST+'_'+DIST+'.zkl')
+                 socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_density_'+str(dens)+'_noise_'+NOISE_STD+'_OCE_b_'+EST+'_'+DIST+POSTFIX+'.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_noise_'+NOISE_STD+'_OCE_b_'+EST+'_'+DIST+'.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_samples_'+str(SAMPLESIZE)+'_noise_'+NOISE_STD+'_OCE_b_'+EST+'_'+DIST+POSTFIX+'.zkl')
