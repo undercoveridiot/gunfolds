@@ -77,6 +77,8 @@ def hamming_neighbors(v, step):
     return l
 
 def find_nearest_reachable(g2, max_depth=4):
+    s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
+    if s: return s
     step = 1
     n = len(g2)
     v = g2vec(g2)
@@ -88,7 +90,7 @@ def find_nearest_reachable(g2, max_depth=4):
             if s: return s
         if step > max_depth:
             return set()
-        step += 1        
+        step += 1
 
 def examine_bidirected_flips(g2, depth=0):
     s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
@@ -167,12 +169,13 @@ def wrapper(fold,n=10,dens=0.1):
         if trv.density(g2) < 0.7:
             print gk.OCE(g2,true_g2)
             #s = examine_bidirected_flips(g2, depth=DEPTH)
+            s = find_nearest_reachable(g2, max_depth=2)
             #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
             #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
             #s = timeout(trv.v2g22g1,
-            s = timeout(trv.edge_backtrack2g1_directed,
-                        args=(g2,CAPSIZE),
-                        timeout_duration=1000, default=set())
+            # s = timeout(trv.edge_backtrack2g1_directed,
+            #             args=(g2,CAPSIZE),
+            #             timeout_duration=1000, default=set())
             print 'o',
             sys.stdout.flush()
             if -1 in s: s=set()
