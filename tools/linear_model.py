@@ -352,11 +352,7 @@ def data2AB(data,x0=None):
     B = np.ones((n,n))
     np.fill_diagonal(B,0)
     B[np.triu_indices(n)] = 0
-
-    #A,B = AB2intAB(A,B)
-    
     K = np.int(scipy.sum(abs(B)))#abs(A)+abs(B)))
-    #K = np.int(scipy.sum(abs(A)+abs(B)))    
     
     a_idx = np.where(A != 0)
     b_idx = np.where(B != 0)
@@ -367,7 +363,6 @@ def data2AB(data,x0=None):
         x = x0
     except AttributeError:
         x = np.r_[A.flatten(),0.1*scipy.randn(K)]
-        #x = scipy.randn(K)
     o = optimize.fmin_bfgs(nllf2, x,
                            args=(np.double(A), np.double(B),
                                  YY,XX,YX,T,a_idx, b_idx),

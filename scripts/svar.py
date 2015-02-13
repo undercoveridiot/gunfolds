@@ -9,7 +9,7 @@ import sys,os
 TOOLSPATH='~/soft/src/dev/craft/gunfolds/tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
-from multiprocessing import Pool, Value, cpu_count
+from multiprocessing import Pool,Process, Queue, cpu_count, current_process
 import linear_model as lm
 import traversal as trv
 import bfutils as bfu
@@ -18,10 +18,7 @@ import zickle as zkl
 import pc
 import pylab as plt
 
-
-counterg = None # http://tinyurl.com/om5nb4t
-
-NOISE_STD = '1.0'
+NOISE_STD = '0.1'
 DEPTH=2
 DIST='flatsigned'
 BURNIN=1000
@@ -30,7 +27,7 @@ PARALLEL=True
 EST = 'svar'
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
-REPEATS = 2
+REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
     PNUM=80
     PNUM=max((1,PNUM/INPNUM))
@@ -50,11 +47,6 @@ else:
     PNUM=max((1,PNUM/INPNUM))
 print 'processes: ',PNUM, INPNUM
 
-def init(args):
-    ''' store the counter for later use '''
-    global counterg
-    counterg = args
-    
 def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
     import signal
 
@@ -118,11 +110,6 @@ def examine_bidirected_flips(g2, depth=0):
     return s
 
 def wrapper(fold,n=10,dens=0.1):
-
-    global counterg
-    if counterg.value > REPEATS: raise ValueError('Computed required runs!')
-    counterg.value += 1
-    print counterg
     scipy.random.seed()
     rate = 2
 
@@ -226,24 +213,17 @@ densities = {6: [0.25, 0.3, 0.35, 0.4],
              35:[0.1]}
 
 wrp = wrapper
-counterg = Value('i', 0)
 
 for nodes in [20]:
     z = {}
-    pool=Pool(processes=PNUM, initializer = init, initargs = (counterg, ))
+    pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
         print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'OCE', 'time')
 
         if PARALLEL:
-            try:
-                results = pool.map_async(functools.partial(wrp, n=nodes,
-                                                          dens=dens),
-                                        range(10*REPEATS))
-            except ValueError:
-                print 'done'
-                pool.close()
-                errors = [p.get() for p in results]
-                
+            errors = pool.map(functools.partial(wrp, n=nodes,
+                                                dens=dens),
+                              range(REPEATS))
         else:
             errors = []
             for i in range(REPEATS):
