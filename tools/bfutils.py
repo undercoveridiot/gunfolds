@@ -118,6 +118,7 @@ def adjs2graph(A,B):
     for i in range(A.shape[0]):
         for name in map(str, np.where(A[i,:]==1)[0]+1):
             G[str(i+1)][name]=set([(0,1)])
+            
     for i in range(B.shape[0]):
         for j in range(B.shape[1]):
             if B[i,j]:
@@ -128,21 +129,22 @@ def adjs2graph(A,B):
     return G
 
 def g2vec(g):
-    A = bfu.graph2adj(g)
-    B = bfu.graph2badj(g)
+    A = graph2adj(g)
+    B = graph2badj(g)
     return np.r_[A.flatten(),B[np.triu_indices(B.shape[0])]]
 
 def vec2adj(v,n):
-    A = np.zeros(n,n)
-    B = np.zeros(n,n)    
-    A[:] = v[:n**2]
+    A = np.zeros((n,n))
+    B = np.zeros((n,n))    
+    A[:] = v[:n**2].reshape(n,n)
     B[np.triu_indices(n)] = v[n**2:]
-    B[np.tril_indices(n)] = v[n**2:]    
+    B = B+B.T
     return A,B
 
 def vec2g(v,n):
     A,B = vec2adj(v,n)
-    return bfu.adjs2graph(A,B)
+    print B
+    return adjs2graph(A,B)
 
 # tried mutable ctypes buffer - not faster :(
 def graph2str(G):
