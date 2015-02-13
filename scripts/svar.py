@@ -20,7 +20,7 @@ import pylab as plt
 
 NOISE_STD = '0.1'
 DEPTH=2
-DIST='beta'
+DIST='flatsigned'
 BURNIN=1000
 SAMPLESIZE=1000
 PARALLEL=True
@@ -29,7 +29,7 @@ INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=10
+    PNUM=80
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=21
@@ -68,6 +68,9 @@ def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
 
     return result
 
+#def haming_neighbors(v, step):
+    
+        
 def examine_bidirected_flips(g2, depth=0):
     s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
     if s: return s
@@ -200,9 +203,9 @@ def wrapgen(fold,n=10,dens=0.1):
     sys.stdout.flush()
     return r
 
-densities = {6: [0.25, 0.3],
+densities = {6: [0.25, 0.3, 0.35, 0.4],
              8: [0.15, 0.2, 0.25, 0.3],
-             10:[.3],
+             10:[0.15, 0.2, 0.25, 0.3],
              15:[0.1],
              20:[0.1],
              25:[0.1],
@@ -211,7 +214,7 @@ densities = {6: [0.25, 0.3],
 
 wrp = wrapper
 
-for nodes in [30]:
+for nodes in [20]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
