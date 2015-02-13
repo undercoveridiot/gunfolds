@@ -68,9 +68,28 @@ def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
 
     return result
 
-#def haming_neighbors(v, step):
-    
-        
+def hamming_neighbors(v, step):
+    l = []
+    for e in itertools.combinations(range(len(v)),step):
+        b = copy(v)
+        for i in e: v[i] = int(not b[i])
+        l.append(b)
+    return l
+
+def find_nearest_reachable(g2, max_depth=4):
+    step = 1
+    n = len(g2)
+    v = g2vec(g2)
+    while True:
+        l = hamming_neighbors(v,step)
+        for e in l:
+            g = vec2g(e,n)
+            s = trv.v2g22g1(g, capsize=CAPSIZE, verbose=False)
+            if s: return s
+        if step > max_depth:
+            return set()
+        step += 1        
+
 def examine_bidirected_flips(g2, depth=0):
     s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
     if s: return s
@@ -150,7 +169,7 @@ def wrapper(fold,n=10,dens=0.1):
             #s = examine_bidirected_flips(g2, depth=DEPTH)
             #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
             #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
-            #s = timeout(trv.v2g22g1,            
+            #s = timeout(trv.v2g22g1,
             s = timeout(trv.edge_backtrack2g1_directed,
                         args=(g2,CAPSIZE),
                         timeout_duration=1000, default=set())
