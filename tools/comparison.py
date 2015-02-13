@@ -5,6 +5,7 @@ import operator
 import networkx as nx
 #from progressbar import ProgressBar, Percentage
 numpy.random.RandomState()
+import bfutils as bfu
 
 def num2CG(num,n):
     """num2CG - converts a number  whose binary representaion encodes edge
