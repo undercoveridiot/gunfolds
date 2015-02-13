@@ -143,7 +143,6 @@ def vec2adj(v,n):
 
 def vec2g(v,n):
     A,B = vec2adj(v,n)
-    print B
     return adjs2graph(A,B)
 
 # tried mutable ctypes buffer - not faster :(
