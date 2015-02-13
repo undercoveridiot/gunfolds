@@ -100,6 +100,51 @@ def graph2badj(G):
         A[int(v)-1,[int(w)-1 for w in G[v] if (2,0) in G[v][w] ]] = 1
     return A
 
+def adj2graph(A):
+    names = [str(i) for i in range(1,A.shape[0]+1)]
+    G = {}
+    for name in names:
+        G[name] = {}
+    for i in range(0,A.shape[0]):
+        for name in map(str, np.where(A[i,:]==1)[0]+1):
+            G[str(i+1)][name]=set([(0,1)])
+    return G
+
+def adjs2graph(A,B):
+    names = [str(i) for i in range(1,A.shape[0]+1)]
+    G = {}
+    for name in names:
+        G[name] = {}
+    for i in range(A.shape[0]):
+        for name in map(str, np.where(A[i,:]==1)[0]+1):
+            G[str(i+1)][name]=set([(0,1)])
+            
+    for i in range(B.shape[0]):
+        for j in range(B.shape[1]):
+            if B[i,j]:
+                if str(j+1) in G[str(i+1)]:
+                    G[str(i+1)][str(j+1)].add((2,0))
+                else:
+                    G[str(i+1)][str(j+1)] = set([(2,0)])                    
+    return G
+
+def g2vec(g):
+    A = graph2adj(g)
+    B = graph2badj(g)
+    return np.r_[A.flatten(),B[np.triu_indices(B.shape[0])]]
+
+def vec2adj(v,n):
+    A = np.zeros((n,n))
+    B = np.zeros((n,n))    
+    A[:] = v[:n**2].reshape(n,n)
+    B[np.triu_indices(n)] = v[n**2:]
+    B = B+B.T
+    return A,B
+
+def vec2g(v,n):
+    A,B = vec2adj(v,n)
+    return adjs2graph(A,B)
+
 # tried mutable ctypes buffer - not faster :(
 def graph2str(G):
     n = len(G)
