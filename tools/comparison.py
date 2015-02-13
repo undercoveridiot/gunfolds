@@ -14,7 +14,7 @@ def num2CG(num,n):
     l = list(bin(num)[2:])
     l = ['0' for i in range(0,n**2 - len(l))] + l
     l = scipy.reshape(map(int, l),[n,n])
-    G = ecj.adj2graph(l)
+    G = bfu.adj2graph(l)
     return G
 
 def hasSelfLoops(G):
