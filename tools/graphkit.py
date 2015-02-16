@@ -275,7 +275,7 @@ def no_parents(g):
         if not T[n]: return True
     return False
 
-def no_childred(g):
+def no_children(g):
     for n in g:
         if not g[n]: return True
     return False

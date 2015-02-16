@@ -363,3 +363,4 @@ def scale_free(n, alpha=0.7, beta=0.25,
     g = gtranspose(g)
     addAring(g)
     return g
+

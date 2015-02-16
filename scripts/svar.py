@@ -42,7 +42,7 @@ elif socket.gethostname().split('.')[0] == 'saturn':
     PNUM=12
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'hooke':
-    PNUM=12
+    PNUM=22
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
@@ -76,7 +76,7 @@ def hamming_neighbors(v, step):
     l = []
     for e in itertools.combinations(range(len(v)),step):
         b = copy.copy(v)
-        for i in e: b[i] = int(not b[i])
+        for i in e: b[i] = int(not b[i])        
         l.append(b)
     return l
 
@@ -92,7 +92,10 @@ def find_nearest_reachable(g2, max_depth=4):
         c = 0
         for e in l:
             g = bfu.vec2g(e,n)
-            s = trv.v2g22g1(g, capsize=CAPSIZE, verbose=False)
+            if not gk.scc_unreachable(g):
+                s = trv.v2g22g1(g, capsize=CAPSIZE, verbose=False)
+            else:
+                s = set()
             if s: return s
             pbar.update(c)
             c += 1
@@ -197,8 +200,8 @@ def wrapgen(fold,n=10,dens=0.1):
     sys.stdout.flush()
     return r
 
-densities = {6: [0.25, 0.3, 0.35, 0.4],
-             8: [0.15, 0.2, 0.25, 0.3],
+densities = {6: [0.25, 0.3, 0.35],
+             8: [0.25, 0.3],
              10:[0.15, 0.2, 0.25, 0.3],
              15:[0.1],
              20:[0.1],
@@ -208,7 +211,7 @@ densities = {6: [0.25, 0.3, 0.35, 0.4],
 
 wrp = wrapper
 
-for nodes in [10]:
+for nodes in [8]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
