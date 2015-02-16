@@ -260,3 +260,28 @@ def cerror(d):
 
 def oerror(d):
     return d['OCE']['directed'][0]/np.double(len(edgelist(d['gt']['graph'])))
+
+def bidirected_no_fork(g):
+    be = bedgelist(g)
+    T = gtranspose(g)
+    for e in be:
+        if not set(T[e[0]].keys())&set(T[e[1]].keys()):
+            return True
+    return False
+
+def no_parents(g):
+    T = gtranspose(g)
+    for n in T:
+        if not T[n]: return True
+    return False
+
+def no_childred(g):
+    for n in g:
+        if not g[n]: return True
+    return False
+
+def scc_unreachable(g):
+    if bidirected_no_fork(g): return True
+    if no_parents(g): return True
+    if no_children(g): return True    
+    return False 
