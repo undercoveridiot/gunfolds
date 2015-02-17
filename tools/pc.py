@@ -17,7 +17,6 @@ def independent(y,X,condset=[], pval=0.05):
         est  = sm.OLS(y,X).fit()
         return est.pvalues[1] > pval
 
-
 def dpc(data, pval=0.05):
     n = data.shape[0]
     data = np.asarray(np.r_[data[:,:-1],data[:,1:]])
@@ -47,7 +46,7 @@ def dpc(data, pval=0.05):
     gtr= bfu.gtranspose(g)
 
     el = gk.edgelist(g)
-    for counter in range(n-2):
+    for counter in range(n-1):
         to_remove = []
         for e in el:
             ppp = [int(k)-1 for k in gtr[e[1]] if k != e[0]]
