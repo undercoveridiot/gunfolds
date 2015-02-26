@@ -12,7 +12,7 @@ import statsmodels.api as sm
 import ipdb
 
 
-def independent(y,X,condset=[], pval=0.05):
+def independent(y,X,pval=0.05):
         X  = sm.add_constant(X)
         est  = sm.OLS(y,X).fit()
         return est.pvalues[1] > pval
@@ -25,7 +25,7 @@ def dpc(data, pval=0.05):
     def cind_(y,x, condset=[], pval=pval, shift=0):
         yd = data[n+int(y)-1,:].T
         X  = data[[shift+int(x)-1]+condset,:].T
-        return independent(yd, X, condset=condset,pval=pval)
+        return independent(yd, X, pval=pval)
 
     def cindependent(y, x, counter, parents=[], pval=pval):
         for S in [j for j in iter.combinations(parents,counter)]:
@@ -50,8 +50,7 @@ def dpc(data, pval=0.05):
         to_remove = []
         for e in el:
             ppp = [int(k)-1 for k in gtr[e[1]] if k != e[0]]
-            ind = cindependent(e[1], e[0], counter, parents=ppp, pval=pval)
-            if ind:
+            if cindependent(e[1], e[0], counter, parents=ppp, pval=pval):
                 to_remove.append(e)
                 gtr[e[1]].pop(e[0],None)
         prune(el, to_remove, g)
