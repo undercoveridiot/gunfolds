@@ -24,16 +24,16 @@ import pylab as plt
 NOISE_STD = '0.1'
 DEPTH=2
 DIST='beta'
-BURNIN=1000
-SAMPLESIZE=1000
+BURNIN=100
+SAMPLESIZE=2000
 PARALLEL=True
-POSTFIX=''
+POSTFIX='_H'
 EST = 'pc'
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 100 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
-    PNUM=10
+    PNUM=30
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
     PNUM=21
@@ -140,19 +140,19 @@ def wrapper(fold,n=10,dens=0.1):
             #raise ValueError
         startTime = int(round(time.time() * 1000))
         if EST=='pc':
-            g2 = pc.dpc(data[:,::2], pval=0.01)
+            g2 = pc.dpc(data[:,::2], pval=0.0001)
         elif EST=='svar':
             g2 = lm.data2graph(data[:,::2])
         if trv.density(g2) < 0.7:
             print gk.OCE(g2,true_g2)
             #s = examine_bidirected_flips(g2, depth=DEPTH)
-            #s = find_nearest_reachable(g2, max_depth=2)
+            s = find_nearest_reachable(g2, max_depth=1)
             #s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
             #s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
             #s = timeout(trv.v2g22g1,
-            s = timeout(trv.edge_backtrack2g1_directed,
-                        args=(g2,CAPSIZE),
-                        timeout_duration=1000, default=set())
+            #s = timeout(trv.edge_backtrack2g1_directed,
+            #            args=(g2,CAPSIZE),
+            #            timeout_duration=1000, default=set())
             print 'o',
             sys.stdout.flush()
             if -1 in s: s=set()
@@ -204,7 +204,7 @@ def wrapgen(fold,n=10,dens=0.1):
 
 densities = {6: [0.25, 0.3, 0.35],
              8: [.15, .2, 0.25, 0.3],
-             10:[.15, .2, .25, 0.3],
+             10:[0.3],
              15:[0.1],
              20:[0.1],
              25:[0.1],
