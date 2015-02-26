@@ -29,16 +29,6 @@ def timesfromfile(fname):
 #alltimes_old = timesfromfile("hooke_nodes_6_g32g1_.zkl")
 #alltimes_new = timesfromfile("leibnitz_nodes_35_newp_.zkl")
 
-l = ['leibnitz_nodes_15_density_0.1_newp_.zkl',
-     'leibnitz_nodes_20_density_0.1_newp_.zkl',
-     'leibnitz_nodes_25_density_0.1_newp_.zkl',
-     'leibnitz_nodes_30_density_0.1_newp_.zkl',
-     'leibnitz_nodes_35_density_0.1_newp_.zkl']
-
-alltimes_new = []
-for fname in l:
-    d = zkl.load(fname)
-    alltimes_new.append(gettimes(d))
 
 shift = 0.15
 wds = 0.3
