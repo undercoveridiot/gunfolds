@@ -17,10 +17,20 @@ d10_01 = {0.15: zkl.load(l[0]),
           0.2: zkl.load(l[1]),
           0.25: zkl.load(l[2])}
 
-d01 = zkl.load('neptune_nodes_8_samples_1000_noise_0.1_OCE_b_svar.zkl')
-#d10 = zkl.load('saturn_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flatsigned.zkl')
-d10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_beta.zkl')
-#xd10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flat.zkl')
+l = ['saturn_nodes_8_samples_1000_density_0.15_noise_0.1_OCE_b_svar_flatsigned_H.zkl',
+     'saturn_nodes_8_samples_1000_density_0.2_noise_0.1_OCE_b_svar_flatsigned_H.zkl',
+     'saturn_nodes_8_samples_1000_density_0.25_noise_0.1_OCE_b_svar_flatsigned_H.zkl']
+
+d08_01 = {0.15: zkl.load(l[0]),
+          0.2: zkl.load(l[1]),
+          0.25: zkl.load(l[2])}
+
+
+
+#d01 = zkl.load('neptune_nodes_8_samples_1000_noise_0.1_OCE_b_svar.zkl')
+d10 = zkl.load('saturn_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flatsigned.zkl')
+#d10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_beta.zkl')
+#d10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flat.zkl')
 
 
 def estOE(d):
@@ -41,8 +51,9 @@ def estCOE(d):
                   -len(gk.bedgelist(gt)))                  
     return (e['directed'][1]+e['bidirected'][1])/N
 
-d = d10
+d = d08_01
 density = np.sort(d.keys())
+n = len(d[density[0]][0]['gt']['graph'])
 OE = [[gk.oerror(x) for x in d[dd]] for dd in density]
 COE = [[gk.cerror(x) for x in d[dd]] for dd in density]
 
@@ -77,9 +88,9 @@ g = sb.boxplot(OE,names=map(lambda x: str(int(x*100))+"%",
 #         map(np.median,alltimes_new), 'bo-', lw=0.5, mec='k')
 #g.figure.get_axes()[0].set_yscale('log')
 plt.ylim([-0.1,1.1])
-plt.xlabel('density (% of 100 total possible edges)')
+plt.xlabel('density (% of '+str(n**2)+' total possible edges)')
 plt.ylabel('Edge omission error')
-plt.title('100 10-node graphs per density',
+plt.title('100 '+str(n)+'-node graphs per density',
           multialignment='center')
 plt.legend(loc=0)
 
@@ -103,9 +114,9 @@ g = sb.boxplot(COE,names=map(lambda x: str(int(x*100))+"%",
 #         map(np.median,alltimes_new), 'bo-', lw=0.5, mec='k')
 #g.figure.get_axes()[0].set_yscale('log')
 plt.ylim([-0.1,1.1])
-plt.xlabel('density (% of 100 total possible edges)')
+plt.xlabel('density (% of '+str(n**2)+' total possible edges)')
 plt.ylabel('Edge comission error')
-plt.title('100 10-node graphs per density',
+plt.title('100 '+str(n)+'-node graphs per density',
           multialignment='center')
 plt.legend(loc=0)
 
