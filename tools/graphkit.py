@@ -248,12 +248,12 @@ def OCE(g1,g2):
     s2 = set(bedgelist(g2))
     bomitted = len(s2 - s1)
     bcomitted = len(s1 - s2)
-    
+
     return {'directed': (omitted, comitted),
             'bidirected': (bomitted, bcomitted)}
 
 def clean_leaf_nodes(g):
-    for v in g: g[v] = {w:g[v][w] for w in g[v] if g[v][w]}        
+    for v in g: g[v] = {w:g[v][w] for w in g[v] if g[v][w]}
 
 def cerror(d):
     return d['OCE']['directed'][1]/np.double(len(d['gt']['graph'])**2-len(edgelist(d['gt']['graph'])))
@@ -283,5 +283,41 @@ def no_children(g):
 def scc_unreachable(g):
     if bidirected_no_fork(g): return True
     if no_parents(g): return True
-    if no_children(g): return True    
-    return False 
+    if no_children(g): return True
+    return False
+
+# unlike functions from traversal package these do not checking
+def addanedge(g,e): g[e[0]][e[1]] =  set([(0,1)])
+def delanedge(g,e): g[e[0]].pop(e[1], None)
+
+def checkequality(H,G_test, au = None):
+    if not au:
+        allundersamples = bfu.call_undersamples(G_test)
+    else:
+        allundersamples = au
+    for graph in allundersamples:
+        if graph == H: return True
+    return False
+
+def isedgesubset(g2star,g2):
+    '''
+    check if g2star edges are a subset of those of g2
+    '''
+    for n in g2star:
+        for h in g2star[n]:
+            if h in g2[n]:
+                #if not (0,1) in g2[n][h]:
+                if not g2star[n][h].issubset(g2[n][h]):
+                    return False
+            else:
+                    return False
+    return True
+
+def checkconflict(H,G_test, au = None):
+    if not au:
+        allundersamples = bfu.call_undersamples(G_test)
+    else:
+        allundersamples = au
+    for graph in allundersamples:
+        if isedgesubset(graph,H): return False
+    return True
