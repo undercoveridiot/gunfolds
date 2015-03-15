@@ -8,6 +8,7 @@ import zickle as zkl
 import numpy as np
 import itertools as iter
 import statsmodels.api as sm
+import linear_model as lm
 import ipdb
 from scipy.spatial.distance import pdist, squareform
 from scipy.stats import zscore, norm
@@ -100,9 +101,19 @@ def independent_(x,y, alpha = 0.05):
     if not ps: return True
     return fdrQ(alpha, ps) > alpha
 
-def dpc(data, pval=0.05):
+def addallb(g):
+    n = len(g)
+    for i in range(n):
+        for j in range(n):
+            if str(j+1) in g[str(i+1)]:
+                g[str(i+1)][str(j+1)].add((2,0))
+            else:
+                g[str(i+1)][str(j+1)] = set([(2,0)])
+    return g
+
+def dpc(data, pval=0.0):
     n = data.shape[0]
-    # stack the data: first n rows is t-1 slice, the next n are slice t    
+    # stack the data: first n rows is t-1 slice, the next n are slice t
     data = np.asarray(np.r_[data[:,:-1],data[:,1:]])
 
     def tetrad_cind_(y,x,condset=[], alpha=0.01, shift=0):
@@ -134,7 +145,7 @@ def dpc(data, pval=0.05):
     def prune(elist, mask, g):
         for e in mask:
             g[e[0]][e[1]].remove((0,1))
-            elist.remove(e)=
+            elist.remove(e)
         gk.clean_leaf_nodes(g)
 
     g  = gk.superclique(n)
