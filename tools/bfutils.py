@@ -26,9 +26,9 @@ def bidirected_inc(G,D):
         # transfer old bidirected edges
         l = [e for e in D[w] if (2,0) in D[w][e]]
         for p in l:
-            if p in G[w]: 
+            if p in G[w]:
                 G[w][p].add((2,0))
-            else: 
+            else:
                 G[w][p] = set([(2,0)])
         # new bidirected edges
         l = [e for e in D[w] if (0,1) in D[w][e]]
@@ -77,7 +77,7 @@ def undersample(G, u):
     for i in range(u):
         Gu = increment_u(G, Gu)
     return Gu
-def all_undersamples(G_star,steps=5):
+def all_undersamples(G_star):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
@@ -118,14 +118,14 @@ def adjs2graph(A,B):
     for i in range(A.shape[0]):
         for name in map(str, np.where(A[i,:]==1)[0]+1):
             G[str(i+1)][name]=set([(0,1)])
-            
+
     for i in range(B.shape[0]):
         for j in range(B.shape[1]):
             if B[i,j]:
                 if str(j+1) in G[str(i+1)]:
                     G[str(i+1)][str(j+1)].add((2,0))
                 else:
-                    G[str(i+1)][str(j+1)] = set([(2,0)])                    
+                    G[str(i+1)][str(j+1)] = set([(2,0)])
     return G
 
 def g2vec(g):
@@ -135,7 +135,7 @@ def g2vec(g):
 
 def vec2adj(v,n):
     A = np.zeros((n,n))
-    B = np.zeros((n,n))    
+    B = np.zeros((n,n))
     A[:] = v[:n**2].reshape(n,n)
     B[np.triu_indices(n)] = v[n**2:]
     B = B+B.T
@@ -166,7 +166,7 @@ def graph2bstr(G):
 
 
 def adj2num(A):
-    s = reduce(lambda y,x: y+str(x), 
+    s = reduce(lambda y,x: y+str(x),
                A.flatten().tolist(),'')
     return int(s,2)
 
@@ -187,7 +187,7 @@ def add_bd_by_adj(G,adj):
                 try:
                     G[str(c+1)][str(v+1)].add((2,0))
                 except KeyError:
-                    G[str(c+1)][str(v+1)] = set([(2,0)])                    
+                    G[str(c+1)][str(v+1)] = set([(2,0)])
         c += 1
     return G
 
@@ -195,7 +195,7 @@ def tuple2graph(t,n):
     g = num2CG(t[0],n)
     return add_bd_by_adj(g, num2adj(t[1],n))
 
-def call_undersamples(G_star,steps=5):
+def call_undersamples(G_star):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
@@ -221,7 +221,7 @@ def cc_undersamples(G_star,steps=1):
         n = ug2num(g)
         if n in glist: return []
         glist.append(n)
-        lastgraph = g       
+        lastgraph = g
     return glist[-1]
 
 def compatible(d1,d2):
@@ -276,7 +276,7 @@ def uniqseq(l):
     ltr = map(lambda *a: list(a), *l)
     for i in range(len(ltr)):
         s.append(len(np.unique(ltr[i])))
-        
+
 def loadgraphs(fname):
     g = zkl.load(fname)
     return g
@@ -323,7 +323,7 @@ def addAring(g):
     if '1' in g[str(len(g))]:
         g[str(len(g))]['1'].add((0,1))
     else:
-        g[str(len(g))]['1'] = set([(0,1)])    
+        g[str(len(g))]['1'] = set([(0,1)])
 
 def upairs(n,k):
     '''
@@ -363,4 +363,3 @@ def scale_free(n, alpha=0.7, beta=0.25,
     g = gtranspose(g)
     addAring(g)
     return g
-
