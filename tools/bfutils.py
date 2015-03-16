@@ -148,12 +148,21 @@ def vec2g(v,n):
 # tried mutable ctypes buffer - not faster :(
 def graph2str(G):
     n = len(G)
-    d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'0',((0,1),(2,0),):'0'}
+    d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'1',((0,1),(2,0),):'0'}
     A = ['0']*(n*n)
     for v in G:
         for w in G[v]:
             A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
     return ''.join(A)
+
+def graph2string(g):
+    n = len(g)
+    n2 = n**2
+    num = int('0'*n*n,2)
+    for v in g:
+        for w in g[v]:
+            num = num | (1<<(n2 - (int(v)-1)*n-int(w)-1) + 1)
+    return num
 
 def graph2bstr(G):
     n = len(G)
