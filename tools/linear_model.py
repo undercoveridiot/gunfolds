@@ -206,13 +206,13 @@ def initRandomMatrix(A, edges, maxtries=100, distribution='beta', stable=True):
         elif distribution=='flatsigned':
             x = np.sign(scipy.randn(len(edges[0])))*scipy.ones(len(edges[0]))
         elif distribution=='beta':
-            x = np.random.beta(0.5,0.5,len(edges[0]))*3-1.5            
+            x = np.random.beta(0.5,0.5,len(edges[0]))*3-1.5
         elif distribution=='normal':
             x = scipy.randn(len(edges[0]))
         elif distribution=='uniform':
             x = np.sign(scipy.randn(len(edges[0])))*scipy.rand(len(edges[0]))
         else:
-             raise ValueError('Wrong option!')   
+             raise ValueError('Wrong option!')
         return x
 
     def eigenvalue(A):
@@ -343,17 +343,17 @@ def data2AB(data,x0=None):
     YY = np.dot(data[:,1:],data[:,1:].T)
     XX = np.dot(data[:,:-1],data[:,:-1].T)
     YX = np.dot(data[:,1:],data[:,:-1].T)
-    
+
     model = VAR(data.T)
     r = model.fit(1)
     A = r.coefs[0,:,:]
-    
+
     #A = np.ones((n,n))
     B = np.ones((n,n))
     np.fill_diagonal(B,0)
     B[np.triu_indices(n)] = 0
     K = np.int(scipy.sum(abs(B)))#abs(A)+abs(B)))
-    
+
     a_idx = np.where(A != 0)
     b_idx = np.where(B != 0)
     np.fill_diagonal(B,1)
@@ -404,3 +404,16 @@ def data2graph(data,x0=None):
     A,B = data2AB(data,x0=x0)
     Ab,Bb = AB2intAB(A,B)
     return intAB2graph(Ab,Bb)
+
+def data2VARgraph(data, pval=0.05):
+    model = VAR(data.T)
+    r = model.fit(1)
+    A = r.coefs[0,:,:]
+    n = A.shape[0]
+    g = {str(i):{} for i in range(1,n+1)}
+
+    for i in range(n):
+        for j in range(n):
+            if np.abs(A[j,i]) > pval: g[str(i+1)][str(j+1)] = set([(0,1)])
+
+    return g

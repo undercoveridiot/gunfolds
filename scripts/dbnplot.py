@@ -23,7 +23,7 @@ def listplot(fname, mname='JJ', stl='', width=5):
     l = zkl.load(fname)
     y = min(width,len(l))
     x = np.int(np.ceil(len(l)/float(y)))
-    d2l.matrix_list(l,y,x,R=5, w_gap=1, h_gap=2, mname=mname, stl=stl)
+    d2l.matrix_list(l,y,x,R=2, w_gap=1, h_gap=2, mname=mname, stl=stl)
 
 
 g = {'1': {'2': set([(0, 1)]), '7': set([(0, 1)])},

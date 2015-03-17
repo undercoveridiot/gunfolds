@@ -20,15 +20,16 @@ def directed_inc(G,D):
             for e in G[w]:
                 G_un[v][e] = set([(0,1)])
     return G_un
+
 def bidirected_inc(G,D):
     # bidirected edges
     for w in G:
         # transfer old bidirected edges
         l = [e for e in D[w] if (2,0) in D[w][e]]
         for p in l:
-            if p in G[w]: 
+            if p in G[w]:
                 G[w][p].add((2,0))
-            else: 
+            else:
                 G[w][p] = set([(2,0)])
         # new bidirected edges
         l = [e for e in D[w] if (0,1) in D[w][e]]
@@ -38,6 +39,7 @@ def bidirected_inc(G,D):
             else:
                 G[pair[0]][pair[1]] = set([(2,0)])
     return G
+
 def increment(g):
     '''
     undersample g by 2
@@ -77,7 +79,7 @@ def undersample(G, u):
     for i in range(u):
         Gu = increment_u(G, Gu)
     return Gu
-def all_undersamples(G_star,steps=5):
+def all_undersamples(G_star):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
@@ -101,13 +103,10 @@ def graph2badj(G):
     return A
 
 def adj2graph(A):
-    names = [str(i) for i in range(1,A.shape[0]+1)]
-    G = {}
-    for name in names:
-        G[name] = {}
-    for i in range(0,A.shape[0]):
-        for name in map(str, np.where(A[i,:]==1)[0]+1):
-            G[str(i+1)][name]=set([(0,1)])
+    G = {str(i):{} for i in range(1,A.shape[0]+1)}
+    idx = np.where(A == 1)
+    for i in range(len(idx[0])):
+        G[str(idx[0][i]+1)][str(idx[1][i]+1)]=set([(0,1)])
     return G
 
 def adjs2graph(A,B):
@@ -118,14 +117,14 @@ def adjs2graph(A,B):
     for i in range(A.shape[0]):
         for name in map(str, np.where(A[i,:]==1)[0]+1):
             G[str(i+1)][name]=set([(0,1)])
-            
+
     for i in range(B.shape[0]):
         for j in range(B.shape[1]):
             if B[i,j]:
                 if str(j+1) in G[str(i+1)]:
                     G[str(i+1)][str(j+1)].add((2,0))
                 else:
-                    G[str(i+1)][str(j+1)] = set([(2,0)])                    
+                    G[str(i+1)][str(j+1)] = set([(2,0)])
     return G
 
 def g2vec(g):
@@ -135,7 +134,7 @@ def g2vec(g):
 
 def vec2adj(v,n):
     A = np.zeros((n,n))
-    B = np.zeros((n,n))    
+    B = np.zeros((n,n))
     A[:] = v[:n**2].reshape(n,n)
     B[np.triu_indices(n)] = v[n**2:]
     B = B+B.T
@@ -148,12 +147,13 @@ def vec2g(v,n):
 # tried mutable ctypes buffer - not faster :(
 def graph2str(G):
     n = len(G)
-    d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'0',((0,1),(2,0),):'0'}
+    d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'1',((0,1),(2,0),):'0'}
     A = ['0']*(n*n)
     for v in G:
         for w in G[v]:
             A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
     return ''.join(A)
+
 
 def graph2bstr(G):
     n = len(G)
@@ -166,13 +166,31 @@ def graph2bstr(G):
 
 
 def adj2num(A):
-    s = reduce(lambda y,x: y+str(x), 
+    s = reduce(lambda y,x: y+str(x),
                A.flatten().tolist(),'')
     return int(s,2)
 
-def g2num(G): return int(graph2str(G),2) #adj2num(graph2adj(G))
+#def g2num(G): return int(graph2str(G),2) #adj2num(graph2adj(G))
+def g2num(g):
+    n = len(g)
+    n2 = n**2 + n
+    num = 0
+    for v in g:
+        for w in g[v]:
+            num = num | (1<<(n2 - int(v)*n - int(w)))
+    return num
 
-def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
+def bg2num(g):
+    n = len(g)
+    n2 = n**2 + n
+    num = 0
+    for v in g:
+        for w in g[v]:
+            if (2,0) in g[v][w]:
+                num = num | (1<<(n2 - int(v)*n - int(w)))
+    return num
+
+#def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
 def ug2num(G): return (g2num(G),bg2num(G))#(adj2num(graph2adj(G)),adj2num(graph2badj(G)))
 
 def num2adj(num,n):
@@ -187,7 +205,7 @@ def add_bd_by_adj(G,adj):
                 try:
                     G[str(c+1)][str(v+1)].add((2,0))
                 except KeyError:
-                    G[str(c+1)][str(v+1)] = set([(2,0)])                    
+                    G[str(c+1)][str(v+1)] = set([(2,0)])
         c += 1
     return G
 
@@ -195,7 +213,7 @@ def tuple2graph(t,n):
     g = num2CG(t[0],n)
     return add_bd_by_adj(g, num2adj(t[1],n))
 
-def call_undersamples(G_star,steps=5):
+def call_undersamples(G_star):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
@@ -221,7 +239,7 @@ def cc_undersamples(G_star,steps=1):
         n = ug2num(g)
         if n in glist: return []
         glist.append(n)
-        lastgraph = g       
+        lastgraph = g
     return glist[-1]
 
 def compatible(d1,d2):
@@ -276,7 +294,7 @@ def uniqseq(l):
     ltr = map(lambda *a: list(a), *l)
     for i in range(len(ltr)):
         s.append(len(np.unique(ltr[i])))
-        
+
 def loadgraphs(fname):
     g = zkl.load(fname)
     return g
@@ -323,7 +341,7 @@ def addAring(g):
     if '1' in g[str(len(g))]:
         g[str(len(g))]['1'].add((0,1))
     else:
-        g[str(len(g))]['1'] = set([(0,1)])    
+        g[str(len(g))]['1'] = set([(0,1)])
 
 def upairs(n,k):
     '''
@@ -363,4 +381,3 @@ def scale_free(n, alpha=0.7, beta=0.25,
     g = gtranspose(g)
     addAring(g)
     return g
-

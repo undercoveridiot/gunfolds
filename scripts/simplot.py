@@ -29,8 +29,8 @@ d08_01 = {0.15: zkl.load(l[0]),
 
 #d01 = zkl.load('neptune_nodes_8_samples_1000_noise_0.1_OCE_b_svar.zkl')
 d10 = zkl.load('saturn_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flatsigned.zkl')
-#d10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_beta.zkl')
-#d10 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flat.zkl')
+#d08 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_beta.zkl')
+d08 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flat.zkl')
 
 
 def estOE(d):
@@ -38,17 +38,17 @@ def estOE(d):
     gt=bfu.undersample(gt,1)
     e = gk.OCE(d['estimate'],gt)
     N = np.double(len(gk.edgelist(gt))) +\
-        np.double(len(gk.bedgelist(gt)))    
+        np.double(len(gk.bedgelist(gt)))
     return (e['directed'][0]+e['bidirected'][0])/N
 
 def estCOE(d):
     gt= d['gt']['graph']
-    gt=bfu.undersample(gt,1)    
+    gt=bfu.undersample(gt,1)
     e = gk.OCE(d['estimate'],gt)
     n = len(gt)
     N = np.double(n**2+(n-1)**2/2.0\
                   -len(gk.edgelist(gt))
-                  -len(gk.bedgelist(gt)))                  
+                  -len(gk.bedgelist(gt)))
     return (e['directed'][1]+e['bidirected'][1])/N
 
 d = d08_01
@@ -87,7 +87,7 @@ g = sb.boxplot(OE,names=map(lambda x: str(int(x*100))+"%",
 # plt.plot(np.arange(len(densities))+shift,
 #         map(np.median,alltimes_new), 'bo-', lw=0.5, mec='k')
 #g.figure.get_axes()[0].set_yscale('log')
-plt.ylim([-0.1,1.1])
+plt.ylim([-0.02,1.02])
 plt.xlabel('density (% of '+str(n**2)+' total possible edges)')
 plt.ylabel('Edge omission error')
 plt.title('100 '+str(n)+'-node graphs per density',
@@ -113,7 +113,7 @@ g = sb.boxplot(COE,names=map(lambda x: str(int(x*100))+"%",
 # plt.plot(np.arange(len(densities))+shift,
 #         map(np.median,alltimes_new), 'bo-', lw=0.5, mec='k')
 #g.figure.get_axes()[0].set_yscale('log')
-plt.ylim([-0.1,1.1])
+plt.ylim([-0.02,1.02])
 plt.xlabel('density (% of '+str(n**2)+' total possible edges)')
 plt.ylabel('Edge comission error')
 plt.title('100 '+str(n)+'-node graphs per density',
@@ -121,5 +121,5 @@ plt.title('100 '+str(n)+'-node graphs per density',
 plt.legend(loc=0)
 
 plt.subplots_adjust(right=0.99, left=0.2)
-
+sb.set_context("talk")
 plt.show()
