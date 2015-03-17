@@ -20,6 +20,7 @@ def directed_inc(G,D):
             for e in G[w]:
                 G_un[v][e] = set([(0,1)])
     return G_un
+
 def bidirected_inc(G,D):
     # bidirected edges
     for w in G:
@@ -38,6 +39,7 @@ def bidirected_inc(G,D):
             else:
                 G[pair[0]][pair[1]] = set([(2,0)])
     return G
+
 def increment(g):
     '''
     undersample g by 2
@@ -105,10 +107,6 @@ def adj2graph(A):
     idx = np.where(A == 1)
     for i in range(len(idx[0])):
         G[str(idx[0][i]+1)][str(idx[1][i]+1)]=set([(0,1)])
-        
-    # for i in range(0,A.shape[0]):
-    #     for name in map(str, np.where(A[i,:]==1)[0]+1):
-    #         G[str(i+1)][name]=set([(0,1)])
     return G
 
 def adjs2graph(A,B):
@@ -175,14 +173,24 @@ def adj2num(A):
 #def g2num(G): return int(graph2str(G),2) #adj2num(graph2adj(G))
 def g2num(g):
     n = len(g)
-    n2 = n**2
-    num = int('0'*n*n,2)
+    n2 = n**2 + n
+    num = 0
     for v in g:
         for w in g[v]:
-            num = num | (1<<(n2 - (int(v)-1)*n-int(w)-1) + 1)
+            num = num | (1<<(n2 - int(v)*n - int(w)))
     return num
 
-def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
+def bg2num(g):
+    n = len(g)
+    n2 = n**2 + n
+    num = 0
+    for v in g:
+        for w in g[v]:
+            if (2,0) in g[v][w]:
+                num = num | (1<<(n2 - int(v)*n - int(w)))
+    return num
+
+#def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
 def ug2num(G): return (g2num(G),bg2num(G))#(adj2num(graph2adj(G)),adj2num(graph2badj(G)))
 
 def num2adj(num,n):
