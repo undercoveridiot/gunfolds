@@ -321,3 +321,15 @@ def checkconflict(H,G_test, au = None):
     for graph in allundersamples:
         if isedgesubset(graph,H): return False
     return True
+
+def checkconflict_(Hnum, G_test, au = None):
+    if not au:
+        allundersamples = bfu.call_undersamples(G_test)
+    else:
+        allundersamples = au
+    #Hnum = bfu.ug2num(H)
+    for graph in allundersamples:
+        gnum = bfu.ug2num(graph)
+        if gnum[0]&Hnum[0] == gnum[0] and gnum[1]&Hnum[1] == gnum[1]:
+            return False
+    return True
