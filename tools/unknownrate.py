@@ -12,6 +12,7 @@ sys.path.append(os.path.expanduser(TOOLSPATH))
 import bfutils as bfu
 import traversal as trv
 import graphkit as gk
+import comparison as cmp
 
 def memo(func):
     cache = {}                        # Stored subproblem solutions
@@ -74,6 +75,56 @@ def eqclass(H):
 # http://stackoverflow.com/a/12174125
 def set_bit(value, bit): return value | (1<<bit)
 def clear_bit(value, bit): return value & ~(1<<bit)
+
+def add2set_(ds, H):
+    n = len(H)
+    
+    dsr = {}
+    s = set()
+    ss = set()
+
+    for gnum in ds:#gset:
+        g = bfu.num2CG(gnum, n)
+        glist = []
+        elist = []
+        for e in ds[gnum]:
+            if not e[1] in g[e[0]]:
+                gk.addanedge(g,e)
+                num = bfu.g2num(g)
+                if not num in s:
+                    au = bfu.call_undersamples(g)
+                    if not gk.checkconflict(H, g, au=au):
+                        glist.append(num)
+                        elist.append(e)
+                        s.add(num)
+                        if gk.checkequality(H, g, au=au): ss.add(num)
+                gk.delanedge(g,e)
+        for gn in glist: dsr[gn] = elist
+
+    return dsr, ss
+
+def iteqclass(H):
+    '''
+    Find all graphs in the same equivalence class with respect to
+    graph H and any undesampling rate.
+    '''
+    if cmp.isSclique(H):
+        print 'not running on superclique'
+        return None
+    g = {n:{} for n in H}
+    s = set()
+
+    edges = gk.edgelist(gk.complement(g))
+
+    ds = {bfu.g2num(g): edges}
+
+    for i in range(len(H)**2):
+        print i, len(ds)
+        ds, ss = add2set_(ds, H)
+        s = s | ss
+        if not ds: break
+
+    return s
 
 def add2set(gset, elist, H):
     n = len(H)
