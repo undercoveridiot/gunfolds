@@ -37,6 +37,7 @@ def prune_conflicts(H, g, elist):
     - `elist`: list of edges to check
     """
     masks  = []
+    #Hnum = bfu.ug2num(H)    
     for e in elist:
         gk.addanedge(g,e)
         if gk.checkconflict(H,g):
@@ -84,6 +85,8 @@ def add2set_(ds, H, cp):
     s = set()
     ss = set()
 
+    #Hnum = bfu.ug2num(H)
+
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
         glist = []
@@ -115,6 +118,7 @@ def confpairs(H):
     s = set()
     cp = set() # cp2
     cp3 = set()
+    #Hnum = bfu.ug2num(H)
 
     edges = gk.edgelist(gk.complement(g))
     edges = prune_conflicts(H, g, edges)
@@ -144,7 +148,7 @@ def confpairs(H):
             if gk.checkconflict(H, g, au=au): cp3.add(num)
         gk.delanedge(g,p[0])
         gk.delanedge(g,p[1])
-        gk.delanedge(g,p[2])        
+        gk.delanedge(g,p[2])
 
     return cp | cp3
 
