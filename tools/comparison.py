@@ -6,17 +6,23 @@ import networkx as nx
 #from progressbar import ProgressBar, Percentage
 numpy.random.RandomState()
 import bfutils as bfu
+import numpy as np
 
 def num2CG(num,n):
     """num2CG - converts a number  whose binary representaion encodes edge
     presence/absence into a compressed graph representaion
 
     """
-    l = list(bin(num)[2:])
-    l = ['0' for i in range(0,n**2 - len(l))] + l
-    l = scipy.reshape(map(int, l),[n,n])
-    G = bfu.adj2graph(l)
+    idx = np.where(np.asarray(list(bin(num)[2:].zfill(n*n)))=='1')
+    idx = np.unravel_index(idx,(n,n))
+    x = idx[0][0]+1
+    y = idx[1][0]+1
+    G = {str(i+1):{} for i in range(n)}
+    for i in range(len(x)):
+        G[str(x[i])][str(y[i])] = set([(0,1)])
     return G
+
+
 
 def hasSelfLoops(G):
     for u in G:
@@ -76,7 +82,7 @@ def nx2graph(G):
     for n in G:
         g[str(n+1)] = {str(x+1):set([(0,1)]) for x in G[n]}
     return g
-    
+
 def gcd4scc(SCC):
     g = graph2nx(SCC)
     return ecj.listgcd(map(lambda x: len(x)-1, nx.simple_cycles(g)))
