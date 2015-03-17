@@ -101,13 +101,14 @@ def graph2badj(G):
     return A
 
 def adj2graph(A):
-    names = [str(i) for i in range(1,A.shape[0]+1)]
-    G = {}
-    for name in names:
-        G[name] = {}
-    for i in range(0,A.shape[0]):
-        for name in map(str, np.where(A[i,:]==1)[0]+1):
-            G[str(i+1)][name]=set([(0,1)])
+    G = {str(i):{} for i in range(1,A.shape[0]+1)}
+    idx = np.where(A == 1)
+    for i in range(len(idx[0])):
+        G[str(idx[0][i]+1)][str(idx[1][i]+1)]=set([(0,1)])
+        
+    # for i in range(0,A.shape[0]):
+    #     for name in map(str, np.where(A[i,:]==1)[0]+1):
+    #         G[str(i+1)][name]=set([(0,1)])
     return G
 
 def adjs2graph(A,B):
@@ -155,14 +156,6 @@ def graph2str(G):
             A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
     return ''.join(A)
 
-def graph2string(g):
-    n = len(g)
-    n2 = n**2
-    num = int('0'*n*n,2)
-    for v in g:
-        for w in g[v]:
-            num = num | (1<<(n2 - (int(v)-1)*n-int(w)-1) + 1)
-    return num
 
 def graph2bstr(G):
     n = len(G)
@@ -179,7 +172,15 @@ def adj2num(A):
                A.flatten().tolist(),'')
     return int(s,2)
 
-def g2num(G): return int(graph2str(G),2) #adj2num(graph2adj(G))
+#def g2num(G): return int(graph2str(G),2) #adj2num(graph2adj(G))
+def g2num(g):
+    n = len(g)
+    n2 = n**2
+    num = int('0'*n*n,2)
+    for v in g:
+        for w in g[v]:
+            num = num | (1<<(n2 - (int(v)-1)*n-int(w)-1) + 1)
+    return num
 
 def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
 def ug2num(G): return (g2num(G),bg2num(G))#(adj2num(graph2adj(G)),adj2num(graph2badj(G)))
