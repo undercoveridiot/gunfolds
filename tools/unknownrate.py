@@ -6,6 +6,7 @@ import copy
 import time
 import sys,os
 
+
 TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
@@ -76,14 +77,14 @@ def eqclass(H):
 def set_bit(value, bit): return value | (1<<bit)
 def clear_bit(value, bit): return value & ~(1<<bit)
 
-def add2set_(ds, H):
+def add2set_(ds, H, cp):
     n = len(H)
-    
+
     dsr = {}
     s = set()
     ss = set()
 
-    for gnum in ds:#gset:
+    for gnum in ds:
         g = bfu.num2CG(gnum, n)
         glist = []
         elist = []
@@ -91,7 +92,13 @@ def add2set_(ds, H):
             if not e[1] in g[e[0]]:
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
-                if not num in s:
+                conflict = False
+                for c in cp:
+                   if num & c == c:
+                       conflict = True
+                       break
+
+                if not conflict and not num in s:
                     au = bfu.call_undersamples(g)
                     if not gk.checkconflict(H, g, au=au):
                         glist.append(num)
@@ -102,6 +109,45 @@ def add2set_(ds, H):
         for gn in glist: dsr[gn] = elist
 
     return dsr, ss
+
+def confpairs(H):
+    g = {n:{} for n in H}
+    s = set()
+    cp = set() # cp2
+    cp3 = set()
+
+    edges = gk.edgelist(gk.complement(g))
+    edges = prune_conflicts(H, g, edges)
+
+    for p in combinations(edges,2):
+        gk.addanedge(g,p[0])
+        gk.addanedge(g,p[1])
+        num = bfu.g2num(g)
+        au = bfu.call_undersamples(g)
+        if gk.checkconflict(H, g, au=au): cp.add(num)
+        gk.delanedge(g,p[0])
+        gk.delanedge(g,p[1])
+
+    for p in combinations(edges,3):
+        gk.addanedge(g,p[0])
+        gk.addanedge(g,p[1])
+        gk.addanedge(g,p[2])
+        num = bfu.g2num(g)
+        conflict = False
+        for c in cp:
+            if num & c == c:
+                conflict = True
+                break
+
+        if not conflict:
+            au = bfu.call_undersamples(g)
+            if gk.checkconflict(H, g, au=au): cp3.add(num)
+        gk.delanedge(g,p[0])
+        gk.delanedge(g,p[1])
+        gk.delanedge(g,p[2])        
+
+    return cp | cp3
+
 
 def iteqclass(H):
     '''
@@ -114,13 +160,15 @@ def iteqclass(H):
     g = {n:{} for n in H}
     s = set()
 
+    cp = confpairs(H)
+
     edges = gk.edgelist(gk.complement(g))
 
     ds = {bfu.g2num(g): edges}
 
     for i in range(len(H)**2):
         print i, len(ds)
-        ds, ss = add2set_(ds, H)
+        ds, ss = add2set_(ds, H, cp)
         s = s | ss
         if not ds: break
 
