@@ -22,8 +22,6 @@ def num2CG(num,n):
         G[str(x[i])][str(y[i])] = set([(0,1)])
     return G
 
-
-
 def hasSelfLoops(G):
     for u in G:
         if G[u].has_key(u):
