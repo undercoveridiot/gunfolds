@@ -180,6 +180,18 @@ def g2num(g):
             num = num | (1<<(n2 - int(v)*n - int(w)))
     return num
 
+def ug2num(g):
+    n = len(g)
+    n2 = n**2 + n
+    num = 0
+    num2 = 0
+    for v in g:
+        for w in g[v]:
+            mask = (1<<(n2 - int(v)*n - int(w)))
+            num = num | mask
+            if (2,0) in g[v][w]: num2 = num2 | mask
+    return num, num2
+
 def bg2num(g):
     n = len(g)
     n2 = n**2 + n
@@ -191,7 +203,7 @@ def bg2num(g):
     return num
 
 #def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
-def ug2num(G): return (g2num(G),bg2num(G))#(adj2num(graph2adj(G)),adj2num(graph2badj(G)))
+#def ug2num(G): return (g2num(G),bg2num(G))#(adj2num(graph2adj(G)),adj2num(graph2badj(G)))
 
 def num2adj(num,n):
     l = list(bin(num)[2:])
