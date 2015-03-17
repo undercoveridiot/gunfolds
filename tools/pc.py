@@ -123,8 +123,8 @@ def dpc(data, pval=0.05):
 
     def cindependent(y, x, counter, parents=[], pval=pval):
         for S in [j for j in iter.combinations(parents,counter)]:
-            if cind_(y, x, condset=list(S), pval=pval):
-            #if tetrad_cind_(x, y, condset=list(S), alpha=pval):
+            #if cind_(y, x, condset=list(S), pval=pval):
+            if tetrad_cind_(x, y, condset=list(S), alpha=pval):
                 return True
         return False
 
@@ -135,7 +135,7 @@ def dpc(data, pval=0.05):
     def prune(elist, mask, g):
         for e in mask:
             g[e[0]][e[1]].remove((0,1))
-            elist.remove(e)=
+            elist.remove(e)
         gk.clean_leaf_nodes(g)
 
     g  = gk.superclique(n)

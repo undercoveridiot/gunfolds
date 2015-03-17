@@ -726,7 +726,7 @@ def addapath(g,v,b):
 
 def addaVpath(g,v,b):
     mask = maskaVpath(g,v,b)
-
+    print mask
     s = set([(0,1)])
     l = [v[0]] + list(b) + [v[1]]
     for i in range(len(l)-1):
@@ -857,7 +857,7 @@ def eqsearch(g2, rate=1):
 
 
     g = cloneempty(g2)
-    edges = gk.edgelist(bfu.complement(g))
+    edges = gk.edgelist(gk.complement(g))
     addnodes(g,g2,edges)
     return s
 
@@ -889,7 +889,7 @@ def supergraphs_in_eq(g, g2, rate=1):
                     addnodes(g,g2,nedges[:i]+nedges[i+1:])
                     delanedge(g,nedges[i],mask)
 
-    edges = gk.edgelist(bfu.complement(g))
+    edges = gk.edgelist(gk.complement(g))
     addnodes(g,g2,edges)
     return s
 
@@ -1073,7 +1073,7 @@ def backtrack_more(g2, rate=1, capsize=None):
 
                 if (n,e) in single_cache: continue
                 if not ok2addaVpath(e,n,g,g2): continue
-
+                
                 mask = addaVpath(g,e,n)
                 r = nodesearch(g,g2,edges[1:],s)
                 delaVpath(g,e,n,mask)
@@ -1192,7 +1192,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
                 s.add(bfu.g2num(g))
                 if capsize and len(s)>capsize:
                     raise ValueError('Too many elements')
-                #s.update(supergraphs_in_eq(g, g2))
+                s.update(supergraphs_in_eq(g, g2))
                 return g
 
             key = order[0]
