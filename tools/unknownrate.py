@@ -70,6 +70,11 @@ def eqclass(H):
     addedges(g,H,edges)
     return s-set([None])
 
+# these two functions come fromt his answer:
+# http://stackoverflow.com/a/12174125
+def set_bit(value, bit): return value | (1<<bit)
+def clear_bit(value, bit): return value & ~(1<<bit)
+
 def add2set(gset, elist, H):
     n = len(H)
 
@@ -85,11 +90,11 @@ def add2set(gset, elist, H):
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
                 if not num in s:
-                    au = bfu.call_undersamples(g)                    
-                    if not gk.checkconflict(H,g, au=au):
+                    au = bfu.call_undersamples(g)
+                    if not gk.checkconflict(H, g, au=au):
                         eremove[e] = False
                         s.add(num)
-                        if gk.checkequality(H,g, au=au): ss.add(num)
+                        if gk.checkequality(H, g, au=au): ss.add(num)
                 gk.delanedge(g,e)
 
     for e in eremove:
