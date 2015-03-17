@@ -25,12 +25,12 @@ def bidirected_inc(G,D):
     # bidirected edges
     for w in G:
         # transfer old bidirected edges
-        l = [e for e in D[w] if (2,0) in D[w][e]]
-        for p in l:
-            if p in G[w]:
-                G[w][p].add((2,0))
-            else:
-                G[w][p] = set([(2,0)])
+        for l in D[w]:
+            if (2,0) in D[w][l]:
+                if l in G[w]:
+                    G[w][l].add((2,0))
+                else:
+                    G[w][l] = set([(2,0)])
         # new bidirected edges
         l = [e for e in D[w] if (0,1) in D[w][e]]
         for pair in itertools.permutations(l,2):
