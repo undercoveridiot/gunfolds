@@ -16,9 +16,9 @@ def directed_inc(G,D):
     # directed edges
     for v in D:
         G_un[v] = {}
-        for w in [el for el in D[v] if (0,1) in D[v][el]]:
-            for e in G[w]:
-                G_un[v][e] = set([(0,1)])
+        for w in D[v]:
+            if (0,1) in D[v][w]:
+                for e in G[w]: G_un[v][e] = set([(0,1)])
     return G_un
 
 def bidirected_inc(G,D):
@@ -147,7 +147,7 @@ def vec2g(v,n):
 # tried mutable ctypes buffer - not faster :(
 def graph2str(G):
     n = len(G)
-    d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'1',((0,1),(2,0),):'0'}
+    d = {((0,1),):'1', ((2,0),):'0',((2,0),(0,1),):'1',((0,1),(2,0),):'1'}
     A = ['0']*(n*n)
     for v in G:
         for w in G[v]:
