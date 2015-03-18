@@ -29,17 +29,11 @@ def bidirected_inc(G,D):
         # transfer old bidirected edges
         for l in D[w]:
             if (2,0) in D[w][l]:
-                if l in G[w]:
-                    G[w][l].add((2,0))
-                else:
-                    G[w][l] = set([(2,0)])
+                G[w].setdefault(l,set()).add((2,0))
         # new bidirected edges
-        l = [e for e in D[w] if (0,1) in D[w][e]]        
+        l = [e for e in D[w] if (0,1) in D[w][e]]
         for pair in itertools.permutations(l,2):
-            if pair[1] in G[pair[0]]:
-                G[pair[0]][pair[1]].add((2,0))
-            else:
-                G[pair[0]][pair[1]] = set([(2,0)])
+            G[pair[0]].setdefault(pair[1],set()).add((2,0))
     return G
 
 def increment(g):
@@ -239,7 +233,7 @@ def call_u_conflicts(G_star, H):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
-        if gk.isedgesubset(g,H): return False        
+        if gk.isedgesubset(g,H): return False
         if g in glist: return True
         glist.append(g)
     return True
