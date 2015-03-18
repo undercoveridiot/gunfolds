@@ -5,7 +5,7 @@ from functools import wraps
 import copy
 import time
 import sys,os
-
+import numpy as np
 
 TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
@@ -178,6 +178,18 @@ def iteqclass(H):
 
     return s
 
+def getrates(g,H):
+    n = len(H)
+    au = bfu.call_undersamples(g)
+    return list(np.where(map(lambda x: x == H, au))[0])
+    
+def withrates(s,H):
+    n = len(H)
+    d = {g:set() for g in s}
+    for g in s:
+        d[g] = getrates(bfu.num2CG(g,n),H)
+    return d
+        
 def add2set(gset, elist, H):
     n = len(H)
 

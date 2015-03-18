@@ -64,7 +64,7 @@ g = {'1': {'2':set([(0,1)])},
 }
 #d2l.matrix_fold(g,2,1,R=5, w_gap=1, h_gap=2, mname='TT1')
 
-listplot('list.zkl', width=4)
+listplot('list.zkl', width=5)
 
 sys.stdout = sys.__stdout__              # remember to reset sys.stdout!
 foo.flush()
