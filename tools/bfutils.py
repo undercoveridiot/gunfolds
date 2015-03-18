@@ -12,6 +12,7 @@ import zickle as zkl
 import graphkit as gk
 from comparison import num2CG, nx2graph
 
+
 def directed_inc(G,D):
     G_un = {}
     # directed edges
@@ -33,7 +34,7 @@ def bidirected_inc(G,D):
                 else:
                     G[w][l] = set([(2,0)])
         # new bidirected edges
-        l = [e for e in D[w] if (0,1) in D[w][e]]
+        l = [e for e in D[w] if (0,1) in D[w][e]]        
         for pair in itertools.permutations(l,2):
             if pair[1] in G[pair[0]]:
                 G[pair[0]][pair[1]].add((2,0))
@@ -107,7 +108,7 @@ def adj2graph(A):
     G = {str(i):{} for i in range(1,A.shape[0]+1)}
     idx = np.where(A == 1)
     for i in range(len(idx[0])):
-        G[str(idx[0][i]+1)][str(idx[1][i]+1)]=set([(0,1)])
+        G['%i' % (idx[0][i]+1)]['%i' % (idx[1][i]+1)]=set([(0,1)])
     return G
 
 def adjs2graph(A,B):
@@ -177,7 +178,7 @@ def g2num(g):
     n2 = n**2 + n
     num = 0
     for v in range(1,n+1):
-        for w in g[str(v)]:
+        for w in g['%i' % v]:
             num |= (1<<(n2 - v*n - int(w)))
     return num
 
