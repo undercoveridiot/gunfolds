@@ -6,6 +6,7 @@ import copy
 import time
 import sys,os
 import numpy as np
+import ipdb
 
 TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
@@ -37,7 +38,7 @@ def prune_conflicts(H, g, elist):
     - `elist`: list of edges to check
     """
     masks  = []
-    #Hnum = bfu.ug2num(H)    
+    #Hnum = bfu.ug2num(H)
     for e in elist:
         gk.addanedge(g,e)
         if gk.checkconflict(H,g):
@@ -102,6 +103,7 @@ def add2set_(ds, H, cp):
                        break
 
                 if not conflict and not num in s:
+                    #if not num in s:
                     au = bfu.call_undersamples(g)
                     if not gk.checkconflict(H, g, au=au):
                         glist.append(num)
@@ -182,14 +184,14 @@ def getrates(g,H):
     n = len(H)
     au = bfu.call_undersamples(g)
     return list(np.where(map(lambda x: x == H, au))[0])
-    
+
 def withrates(s,H):
     n = len(H)
     d = {g:set() for g in s}
     for g in s:
         d[g] = getrates(bfu.num2CG(g,n),H)
     return d
-        
+
 def add2set(gset, elist, H):
     n = len(H)
 
