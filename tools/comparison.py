@@ -16,15 +16,14 @@ def num2CG(num,n):
     """
     n2 = n*n
     G = {'%i' % i+1:{} for i in range(n)}
-    if num == 0: return G    
+    if num == 0: return G
     bl = gmp.bit_length(num)
     idx = [n2-i-1 for i in xrange(bl) if num & (1<<i)]
     idx = np.unravel_index(idx,(n,n))
     x = idx[0]+1
     y = idx[1]+1
     for i in range(len(x)):
-        G['%i' % x[i]]['%i' % y[i]] = set([(0,1)])        
-        #G[str(x[i])][str(y[i])] = set([(0,1)])
+        G['%i' % x[i]]['%i' % y[i]] = set([(0,1)])
     return G
 
 def hasSelfLoops(G):
