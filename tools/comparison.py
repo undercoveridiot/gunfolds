@@ -15,7 +15,7 @@ def num2CG(num,n):
 
     """
     n2 = n*n
-    G = {'%i' % i+1:{} for i in range(n)}
+    G = {'%i' % (i+1):{} for i in range(n)}
     if num == 0: return G
     bl = gmp.bit_length(num)
     idx = [n2-i-1 for i in xrange(bl) if num & (1<<i)]
@@ -80,9 +80,9 @@ def graph2nx(G):
         g.add_edges_from([(v,x) for x in G[v] if (0,1) in G[v][x]])
     return g
 def nx2graph(G):
-    g = {'%i' % n+1:{} for n in G}
+    g = {'%i' % (n+1):{} for n in G}
     for n in G:
-        g['%i' % n+1] = {'%i' % x+1:set([(0,1)]) for x in G[n]}
+        g['%i' % (n+1)] = {'%i' % (x+1):set([(0,1)]) for x in G[n]}
     return g
 
 def gcd4scc(SCC):
