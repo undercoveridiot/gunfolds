@@ -20,7 +20,7 @@ def memo(func):
     cache = {}                        # Stored subproblem solutions
     @wraps(func)                      # Make wrap look like func
     def wrap(*args):                  # The memoized wrapper
-        s = trv.gsig(args[0])        # Signature: just the g
+        s = trv.gsig(args[0])         # Signature: just the g
         #s = tool.signature(args[0],args[2])# Signature: g and edges
         if s not in cache:            # Not already computed?
             cache[s] = func(*args)    # Compute & cache the solution
