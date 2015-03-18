@@ -7,19 +7,24 @@ import networkx as nx
 numpy.random.RandomState()
 import bfutils as bfu
 import numpy as np
+import gmpy as gmp
 
 def num2CG(num,n):
     """num2CG - converts a number  whose binary representaion encodes edge
     presence/absence into a compressed graph representaion
 
     """
-    idx = np.where(np.asarray(list(bin(num)[2:].zfill(n*n)))=='1')
+    n2 = n*n
+    G = {'%i' % i+1:{} for i in range(n)}
+    if num == 0: return G    
+    bl = gmp.bit_length(num)
+    idx = [n2-i-1 for i in xrange(bl) if num & (1<<i)]
     idx = np.unravel_index(idx,(n,n))
-    x = idx[0][0]+1
-    y = idx[1][0]+1
-    G = {str(i+1):{} for i in range(n)}
+    x = idx[0]+1
+    y = idx[1]+1
     for i in range(len(x)):
-        G[str(x[i])][str(y[i])] = set([(0,1)])
+        G['%i' % x[i]]['%i' % y[i]] = set([(0,1)])        
+        #G[str(x[i])][str(y[i])] = set([(0,1)])
     return G
 
 def hasSelfLoops(G):
@@ -76,9 +81,9 @@ def graph2nx(G):
         g.add_edges_from([(v,x) for x in G[v] if (0,1) in G[v][x]])
     return g
 def nx2graph(G):
-    g = {str(n+1):{} for n in G}
+    g = {'%i' % n+1:{} for n in G}
     for n in G:
-        g[str(n+1)] = {str(x+1):set([(0,1)]) for x in G[n]}
+        g['%i' % n+1] = {'%i' % x+1:set([(0,1)]) for x in G[n]}
     return g
 
 def gcd4scc(SCC):
