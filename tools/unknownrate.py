@@ -111,43 +111,6 @@ def add2set_(ds, H, cp):
 
     return dsr, ss
 
-def add2set__(ds, H, cp):
-    n = len(H)
-
-    dsr = {}
-    s = set()
-    ss = set()
-
-    #Hnum = bfu.ug2num(H)
-
-    for gnum in ds:
-        g = bfu.num2CG(gnum, n)
-        glist = []
-        elist = []
-        for e in ds[gnum]:
-            if not e[1] in g[e[0]]:
-                gk.addanedge(g,e)
-                num = bfu.g2num(g)
-                conflict = False
-                for c in cp:
-                   if num & c == c:
-                       conflict = True
-                       break
-
-                if not conflict and not num in s:
-                    #if not num in s:
-                    au = bfu.call_undersamples(g)
-                    #if not bfu.call_u_conflicts(g, H):
-                    if not gk.checkconflict(H, g, au=au):
-                        glist.append(num)
-                        elist.append(e)
-                        s.add(num)
-                        #if bfu.call_u_equals(g, H): ss.add(num)
-                        if gk.checkequality(H, g, au=au): ss.add(num)
-                gk.delanedge(g,e)
-        for gn in glist: dsr[gn] = elist
-
-    return dsr, ss
 
 def confpairs(H):
     g = {n:{} for n in H}
