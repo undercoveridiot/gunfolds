@@ -9,6 +9,7 @@ import networkx as nx
 #local
 import ecj
 import zickle as zkl
+import graphkit as gk
 from comparison import num2CG, nx2graph
 
 def directed_inc(G,D):
@@ -17,7 +18,7 @@ def directed_inc(G,D):
     for v in D:
         G_un[v] = {}
         for w in D[v]:
-            if (0,1) in D[v][w]:
+            if G[w] and (0,1) in D[v][w]:
                 for e in G[w]: G_un[v][e] = set([(0,1)])
     return G_un
 
@@ -175,9 +176,9 @@ def g2num(g):
     n = len(g)
     n2 = n**2 + n
     num = 0
-    for v in g:
-        for w in g[v]:
-            num = num | (1<<(n2 - int(v)*n - int(w)))
+    for v in range(1,n+1):
+        for w in g[str(v)]:
+            num |= (1<<(n2 - v*n - int(w)))
     return num
 
 def ug2num(g):
@@ -188,8 +189,8 @@ def ug2num(g):
     for v in g:
         for w in g[v]:
             mask = (1<<(n2 - int(v)*n - int(w)))
-            num = num | mask
-            if (2,0) in g[v][w]: num2 = num2 | mask
+            num |= mask
+            if (2,0) in g[v][w]: num2 |= mask
     return num, num2
 
 def bg2num(g):
@@ -232,6 +233,15 @@ def call_undersamples(G_star):
         if g in glist: return glist
         glist.append(g)
     return glist
+
+def call_u_conflicts(G_star, H):
+    glist = [G_star]
+    while True:
+        g = increment_u(G_star, glist[-1])
+        if g in glist: return True
+        if gk.isedgesubset(g,H): return False        
+        glist.append(g)
+    return True
 
 def compact_call_undersamples(G_star,steps=None):
     glist = [ug2num(G_star)]
