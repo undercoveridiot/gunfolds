@@ -250,7 +250,6 @@ def call_u_equals(G_star, H):
         if g == H: return True
         if g in glist: return False
         glist.append(g)
-
     return False
 
 def compact_call_undersamples(G_star,steps=None):
