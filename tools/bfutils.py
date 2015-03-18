@@ -147,7 +147,7 @@ def graph2str(G):
     A = ['0']*(n*n)
     for v in G:
         for w in G[v]:
-            A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
+            A[n*(int(v,10)-1)+int(w,10)-1] = d[tuple(G[v][w])]
     return ''.join(A)
 
 
@@ -157,7 +157,7 @@ def graph2bstr(G):
     A = ['0']*(n*n)
     for v in G:
         for w in G[v]:
-            A[n*(int(v)-1)+int(w)-1] = d[tuple(G[v][w])]
+            A[n*(int(v,10)-1)+int(w,10)-1] = d[tuple(G[v][w])]
     return ''.join(A)
 
 
@@ -172,8 +172,8 @@ def g2num(g):
     n2 = n**2 + n
     num = 0
     for v in range(1,n+1):
-        for w in g['%i' % v]:
-            num |= (1<<(n2 - v*n - int(w)))
+        for w in g[str(v)]:
+            num |= (1<<(n2 - v*n - int(w,10)))
     return num
 
 def ug2num(g):
@@ -183,7 +183,7 @@ def ug2num(g):
     num2 = 0
     for v in g:
         for w in g[v]:
-            mask = (1<<(n2 - int(v)*n - int(w)))
+            mask = (1<<(n2 - int(v,10)*n - int(w,10)))
             num |= mask
             if (2,0) in g[v][w]: num2 |= mask
     return num, num2
