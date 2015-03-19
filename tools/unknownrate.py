@@ -81,7 +81,7 @@ def clear_bit(value, bit): return value & ~(1<<bit)
 
 def add2set_(ds, H, cp):
     n = len(H)
-
+    n2 = n*n +n
     dsr = {}
     s = set()
     ss = set()
@@ -95,10 +95,12 @@ def add2set_(ds, H, cp):
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
                 conflict = False
-                for c in cp:
-                   if num & c == c:
-                       conflict = True
-                       break
+                ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
+                if ekey in cp:
+                    for c in cp[ekey]:
+                        if num & c == c:
+                            conflict = True
+                            break
 
                 if not conflict and not num in s:
                     if not bfu.call_u_conflicts(g, H):
@@ -112,12 +114,16 @@ def add2set_(ds, H, cp):
     return dsr, ss
 
 
+def e2num(e,n): return (1<<(n*n +n - int(e[0],10)*n - int(e[1],10)))
+
 def confpairs(H):
+    n = len(H)
     g = {n:{} for n in H}
     s = set()
     cp = set() # cp2
     cp3 = set()
     #Hnum = bfu.ug2num(H)
+    d = {}
 
     edges = gk.edgelist(gk.complement(g))
     edges = prune_conflicts(H, g, edges)
@@ -127,7 +133,10 @@ def confpairs(H):
         gk.addanedge(g,p[1])
         num = bfu.g2num(g)
         au = bfu.call_undersamples(g)
-        if gk.checkconflict(H, g, au=au): cp.add(num)
+        if gk.checkconflict(H, g, au=au):
+            d.setdefault(e2num(p[0],n),set()).add(num)
+            d.setdefault(e2num(p[1],n),set()).add(num)
+            cp.add(num)
         gk.delanedge(g,p[0])
         gk.delanedge(g,p[1])
 
@@ -144,12 +153,16 @@ def confpairs(H):
 
         if not conflict:
             au = bfu.call_undersamples(g)
-            if gk.checkconflict(H, g, au=au): cp3.add(num)
+            if gk.checkconflict(H, g, au=au):
+                d.setdefault(e2num(p[0],n),set()).add(num)
+                d.setdefault(e2num(p[1],n),set()).add(num)
+                d.setdefault(e2num(p[2],n),set()).add(num)
+                #cp3.add(num)
         gk.delanedge(g,p[0])
         gk.delanedge(g,p[1])
         gk.delanedge(g,p[2])
 
-    return cp | cp3
+    return d
 
 
 def iteqclass(H):
