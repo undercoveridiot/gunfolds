@@ -94,7 +94,7 @@ def cacheconflicts(num, cache):
         if num & c == c:
             return True
     return False
-    
+
 def add2set_(ds, H, cp):
     n = len(H)
     n2 = n*n +n
@@ -113,7 +113,7 @@ def add2set_(ds, H, cp):
                 conflict = False
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
                 if ekey in cp: conflict = cacheconflicts(num,cp[ekey])
-                    
+
                 if not conflict and not num in s:
                     if not bfu.call_u_conflicts(g, H):
                         glist.append(num)
@@ -131,7 +131,7 @@ def confpairs(H):
     s = set()
     cp = set() # cp2
     cp3 = set()
-    #Hnum = bfu.ug2num(H)
+
     d = {}
 
     edges = gk.edgelist(gk.complement(g))
@@ -170,8 +170,10 @@ def iteqclass(H):
         print 'not running on superclique'
         return None
     g = {n:{} for n in H}
-    s = set()
-
+    s = set()    
+    Hnum = bfu.ug2num(H)
+    if Hnum[1]==0: s.add(Hnum[0])
+    
     cp = confpairs(H)
 
     edges = gk.edgelist(gk.complement(g))

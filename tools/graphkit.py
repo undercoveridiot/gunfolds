@@ -26,6 +26,44 @@ def edgelist(g): # directed
 def edgenumber(g):
     return sum([sum([len(g[y][x]) for x in g[y]]) for y in g])
 
+def iedgelist(g): # directed iterator
+    '''
+    iterate over the list of tuples for edges of g
+    '''
+    for v in g:
+        for w in g[v]:
+            if (0,1) in g[v][w]: yield (v,w)
+def inedgelist(g): # missing directed iterator
+    '''
+    iterate over the list of tuples for edges of g
+    '''
+    n = len(g)
+    for v in g:
+        for i in xrange(1,n+1):
+            w = str(i)
+            if not w in g[v]:
+                yield (v,w)            
+            elif not (0,1) in g[v][w]:
+                yield (v,w)
+def ibedgelist(g): # directed iterator
+    '''
+    iterate over the list of tuples for edges of g
+    '''
+    for v in g:
+       for w in g[v]:
+           if (2,0) in g[v][w]: yield (v,w)
+def inbedgelist(g): # missing bidirected iterator
+    '''
+    iterate over the list of tuples for edges of g
+    '''
+    for v in g:
+       for w in g:
+           if v!=w:
+               if not w in g[v]:
+                   yield (v,w)                   
+               elif not (2,0) in g[v][w]:
+                   yield (v,w)                   
+
 def bedgelist(g): # bidirected edge list with flips
     l = []
     for n in g:
@@ -315,6 +353,16 @@ def isedgesubset(g2star,g2):
                     return False
             else:
                     return False
+    return True
+
+def isedgesubset_(g,H):
+    '''
+    check if g edges are a subset of those of H
+    '''
+    for e in inbedgelist(H):
+        if e[1] in g[e[0]] and (2,0) in g[e[0]][e[1]]: return False    
+    for e in inedgelist(H):
+        if e[1] in g[e[0]] and (0,1) in g[e[0]][e[1]]: return False
     return True
 
 def checkconflict(H,G_test, au = None):
