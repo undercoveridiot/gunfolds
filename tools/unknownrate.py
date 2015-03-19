@@ -79,6 +79,21 @@ def eqclass(H):
 def set_bit(value, bit): return value | (1<<bit)
 def clear_bit(value, bit): return value & ~(1<<bit)
 def e2num(e,n): return (1<<(n*n +n - int(e[0],10)*n - int(e[1],10)))
+
+def cacheconflicts(num, cache):
+    """Given a number representation of a graph and an iterable of
+    conflicting subgraphs return True if the graph conflicts with any
+    of them and false otherwise
+
+    Arguments:
+    - `num`: the number representation of a graph
+    - `cache`: an iterable of number representations of conflicting graphs
+    """
+    conflict = False
+    for c in cache:
+        if num & c == c:
+            return True
+    return False
     
 def add2set_(ds, H, cp):
     n = len(H)
@@ -97,12 +112,8 @@ def add2set_(ds, H, cp):
                 num = bfu.g2num(g)
                 conflict = False
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
-                if ekey in cp:
-                    for c in cp[ekey]:
-                        if num & c == c:
-                            conflict = True
-                            break
-
+                if ekey in cp: conflict = cacheconflicts(num,cp[ekey])
+                    
                 if not conflict and not num in s:
                     if not bfu.call_u_conflicts(g, H):
                         glist.append(num)
@@ -127,38 +138,25 @@ def confpairs(H):
     edges = prune_conflicts(H, g, edges)
 
     for p in combinations(edges,2):
-        gk.addanedge(g,p[0])
-        gk.addanedge(g,p[1])
-        num = bfu.g2num(g)
-        au = bfu.call_undersamples(g)
-        if gk.checkconflict(H, g, au=au):
+        gk.addedges(g,p)
+        if bfu.call_u_conflicts(g, H):
+            num = bfu.g2num(g)
             d.setdefault(e2num(p[0],n),set()).add(num)
             d.setdefault(e2num(p[1],n),set()).add(num)
             cp.add(num)
-        gk.delanedge(g,p[0])
-        gk.delanedge(g,p[1])
+        gk.deledges(g,p)
 
     for p in combinations(edges,3):
-        gk.addanedge(g,p[0])
-        gk.addanedge(g,p[1])
-        gk.addanedge(g,p[2])
+        gk.addedges(g,p)
         num = bfu.g2num(g)
-        conflict = False
-        for c in cp:
-            if num & c == c:
-                conflict = True
-                break
 
+        conflict = cacheconflicts(num,cp)
         if not conflict:
-            au = bfu.call_undersamples(g)
-            if gk.checkconflict(H, g, au=au):
+            if bfu.call_u_conflicts(g, H):
                 d.setdefault(e2num(p[0],n),set()).add(num)
                 d.setdefault(e2num(p[1],n),set()).add(num)
                 d.setdefault(e2num(p[2],n),set()).add(num)
-                #cp3.add(num)
-        gk.delanedge(g,p[0])
-        gk.delanedge(g,p[1])
-        gk.delanedge(g,p[2])
+        gk.deledges(g,p)
 
     return d
 
