@@ -78,7 +78,8 @@ def eqclass(H):
 # http://stackoverflow.com/a/12174125
 def set_bit(value, bit): return value | (1<<bit)
 def clear_bit(value, bit): return value & ~(1<<bit)
-
+def e2num(e,n): return (1<<(n*n +n - int(e[0],10)*n - int(e[1],10)))
+    
 def add2set_(ds, H, cp):
     n = len(H)
     n2 = n*n +n
@@ -112,9 +113,6 @@ def add2set_(ds, H, cp):
         for gn in glist: dsr[gn] = elist
 
     return dsr, ss
-
-
-def e2num(e,n): return (1<<(n*n +n - int(e[0],10)*n - int(e[1],10)))
 
 def confpairs(H):
     n = len(H)
