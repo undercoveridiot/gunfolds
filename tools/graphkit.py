@@ -286,9 +286,13 @@ def scc_unreachable(g):
     if no_children(g): return True
     return False
 
-# unlike functions from traversal package these do not checking
+# unlike functions from traversal package these do no checking
 def addanedge(g,e): g[e[0]][e[1]] =  set([(0,1)])
 def delanedge(g,e): g[e[0]].pop(e[1], None)
+def addedges(g,es):
+    for e in es: addanedge(g,e)
+def deledges(g,es):
+    for e in es: delanedge(g,e)
 
 def checkequality(H,G_test, au = None):
     if not au:
