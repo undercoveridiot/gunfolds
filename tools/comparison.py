@@ -70,7 +70,7 @@ def hasRoot(G): return hasSink(ecj.tr(G))
 def isSclique(G):
     n = len(G)
     for v in G:
-        if len(G[v]) < n: return False
+        if sum([(0,1) in G[v][w] for w in G[v]]) < n: return False
         if sum([(2,0) in G[v][w] for w in G[v]]) < n-1: return False
     return True
 
