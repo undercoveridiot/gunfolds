@@ -66,7 +66,7 @@ def eqclass(H):
 
             for i in range(n):
                 gk.addanedge(g,nedges[i])
-                if gk.checkequality(H,g): return trv.gsig(g)
+                if bfu.call_u_equals(g, H): s.add(bfu.g2num(g))
                 s.add(addedges(g,H,nedges[:i]+nedges[i+1:]))
                 gk.delanedge(g,nedges[i])
 
@@ -94,7 +94,7 @@ def cacheconflicts(num, cache):
         if num & c == c:
             return True
     return False
-    
+
 def add2set_(ds, H, cp):
     n = len(H)
     n2 = n*n +n
@@ -113,7 +113,7 @@ def add2set_(ds, H, cp):
                 conflict = False
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
                 if ekey in cp: conflict = cacheconflicts(num,cp[ekey])
-                    
+
                 if not conflict and not num in s:
                     if not bfu.call_u_conflicts(g, H):
                         glist.append(num)
