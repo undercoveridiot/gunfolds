@@ -66,7 +66,7 @@ def eqclass(H):
 
             for i in range(n):
                 gk.addanedge(g,nedges[i])
-                if gk.checkequality(H,g): return trv.gsig(g)
+                if bfu.call_u_equals(g, H): s.add(bfu.g2num(g))
                 s.add(addedges(g,H,nedges[:i]+nedges[i+1:]))
                 gk.delanedge(g,nedges[i])
 
