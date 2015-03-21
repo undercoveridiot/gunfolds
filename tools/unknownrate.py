@@ -153,12 +153,14 @@ def confpairs(H):
         gk.addedges(g,p)
         num = bfu.g2num(g)
 
-        conflict = cacheconflicts(num,cp)
-        if not conflict:
-            if bfu.call_u_conflicts(g, H):
-                d.setdefault(e2num(p[0],n),set()).add(twoe2num(p[1],p[2],n))
-                d.setdefault(e2num(p[1],n),set()).add(twoe2num(p[0],p[2],n))
-                d.setdefault(e2num(p[2],n),set()).add(twoe2num(p[0],p[1],n))
+        if cacheconflicts(num,cp):
+            gk.deledges(g,p)
+            continue
+
+        if bfu.call_u_conflicts(g, H):
+            d.setdefault(e2num(p[0],n),set()).add(twoe2num(p[1],p[2],n))
+            d.setdefault(e2num(p[1],n),set()).add(twoe2num(p[0],p[2],n))
+            d.setdefault(e2num(p[2],n),set()).add(twoe2num(p[0],p[1],n))
         gk.deledges(g,p)
 
     return d
