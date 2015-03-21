@@ -41,7 +41,7 @@ def prune_conflicts(H, g, elist):
     #Hnum = bfu.ug2num(H)
     for e in elist:
         gk.addanedge(g,e)
-        if gk.checkconflict(H,g):
+        if bfu.call_u_conflicts(g, H):
             masks.append(False)
         else:
             masks.append(True)
