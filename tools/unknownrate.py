@@ -79,6 +79,7 @@ def eqclass(H):
 def set_bit(value, bit): return value | (1<<bit)
 def clear_bit(value, bit): return value & ~(1<<bit)
 def e2num(e,n): return (1<<(n*n +n - int(e[0],10)*n - int(e[1],10)))
+def twoe2num(e1,e2,n): return e2num(e1,n)|e2num(e2,n)
 
 def cacheconflicts(num, cache):
     """Given a number representation of a graph and an iterable of
@@ -140,9 +141,11 @@ def confpairs(H):
     for p in combinations(edges,2):
         gk.addedges(g,p)
         if bfu.call_u_conflicts(g, H):
+            n1 = e2num(p[0],n)
+            n2 = e2num(p[1],n)
+            d.setdefault(n1,set()).add(n2)
+            d.setdefault(n2,set()).add(n1)
             num = bfu.g2num(g)
-            d.setdefault(e2num(p[0],n),set()).add(num)
-            d.setdefault(e2num(p[1],n),set()).add(num)
             cp.add(num)
         gk.deledges(g,p)
 
@@ -153,9 +156,9 @@ def confpairs(H):
         conflict = cacheconflicts(num,cp)
         if not conflict:
             if bfu.call_u_conflicts(g, H):
-                d.setdefault(e2num(p[0],n),set()).add(num)
-                d.setdefault(e2num(p[1],n),set()).add(num)
-                d.setdefault(e2num(p[2],n),set()).add(num)
+                d.setdefault(e2num(p[0],n),set()).add(twoe2num(p[1],p[2],n))
+                d.setdefault(e2num(p[1],n),set()).add(twoe2num(p[0],p[2],n))
+                d.setdefault(e2num(p[2],n),set()).add(twoe2num(p[0],p[1],n))
         gk.deledges(g,p)
 
     return d
@@ -170,10 +173,10 @@ def iteqclass(H):
         print 'not running on superclique'
         return None
     g = {n:{} for n in H}
-    s = set()    
+    s = set()
     Hnum = bfu.ug2num(H)
     if Hnum[1]==0: s.add(Hnum[0])
-    
+
     cp = confpairs(H)
 
     edges = gk.edgelist(gk.complement(g))
