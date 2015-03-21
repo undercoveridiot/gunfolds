@@ -84,6 +84,9 @@ def le2num(elist,n):
     for e in elist:
         num |= e2num(e,n)
     return num
+def ekey2e(ekey,n):
+    idx = np.unravel_index(n*n - ekey .bit_length() - 1 + 1,(n,n))
+    return str(idx[0]+1),str(idx[1]+1)
 
 def cacheconflicts(num, cache):
     """Given a number representation of a graph and an iterable of
@@ -113,6 +116,7 @@ def add2set_(ds, H, cp):
 
         glist = []
         elist = []
+        eset = set()
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
                 conflict = False
@@ -124,12 +128,18 @@ def add2set_(ds, H, cp):
                 num = bfu.g2num(g)
                 if not num in s:
                     if not bfu.call_u_conflicts(g, H):
-                        glist.append(num)
+                        glist.append((num,ekey))
                         elist.append(e)
+                        eset.add(ekey)
                         s.add(num)
                         if bfu.call_u_equals(g, H): ss.add(num)
                 gk.delanedge(g,e)
-        for gn in glist: dsr[gn] = elist
+                
+        for gn,e in glist:
+            if e in cp:
+                dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
+            else:
+                dsr[gn] = elist
 
     return dsr, ss
 
@@ -151,13 +161,13 @@ def confpairs(H):
             d.setdefault(n2,set()).add(n1)
         gk.deledges(g,p)
 
-    for p in combinations(edges,3):
-        gk.addedges(g,p)
-        if bfu.call_u_conflicts(g, H):
-            d.setdefault(e2num(p[0],n),set()).add(le2num([p[1],p[2]],n))
-            d.setdefault(e2num(p[1],n),set()).add(le2num([p[0],p[2]],n))
-            d.setdefault(e2num(p[2],n),set()).add(le2num([p[0],p[1]],n))
-        gk.deledges(g,p)
+    # for p in combinations(edges,3):
+    #     gk.addedges(g,p)
+    #     if bfu.call_u_conflicts(g, H):
+    #         d.setdefault(e2num(p[0],n),set()).add(le2num([p[1],p[2]],n))
+    #         d.setdefault(e2num(p[1],n),set()).add(le2num([p[0],p[2]],n))
+    #         d.setdefault(e2num(p[2],n),set()).add(le2num([p[0],p[1]],n))
+    #     gk.deledges(g,p)
 
     return d
 
@@ -249,9 +259,9 @@ def eqclass_list(H):
     return s
 
 def main():
-    g = bfu.ringmore(4,2);
-    H = bfu.undersample(g,2);
-    ss = eqclass(H)
+    g = bfu.ringmore(6,1);
+    H = bfu.undersample(g,1);
+    ss = iteqclass(H)
     print ss
 
 if __name__ == "__main__":
