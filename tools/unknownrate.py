@@ -79,7 +79,11 @@ def eqclass(H):
 def set_bit(value, bit): return value | (1<<bit)
 def clear_bit(value, bit): return value & ~(1<<bit)
 def e2num(e,n): return (1<<(n*n +n - int(e[0],10)*n - int(e[1],10)))
-def twoe2num(e1,e2,n): return e2num(e1,n)|e2num(e2,n)
+def le2num(elist,n):
+    num = 0
+    for e in elist:
+        num |= e2num(e,n)
+    return num
 
 def cacheconflicts(num, cache):
     """Given a number representation of a graph and an iterable of
@@ -106,7 +110,7 @@ def add2set_(ds, H, cp):
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
         gnum = bfu.g2num(g)
-        
+
         glist = []
         elist = []
         for e in ds[gnum]:
@@ -148,22 +152,14 @@ def confpairs(H):
             n2 = e2num(p[1],n)
             d.setdefault(n1,set()).add(n2)
             d.setdefault(n2,set()).add(n1)
-            num = bfu.g2num(g)
-            cp.add(num)
         gk.deledges(g,p)
 
     for p in combinations(edges,3):
         gk.addedges(g,p)
-        num = bfu.g2num(g)
-
-        if cacheconflicts(num,cp):
-            gk.deledges(g,p)
-            continue
-
         if bfu.call_u_conflicts(g, H):
-            d.setdefault(e2num(p[0],n),set()).add(twoe2num(p[1],p[2],n))
-            d.setdefault(e2num(p[1],n),set()).add(twoe2num(p[0],p[2],n))
-            d.setdefault(e2num(p[2],n),set()).add(twoe2num(p[0],p[1],n))
+            d.setdefault(e2num(p[0],n),set()).add(le2num([p[1],p[2]],n))
+            d.setdefault(e2num(p[1],n),set()).add(le2num([p[0],p[2]],n))
+            d.setdefault(e2num(p[2],n),set()).add(le2num([p[0],p[1]],n))
         gk.deledges(g,p)
 
     return d
