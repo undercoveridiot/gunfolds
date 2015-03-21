@@ -105,16 +105,19 @@ def add2set_(ds, H, cp):
 
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
+        gnum = bfu.g2num(g)
+        
         glist = []
         elist = []
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
-                gk.addanedge(g,e)
-                num = bfu.g2num(g)
                 conflict = False
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
-                if ekey in cp: conflict = cacheconflicts(num,cp[ekey])
+                if ekey in cp: conflict = cacheconflicts(gnum,cp[ekey])
+                if conflict: continue
 
+                gk.addanedge(g,e)
+                num = bfu.g2num(g)
                 if not conflict and not num in s:
                     if not bfu.call_u_conflicts(g, H):
                         glist.append(num)
