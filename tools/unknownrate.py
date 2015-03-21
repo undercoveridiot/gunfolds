@@ -118,7 +118,7 @@ def add2set_(ds, H, cp):
 
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
-                if not conflict and not num in s:
+                if not num in s:
                     if not bfu.call_u_conflicts(g, H):
                         glist.append(num)
                         elist.append(e)
