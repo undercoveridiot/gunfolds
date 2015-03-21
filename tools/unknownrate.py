@@ -128,10 +128,7 @@ def add2set_(ds, H, cp):
 def confpairs(H):
     n = len(H)
     g = {n:{} for n in H}
-    s = set()
-    cp = set() # cp2
-    cp3 = set()
-
+    cp = set()
     d = {}
 
     edges = gk.edgelist(gk.complement(g))
@@ -150,12 +147,14 @@ def confpairs(H):
         gk.addedges(g,p)
         num = bfu.g2num(g)
 
-        conflict = cacheconflicts(num,cp)
-        if not conflict:
-            if bfu.call_u_conflicts(g, H):
-                d.setdefault(e2num(p[0],n),set()).add(num)
-                d.setdefault(e2num(p[1],n),set()).add(num)
-                d.setdefault(e2num(p[2],n),set()).add(num)
+        if cacheconflicts(num,cp):
+            gk.deledges(g,p)
+            continue
+        
+        if bfu.call_u_conflicts(g, H):
+            d.setdefault(e2num(p[0],n),set()).add(num)
+            d.setdefault(e2num(p[1],n),set()).add(num)
+            d.setdefault(e2num(p[2],n),set()).add(num)
         gk.deledges(g,p)
 
     return d
