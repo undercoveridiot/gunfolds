@@ -37,16 +37,12 @@ def prune_conflicts(H, g, elist):
     - `g`: a graph under construction
     - `elist`: list of edges to check
     """
-    masks  = []
-    #Hnum = bfu.ug2num(H)
+    l  = []
     for e in elist:
         gk.addanedge(g,e)
-        if bfu.call_u_conflicts(g, H):
-            masks.append(False)
-        else:
-            masks.append(True)
+        if not bfu.call_u_conflicts(g, H): l.append(e)
         gk.delanedge(g,e)
-    return [elist[i] for i in range(len(elist)) if masks[i]]
+    return l
 
 def eqclass(H):
     '''
@@ -146,10 +142,6 @@ def add2set_(ds, H, cp):
 def confpairs(H):
     n = len(H)
     g = {n:{} for n in H}
-    s = set()
-    cp = set() # cp2
-    cp3 = set()
-
     d = {}
 
     edges = gk.edgelist(gk.complement(g))
