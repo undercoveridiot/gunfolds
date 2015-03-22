@@ -1103,7 +1103,7 @@ def backtrack_more(g2, rate=1, capsize=None):
 
 def backtrackup2u(H,umax=2):
     s = set()
-    for i in xrange(umax):
+    for i in xrange(1,umax+1):
         s = s | backtrack_more(H,rate=i)
     return s
 
