@@ -115,10 +115,8 @@ def add2set_(ds, H, cp):
         eset = set()
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
-                conflict = False
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
-                if ekey in cp: conflict = cacheconflicts(gnum,cp[ekey])
-                if conflict: continue
+                if ekey in cp and cacheconflicts(gnum,cp[ekey]): continue
 
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
@@ -130,7 +128,7 @@ def add2set_(ds, H, cp):
                         s.add(num)
                         if bfu.call_u_equals(g, H): ss.add(num)
                 gk.delanedge(g,e)
-                
+
         for gn,e in glist:
             if e in cp:
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
