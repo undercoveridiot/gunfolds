@@ -242,7 +242,7 @@ def call_u_equals(G_star, H):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
-        if g == H: return True        
+        if g == H: return True
         if g in glist: return False
         glist.append(g)
     return False
