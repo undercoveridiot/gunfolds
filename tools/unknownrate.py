@@ -1,4 +1,4 @@
-			#BFS implementation of subgraph and supergraph
+#BFS implementation of subgraph and supergraph
 #Gu to G1 algorithm
 from itertools import combinations
 from functools import wraps
@@ -37,16 +37,12 @@ def prune_conflicts(H, g, elist):
     - `g`: a graph under construction
     - `elist`: list of edges to check
     """
-    masks  = []
-    #Hnum = bfu.ug2num(H)
+    l  = []
     for e in elist:
         gk.addanedge(g,e)
-        if gk.checkconflict(H,g):
-            masks.append(False)
-        else:
-            masks.append(True)
+        if not bfu.call_u_conflicts(g, H): l.append(e)
         gk.delanedge(g,e)
-    return [elist[i] for i in range(len(elist)) if masks[i]]
+    return l
 
 def eqclass(H):
     '''
@@ -119,10 +115,8 @@ def add2set_(ds, H, cp):
         eset = set()
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
-                conflict = False
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
-                if ekey in cp: conflict = cacheconflicts(gnum,cp[ekey])
-                if conflict: continue
+                if ekey in cp and cacheconflicts(gnum,cp[ekey]): continue
 
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
@@ -134,7 +128,7 @@ def add2set_(ds, H, cp):
                         s.add(num)
                         if bfu.call_u_equals(g, H): ss.add(num)
                 gk.delanedge(g,e)
-                
+
         for gn,e in glist:
             if e in cp:
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
@@ -146,7 +140,6 @@ def add2set_(ds, H, cp):
 def confpairs(H):
     n = len(H)
     g = {n:{} for n in H}
-    cp = set()
     d = {}
 
     edges = gk.edgelist(gk.complement(g))
@@ -160,14 +153,6 @@ def confpairs(H):
             d.setdefault(n1,set()).add(n2)
             d.setdefault(n2,set()).add(n1)
         gk.deledges(g,p)
-
-    # for p in combinations(edges,3):
-    #     gk.addedges(g,p)
-    #     if bfu.call_u_conflicts(g, H):
-    #         d.setdefault(e2num(p[0],n),set()).add(le2num([p[1],p[2]],n))
-    #         d.setdefault(e2num(p[1],n),set()).add(le2num([p[0],p[2]],n))
-    #         d.setdefault(e2num(p[2],n),set()).add(le2num([p[0],p[1]],n))
-    #     gk.deledges(g,p)
 
     return d
 

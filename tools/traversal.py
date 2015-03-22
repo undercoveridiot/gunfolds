@@ -695,17 +695,11 @@ def ok2addapath(e,p,g,g2):
     cleanedges(e,p,g,mask)
     return True
 
-def ok2addaVpath(e,p,g,g2):
+def ok2addaVpath(e,p,g,g2,rate=2):
     mask = addaVpath(g,e,p)
-    if not isedgesubset(bfu.undersample(g,2), g2):
+    if not isedgesubset(bfu.undersample(g,rate), g2):
         cleanVedges(g,e,p,mask)
         return False
-    #l = [e[0]] + list(p) + [e[1]]
-    #for i in range(len(l)-2):
-        #if not edge_increment_ok(l[i],l[i+1],l[i+2],g,g2):
-        #    cleanVedges(g,e,p,mask)
-        #    return False
-        #mask.extend(add2edges(g,(l[i],l[i+2]),l[i+1]))
     cleanVedges(g,e,p,mask)
     return True
 
@@ -726,7 +720,6 @@ def addapath(g,v,b):
 
 def addaVpath(g,v,b):
     mask = maskaVpath(g,v,b)
-    print mask
     s = set([(0,1)])
     l = [v[0]] + list(b) + [v[1]]
     for i in range(len(l)-1):
@@ -1058,7 +1051,10 @@ def backtrack_more(g2, rate=1, capsize=None):
     if rate == 1:
         ln = [n for n in g2]
     else:
-        ln = [x for x in itertools.permutations(g2.keys(),rate)] + [(n,n) for n in g2]
+        ln = []
+        for x in itertools.combinations_with_replacement(g2.keys(),rate):
+            ln.extend(itertools.permutations(x,rate))
+        ln = set(ln)
 
     @memo # memoize the search
     def nodesearch(g, g2, edges, s):
@@ -1072,8 +1068,8 @@ def backtrack_more(g2, rate=1, capsize=None):
             for n in ln:
 
                 if (n,e) in single_cache: continue
-                if not ok2addaVpath(e,n,g,g2): continue
-                
+                if not ok2addaVpath(e, n, g, g2, rate=rate): continue
+
                 mask = addaVpath(g,e,n)
                 r = nodesearch(g,g2,edges[1:],s)
                 delaVpath(g,e,n,mask)
@@ -1103,6 +1099,12 @@ def backtrack_more(g2, rate=1, capsize=None):
         nodesearch(g,g2,edges,s)
     except ValueError:
         s.add(0)
+    return s
+
+def backtrackup2u(H,umax=2):
+    s = set()
+    for i in xrange(umax):
+        s = s | backtrack_more(H,rate=i)
     return s
 
 def vg22g1(g2, capsize=None):
