@@ -164,14 +164,6 @@ def confpairs(H):
             d.setdefault(n2,set()).add(n1)
         gk.deledges(g,p)
 
-    # for p in combinations(edges,3):
-    #     gk.addedges(g,p)
-    #     if bfu.call_u_conflicts(g, H):
-    #         d.setdefault(e2num(p[0],n),set()).add(le2num([p[1],p[2]],n))
-    #         d.setdefault(e2num(p[1],n),set()).add(le2num([p[0],p[2]],n))
-    #         d.setdefault(e2num(p[2],n),set()).add(le2num([p[0],p[1]],n))
-    #     gk.deledges(g,p)
-
     return d
 
 
