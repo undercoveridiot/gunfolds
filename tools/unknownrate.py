@@ -82,7 +82,8 @@ def le2num(elist,n):
     return num
 def ekey2e(ekey,n):
     idx = np.unravel_index(n*n - ekey .bit_length() - 1 + 1,(n,n))
-    return str(idx[0]+1),str(idx[1]+1)
+    idx = tuple([x+1 for x in idx])
+    return ('%i %i'%idx).split(' ')
 
 def cacheconflicts(num, cache):
     """Given a number representation of a graph and an iterable of
