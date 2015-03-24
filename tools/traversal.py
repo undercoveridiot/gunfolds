@@ -1311,7 +1311,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
     def predictive_check(g,g2,pool,checks_ok, key):
         s = set()
         for u in pool:
-            if not checks_ok(key,u,g,g2): continue
+            if not checks_ok(key,u,g,g2,rate=rate): continue
             s.add(u)
         return s
 
@@ -1342,7 +1342,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
             checks_ok = c[edge_function_idx(key)]
 
             for n in tocheck:
-                if not checks_ok(key,n,g,g2): continue
+                if not checks_ok(key,n,g,g2,rate=rate): continue
                 masked = np.prod(masker(g,key,n))
                 if masked:
                     nodesearch(g,g2,order[1:], [n]+inlist, s, cds, pool, pc)
