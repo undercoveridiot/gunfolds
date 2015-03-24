@@ -7,6 +7,8 @@ import time
 import sys,os
 import numpy as np
 import ipdb
+from progressbar import ProgressBar, Percentage, \
+    Bar, RotatingMarker, ETA, FileTransferSpeed
 
 TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
@@ -82,7 +84,8 @@ def le2num(elist,n):
     return num
 def ekey2e(ekey,n):
     idx = np.unravel_index(n*n - ekey .bit_length() - 1 + 1,(n,n))
-    return str(idx[0]+1),str(idx[1]+1)
+    idx = tuple([x+1 for x in idx])
+    return ('%i %i'%idx).split(' ')
 
 def cacheconflicts(num, cache):
     """Given a number representation of a graph and an iterable of
@@ -99,20 +102,22 @@ def cacheconflicts(num, cache):
             return True
     return False
 
-def add2set_(ds, H, cp):
+def add2set_(ds, H, cp, iter=1):
     n = len(H)
     n2 = n*n +n
     dsr = {}
     s = set()
     ss = set()
-
+    pbar = ProgressBar(widgets=['%3s'%str(iter)+'%10s'%str(len(ds))+' ', Bar(), ' '], maxval=len(ds.keys())).start()
+    c = 0
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
         gnum = bfu.g2num(g)
-
+        c += 1        
+        pbar.update(c)
         glist = []
         elist = []
-        eset = set()
+        eset = set()        
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
@@ -134,7 +139,7 @@ def add2set_(ds, H, cp):
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
             else:
                 dsr[gn] = elist
-
+    pbar.finish()
     return dsr, ss
 
 def confpairs(H):
@@ -176,9 +181,10 @@ def iteqclass(H):
 
     ds = {bfu.g2num(g): edges}
 
+    print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-        print i, len(ds)
-        ds, ss = add2set_(ds, H, cp)
+        #print i, len(ds),
+        ds, ss = add2set_(ds, H, cp, iter=i)
         s = s | ss
         if not ds: break
 
