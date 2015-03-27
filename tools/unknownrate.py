@@ -7,6 +7,7 @@ import time
 import sys,os
 import numpy as np
 import ipdb
+from matplotlib.cbook import flatten
 from progressbar import ProgressBar, Percentage, \
     Bar, RotatingMarker, ETA, FileTransferSpeed
 
@@ -126,7 +127,7 @@ def add2set_(ds, H, cp, iter=1):
 
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
-                if not num in s:                    
+                if not num in s:
                     if not bfu.call_u_conflicts(g, H):
                         glist.append((num,ekey))
                         elist.append(e)
@@ -188,6 +189,54 @@ def iteqclass(H):
         s = s | ss
         if not ds: break
 
+    return s
+
+def quadmerge(glist, H, ds):
+    n = len(H)
+    gl = set()
+    ss = set()
+
+    for gi in combinations(glist, 2):
+        if gi[0] & gi[1]: continue
+        pss = False
+        for ekey in ds:
+            if (gi[0] & ekey) == ekey:
+                if ekey in ds and cacheconflicts(gi[1],ds[ekey]):
+                    pss = True
+                    break
+        if pss: continue
+        
+        gnum = gi[0] | gi[1]
+        if gnum in gl: continue
+        g = bfu.num2CG(gnum,n)
+        if not bfu.call_u_conflicts(g, H):
+            gl.add(gnum)
+            if bfu.call_u_equals(g, H): ss.add(gnum)
+    return gl, ss
+
+def ecmerge(H):
+    """Find all graphs in the same equivalence class with respect to H
+
+    Arguments:
+    - `H`: an undersampled graph
+    """
+    if cmp.isSclique(H):
+        print 'not running on superclique'
+        return None
+    n = len(H)
+    s = set()
+    ds = confpairs(H)
+
+    glist =  np.r_[[0],2**np.arange(n**2)]
+    #glist =  2**np.arange(n**2)
+
+    #glist, ss = quadmerge(glist,H)
+
+    for i in range(int(np.log2(n**2))):
+        print i, len(glist)
+        #print glist
+        glist, ss = quadmerge(glist,H, ds)
+        s = s | ss
     return s
 
 def getrates(g,H):
