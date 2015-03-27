@@ -229,7 +229,7 @@ def call_undersamples(G_star):
         glist.append(g)
     return glist
 
-def call_u_conflicts(G_star, H):
+def call_u_conflicts(G_star, H, checkrate=0):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
