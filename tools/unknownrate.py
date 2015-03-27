@@ -108,16 +108,17 @@ def add2set_(ds, H, cp, iter=1):
     dsr = {}
     s = set()
     ss = set()
-    pbar = ProgressBar(widgets=['%3s'%str(iter)+'%10s'%str(len(ds))+' ', Bar(), ' '], maxval=len(ds.keys())).start()
+    pbar = ProgressBar(widgets=['%3s' % str(iter) +'%10s' % str(len(ds))+' ',
+                                Bar(), ' '], maxval=len(ds.keys())).start()
     c = 0
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
         gnum = bfu.g2num(g)
-        c += 1        
+        c += 1
         pbar.update(c)
         glist = []
         elist = []
-        eset = set()        
+        eset = set()
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
@@ -125,7 +126,7 @@ def add2set_(ds, H, cp, iter=1):
 
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
-                if not num in s:
+                if not num in s:                    
                     if not bfu.call_u_conflicts(g, H):
                         glist.append((num,ekey))
                         elist.append(e)
@@ -183,7 +184,6 @@ def iteqclass(H):
 
     print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-        #print i, len(ds),
         ds, ss = add2set_(ds, H, cp, iter=i)
         s = s | ss
         if not ds: break
