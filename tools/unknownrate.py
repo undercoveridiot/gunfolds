@@ -14,6 +14,7 @@ from progressbar import ProgressBar, Percentage, \
 TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
+import pprint
 import bfutils as bfu
 import traversal as trv
 import graphkit as gk
@@ -191,21 +192,159 @@ def iteqclass(H):
 
     return s
 
-def quadmerge(glist, H, ds):
+def edgemask(gl,H, cds):
+    """given a list of encoded graphs and observed undersampled graph
+    H returns a matrix with -1 on diagonal, 0 at the conflicting graph
+    combination and encoded graph at non-conflicted
+    positions. Furthermore, returns a set of graphs that are in the
+    equivalence class of H
+
+    Arguments:
+    - `gl`: list of integer encoded graphs
+    - `H`: the observed undersampled graph
+    """
+    n = len(H)
+    nl= len(gl)
+    ss = set()
+    mask = np.zeros((nl,nl),'int')
+    np.fill_diagonal(mask,-1)
+    for i in xrange(nl):
+        for j in xrange(i+1,nl):
+            if gl[i] & gl[j]: continue
+            if pass_conflict(gl[i], gl[j], cds): continue
+            gnum = gl[i] | gl[j]
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                if bfu.call_u_equals(g, H): ss.add(gnum)
+                mask[i,j] = gnum
+                mask[j,i] = gnum
+    return mask, ss
+
+def edgeds(mask):
+    """construct an edge dictionary from the mask matrix
+
+    Arguments:
+    - `mask`:
+    """
+    ds = {}
+    nl = mask.shape[0]
+    idx = np.triu_indices(nl,1)
+    for i,j in zip(idx[0], idx[1]):
+        if mask[i,j]:
+            ds[(i,j)] = set()
+            conf = set([i,j])
+            conf = conf.union(np.where(mask[i,:]==0)[0])
+            conf = conf.union(np.where(mask[j,:]==0)[0])
+            for k,m in zip(idx[0], idx[1]):
+                if not mask[k,m]: continue
+                if not k in conf and not m in conf:
+                    if not (k,m) in ds:
+                        ds[(i,j)].add(mask[k,m])
+            if not ds[(i,j)]: ds.pop((i,j))
+    return ds
+
+def quadmerge(gl, H, os, cds):
+    n = len(H)
+    l = set()
+    mask, ss = edgemask(gl, H, cds)
+    ds = edgeds(mask)
+    
+    pp = pprint.PrettyPrinter(indent=1)
+    pp.pprint(ds)
+
+    ss = ss | os
+    for g in ds:
+        for gn in ds[g]:
+            if pass_conflict(mask[g], gn, cds): continue
+            gnum = mask[g]|gn
+            if gnum in l or gnum in ss: continue
+            gg = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(gg, H):
+                l.add(gnum)
+                if bfu.call_u_equals(gg, H): ss.add(gnum)
+    return list(l), ss
+
+def quadmerger(gl, H, os, cds):
+    if len(gl) <= 1: return os
+    n = len(H)
+    l = set()
+    mask, ss = edgemask(gl, H, cds)
+    ds = edgeds(mask)
+    ss = ss | os
+    for g in ds:
+        l = set()
+        for gn in ds[g]:
+            if pass_conflict(mask[g], gn, cds): continue
+            gnum = mask[g]|gn
+            if gnum in l or gnum in ss: continue
+            gg = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(gg, H):
+                l.add(gnum)
+                if bfu.call_u_equals(gg, H): ss.add(gnum)
+
+        rs = quadmerger(list(l), H, ss, cds)
+        ss = ss | rs
+    return ss
+
+def pass_conflict(g1, g2, ds):
+    pss = False
+    for ekey in ds:
+        if (g1 & ekey) == ekey:
+            if ekey in ds and cacheconflicts(g2,ds[ekey]):
+                pss = True
+                break
+    return pss
+
+def quadlist(gl,H):
+    """given a list of graph lists and an undersampled graph H return
+    another lists of edge list constructed of graph combinations
+
+    Arguments:
+    - `gl`:
+    - `H`:
+    """
+    s = set()
+    l = []
+    rll = set()
+    for ll in gl:
+        li, ss, lll = quadmerge(ll, H, rll)
+        rll = rll|lll
+        s = s|ss
+        if li: l.extend(li)
+    return l,s
+
+
+def dceqclass(H):
+    """Find all graphs in the same equivalence class with respect to H
+
+    Arguments:
+    - `H`: an undersampled graph
+    """
+    if cmp.isSclique(H):
+        print 'not running on superclique'
+        return set()
+    n = len(H)
+    s = set()
+    cds = confpairs(H)
+
+    glist =  np.r_[[0],2**np.arange(n**2)]
+    i = 1
+    while glist != []:
+        print i, len(glist)
+        glist, s = quadmerge(glist, H, s, cds)
+        i += 1
+    return s
+
+
+def quadmerge_(glist, H, ds):
     n = len(H)
     gl = set()
     ss = set()
 
     for gi in combinations(glist, 2):
         if gi[0] & gi[1]: continue
-        pss = False
-        for ekey in ds:
-            if (gi[0] & ekey) == ekey:
-                if ekey in ds and cacheconflicts(gi[1],ds[ekey]):
-                    pss = True
-                    break
-        if pss: continue
-        
+        if pass_conflict(gi[0], gi[1], ds): continue
+
         gnum = gi[0] | gi[1]
         if gnum in gl: continue
         g = bfu.num2CG(gnum,n)
@@ -235,7 +374,7 @@ def ecmerge(H):
     for i in range(int(np.log2(n**2))):
         print i, len(glist)
         #print glist
-        glist, ss = quadmerge(glist,H, ds)
+        glist, ss = quadmerge_(glist,H, ds)
         s = s | ss
     return s
 
