@@ -7,6 +7,7 @@ import time
 import sys,os
 import numpy as np
 import ipdb
+import gmpy as gmp
 from matplotlib.cbook import flatten
 from progressbar import ProgressBar, Percentage, \
     Bar, RotatingMarker, ETA, FileTransferSpeed
@@ -19,6 +20,7 @@ import bfutils as bfu
 import traversal as trv
 import graphkit as gk
 import comparison as cmp
+
 
 def memo(func):
     cache = {}                        # Stored subproblem solutions
@@ -125,12 +127,12 @@ def add2set_(ds, H, cp, ccf, iter=1):
             if not e[1] in g[e[0]]:
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
-                if skip_conflictors(num,ccf):
+                ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
+                if skip_conflictors(num,ccf[ekey]):
                     gk.delanedge(g,e)
                     continue
                 if not num in s:
                     if not bfu.call_u_conflicts(g, H):
-                        ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
                         glist.append((num,ekey))
                         elist.append(e)
                         eset.add(ekey)
@@ -191,7 +193,12 @@ def conflictors(H):
         s = s | conflictor(x,H)
     for x in gk.inbedgelist(H):
         s = s | bconflictor(x,H)
-    return s
+
+    ds = {}
+    num = reduce(np.bitwise_or,s)
+    for i in xrange(gmp.bit_length(num)):
+        ds[1<<i] = [x for x in s if x&(1<<i)]
+    return ds
 
 def confpairs(H):
     n = len(H)
