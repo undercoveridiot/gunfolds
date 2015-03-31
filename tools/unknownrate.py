@@ -104,7 +104,7 @@ def cacheconflicts(num, cache):
             return True
     return False
 
-def add2set_(ds, H, cp, iter=1):
+def add2set_(ds, H, cp, ccf, iter=1):
     n = len(H)
     n2 = n*n +n
     dsr = {}
@@ -123,13 +123,14 @@ def add2set_(ds, H, cp, iter=1):
         eset = set()
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
-                ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
-                if ekey in cp and cacheconflicts(gnum,cp[ekey]): continue
-
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
+                if skip_conflictors(num,ccf):
+                    gk.delanedge(g,e)
+                    continue
                 if not num in s:
                     if not bfu.call_u_conflicts(g, H):
+                        ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
                         glist.append((num,ekey))
                         elist.append(e)
                         eset.add(ekey)
@@ -144,6 +145,53 @@ def add2set_(ds, H, cp, iter=1):
                 dsr[gn] = elist
     pbar.finish()
     return dsr, ss
+
+def skip_conflictors(gnum, ccf):
+    pss = False
+    for xx in ccf:
+        if xx&gnum == xx:
+            pss = True
+            break
+    return pss
+
+def bconflictor(e,H):
+    n = len(H)
+    s = set()
+    for v in H:
+        s.add(e2num((v,e[0]),n)|e2num((v,e[1]),n))
+    return s
+
+def conflictor(e,H):
+    n = len(H)
+    def pairs(e):
+        ekey = e2num(e,n)
+        return [ekey|e2num((e[0],e[0]),n),
+                ekey|e2num((e[1],e[1]),n)]
+
+    def trios(e,H):
+        s = set()
+        for v in H:
+            if not v in e:
+                s.add(e2num((e[0],v),n)|
+                      e2num((v,e[1]),n)|
+                      e2num((e[1],e[1]),n))
+                s.add(e2num((e[0],e[0]),n)|
+                      e2num((e[0],v),n)|
+                      e2num((v,e[1]),n))
+                s.add(e2num((e[0],v),n)|
+                      e2num((v,v),n)|
+                      e2num((v,e[1]),n))
+        return s
+
+    return trios(e,H).union(pairs(e))
+
+def conflictors(H):
+    s = set()
+    for x in gk.inedgelist(H):
+        s = s | conflictor(x,H)
+    for x in gk.inbedgelist(H):
+        s = s | bconflictor(x,H)
+    return s
 
 def confpairs(H):
     n = len(H)
@@ -179,6 +227,7 @@ def iteqclass(H):
     if Hnum[1]==0: s.add(Hnum[0])
 
     cp = confpairs(H)
+    ccf = conflictors(H)
 
     edges = gk.edgelist(gk.complement(g))
 
@@ -186,7 +235,7 @@ def iteqclass(H):
 
     print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-        ds, ss = add2set_(ds, H, cp, iter=i)
+        ds, ss = add2set_(ds, H, cp, ccf, iter=i)
         s = s | ss
         if not ds: break
 
@@ -246,6 +295,21 @@ def edgeds(mask):
             if not ds[(i,j)]: ds.pop((i,j))
     return ds
 
+def prune(gl, H):
+    l = []
+    ss = set()
+    for gnum in gl:
+        if gnum in cache:
+            if cache[gnum]: l.append(gnum)
+        else:
+            cache[gnum] = False
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                if bfu.call_u_equals(g, H): ss.add(gnum)
+                l.append(gnum)
+                cache[gnum] = True
+    return l
+
 def quadlister(glist, H, cds):
     n = len(H)
     s = set()
@@ -258,8 +322,14 @@ def quadlister(glist, H, cds):
         np.fill_diagonal(mask,-1)
         idx = np.triu_indices(nl,1)
         for i,j in zip(idx[0], idx[1]):
-            if gl[i] & gl[j]: continue
-            if skip_conflict(gl[i], gl[j], cds): continue
+            if gl[i] & gl[j]:
+                mask[i,j] = -1
+                mask[j,i] = -1
+                continue
+            if skip_conflict(gl[i], gl[j], cds):
+                gnum = gl[i] | gl[j]
+                cache[gnum] = False
+                continue
 
             gnum = gl[i] | gl[j]
             if gnum in cache:
@@ -276,20 +346,6 @@ def quadlister(glist, H, cds):
                     cache[gnum] = True
         return mask, ss
 
-    def prune(gl, H):
-        l = []
-        ss = set()
-        for gnum in gl:
-            if gnum in cache:
-                if cache[gnum]: l.append(gnum)
-            else:
-                cache[gnum] = False
-                g = bfu.num2CG(gnum,n)
-                if not bfu.call_u_conflicts(g, H):
-                    if bfu.call_u_equals(g, H): ss.add(gnum)
-                    l.append(gnum)
-                    cache[gnum] = True
-        return l
 
     def quadmerger(gl, H, cds):
         mask, ss = edgemask(gl, H, cds)
@@ -300,7 +356,6 @@ def quadlister(glist, H, cds):
     l = []
     for gl in glist:
         ll, ss = quadmerger(gl, H, cds)
-        print ll
         l.extend(ll)
         s = s|ss
 
@@ -321,13 +376,13 @@ def dceqc(H):
     cds = confpairs(H)
 
     glist =  [np.r_[[0],2**np.arange(n**2)]]
-    #i = 1
-    for i in range(int(np.log2(n**2))):
-        #while glist != []:
+    i = 1
+    #for i in range(int(np.log2(n**2))):
+    while glist != []:
         print i, np.max(map(len,glist)), len(glist)
         glist, ss = quadlister(glist, H, cds)
         s = s|ss
-        #i += 1
+        i += 1
     return s
 
 
