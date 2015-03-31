@@ -197,7 +197,8 @@ def conflictors(H):
     ds = {}
     num = reduce(np.bitwise_or,s)
     for i in xrange(gmp.bit_length(num)):
-        ds[1<<i] = [x for x in s if x&(1<<i)]
+        if num & 1<<i:
+            ds[1<<i] = [x for x in s if x&(1<<i)]
     return ds
 
 def confpairs(H):
