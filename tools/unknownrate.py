@@ -106,14 +106,21 @@ def cacheconflicts(num, cache):
             return True
     return False
 
-def add2set_(ds, H, cp, ccf, iter=1):
+class nobar:
+    def update(self,c): return None
+    def finish(self): return None
+
+def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
     n = len(H)
     n2 = n*n +n
     dsr = {}
     s = set()
     ss = set()
-    pbar = ProgressBar(widgets=['%3s' % str(iter) +'%10s' % str(len(ds))+' ',
-                                Bar(), ' '], maxval=len(ds.keys())).start()
+    if verbose:
+        pbar = ProgressBar(widgets=['%3s' % str(iter) +'%10s' % str(len(ds))+' ',
+                                    Bar(), ' '], maxval=len(ds.keys())).start()
+    else:
+        pbar = nobar()
     c = 0
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
@@ -221,7 +228,7 @@ def confpairs(H):
     return d
 
 
-def iteqclass(H):
+def iteqclass(H, verbose=True):
     '''
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
@@ -241,9 +248,9 @@ def iteqclass(H):
 
     ds = {bfu.g2num(g): edges}
 
-    print '%3s'%'i'+'%10s'%' graphs'
+    if verbose: print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-        ds, ss = add2set_(ds, H, cp, ccf, iter=i)
+        ds, ss = add2set_(ds, H, cp, ccf, iter=i, verbose=verbose)
         s = s | ss
         if not ds: break
 
