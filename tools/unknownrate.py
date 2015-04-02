@@ -128,7 +128,7 @@ def add2set_(ds, H, cp, ccf, iter=1):
                 gk.addanedge(g,e)
                 num = bfu.g2num(g)
                 ekey = (1<<(n2 - int(e[0],10)*n - int(e[1],10)))
-                if skip_conflictors(num,ccf[ekey]):
+                if ekey in ccf and skip_conflictors(num,ccf[ekey]):
                     gk.delanedge(g,e)
                     continue
                 if not num in s:
@@ -454,17 +454,22 @@ def quadmerge_(glist, H, ds):
     n = len(H)
     gl = set()
     ss = set()
-
+    conflicts = set()
     for gi in combinations(glist, 2):
         if gi[0] & gi[1]: continue
-        if skip_conflict(gi[0], gi[1], ds): continue
-
+        #if skip_conflict(gi[0], gi[1], ds): continue
         gnum = gi[0] | gi[1]
+        if gnum in conflicts: continue
+        if skip_conflictors(gnum, ds):
+            conflicts.add(gnum)
+            continue
         if gnum in gl: continue
         g = bfu.num2CG(gnum,n)
         if not bfu.call_u_conflicts(g, H):
             gl.add(gnum)
             if bfu.call_u_equals(g, H): ss.add(gnum)
+        else:
+            conflicts.add(gnum)
     return gl, ss
 
 def ecmerge(H):
@@ -479,6 +484,10 @@ def ecmerge(H):
     n = len(H)
     s = set()
     ds = confpairs(H)
+    ccf = conflictors(H)
+    cset = set()
+    for e in ccf:
+        cset = cset.union(ccf[e])
 
     glist =  np.r_[[0],2**np.arange(n**2)]
     #glist =  2**np.arange(n**2)
@@ -487,7 +496,7 @@ def ecmerge(H):
 
     for i in range(int(2*np.log2(n))):
         print i, len(glist)
-        glist, ss = quadmerge_(glist,H, ds)
+        glist, ss = quadmerge_(glist,H, cset)
         s = s | ss
     return s
 
