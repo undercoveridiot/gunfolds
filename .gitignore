@@ -60,3 +60,6 @@ target/
 *.pdf
 *.aux
 shipfig_figure.tex
+
+# my local files
+*.zkl
