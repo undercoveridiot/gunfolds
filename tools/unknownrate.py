@@ -117,8 +117,10 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
     s = set()
     ss = set()
     if verbose:
-        pbar = ProgressBar(widgets=['%3s' % str(iter) +'%10s' % str(len(ds))+' ',
-                                    Bar(), ' '], maxval=len(ds.keys())).start()
+        pbar = ProgressBar(widgets=['%3s' % str(iter) +
+                                    '%10s' % str(len(ds))+' ',
+                                    Bar(), ' '],
+                           maxval=len(ds.keys())).start()
     else:
         pbar = nobar()
     c = 0
@@ -152,6 +154,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
             else:
                 dsr[gn] = elist
+                
     pbar.finish()
     return dsr, ss
 
@@ -565,6 +568,9 @@ def eqclass_list(H):
         if not edges: break
 
     return s
+
+
+
 
 def main():
     g = bfu.ringmore(6,1);
