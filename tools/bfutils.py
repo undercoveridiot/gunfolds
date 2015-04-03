@@ -229,6 +229,15 @@ def call_undersamples(G_star):
         glist.append(g)
     return glist
 
+def overshoot(G_star, H):
+    glist = [G_star]
+    while True:
+        g = increment_u(G_star, glist[-1])
+        if gk.isedgesubset(H,g): return True
+        if g in glist: return False
+        glist.append(g)
+    return False
+
 def call_u_conflicts(G_star, H, checkrate=0):
     glist = [G_star]
     while True:
