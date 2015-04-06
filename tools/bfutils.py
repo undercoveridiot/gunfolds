@@ -10,7 +10,7 @@ import networkx as nx
 import ecj
 import zickle as zkl
 import graphkit as gk
-from comparison import num2CG, nx2graph
+from comparison import num2CG, nx2graph, isSclique
 
 
 def directed_inc(G,D):
@@ -233,7 +233,7 @@ def overshoot(G_star, H):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
-        if cmp.isSclique(g): return False
+        if isSclique(g): return False
         if gk.isedgesubset(H,g): return True
         if g in glist: return False
         glist.append(g)
