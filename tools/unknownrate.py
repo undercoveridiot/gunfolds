@@ -110,20 +110,27 @@ class nobar:
     def update(self,c): return None
     def finish(self): return None
 
+def start_progress_bar(iter, n, verbose = True):
+    if verbose:
+        pbar = ProgressBar(widgets=['%3s' % str(iter) +
+                                '%10s' % str(n)+' ',
+                                Bar(), ' '],
+                        maxval=n).start()
+    else:
+        pbar = nobar()
+    return pbar
+
 def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
     n = len(H)
     n2 = n*n +n
     dsr = {}
     s = set()
     ss = set()
-    if verbose:
-        pbar = ProgressBar(widgets=['%3s' % str(iter) +
-                                    '%10s' % str(len(ds))+' ',
-                                    Bar(), ' '],
-                           maxval=len(ds.keys())).start()
-    else:
-        pbar = nobar()
+
+    pbar = start_progress_bar(iter, len(ds), verbose = verbose)
+
     c = 0
+
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
         gnum = bfu.g2num(g)
@@ -154,7 +161,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
             else:
                 dsr[gn] = elist
-                
+
     pbar.finish()
     return dsr, ss
 
@@ -197,13 +204,16 @@ def conflictor(e,H):
 
     return trios(e,H).union(pairs(e))
 
-def conflictors(H):
+def conflictor_set(H):
     s = set()
     for x in gk.inedgelist(H):
         s = s | conflictor(x,H)
     for x in gk.inbedgelist(H):
         s = s | bconflictor(x,H)
+    return s
 
+def conflictors(H):
+    s = conflictor_set(H)
     ds = {}
     num = reduce(np.bitwise_or,s)
     for i in xrange(gmp.bit_length(num)):
@@ -248,7 +258,6 @@ def iteqclass(H, verbose=True):
     ccf = conflictors(H)
 
     edges = gk.edgelist(gk.complement(g))
-
     ds = {bfu.g2num(g): edges}
 
     if verbose: print '%3s'%'i'+'%10s'%' graphs'
@@ -311,6 +320,29 @@ def edgeds(mask):
                 if m in conf: continue
                 if not (k,m) in ds: ds[(i,j)].add(mask[k,m])
             if not ds[(i,j)]: ds.pop((i,j))
+    return ds
+
+def edgedsg(mask):
+    """construct an edge dictionary from the mask matrix
+
+    Arguments:
+    - `mask`:
+    """
+    ds = {}
+    nl = mask.shape[0]
+    idx = np.triu_indices(nl,1)
+    for i,j in zip(idx[0], idx[1]):
+        if mask[i,j]:
+            ds[mask[i,j]] = set()
+            conf = set([i,j])
+            conf = conf.union(np.where(mask[i,:]==0)[0])
+            conf = conf.union(np.where(mask[j,:]==0)[0])
+            for k,m in zip(idx[0], idx[1]):
+                if not mask[k,m]: continue
+                if k in conf: continue
+                if m in conf: continue
+                if not (k,m) in ds: ds[mask[i,j]].add(mask[k,m])
+            if not ds[mask[i,j]]: ds.pop(mask[i,j])
     return ds
 
 def prune(gl, H):
@@ -393,7 +425,7 @@ def dceqc(H):
     s = set()
     cds = confpairs(H)
 
-    glist =  [np.r_[[0],2**np.arange(n**2)]]
+    glist =  [2**np.arange(n**2)]
     i = 1
     #for i in range(int(np.log2(n**2))):
     while glist != []:
@@ -402,7 +434,6 @@ def dceqc(H):
         s = s|ss
         i += 1
     return s
-
 
 def quadmerge(gl, H, cds):
     n = len(H)
@@ -436,6 +467,116 @@ def skip_conflict(g1, g2, ds):
                 pss = True
                 break
     return pss
+
+def edgemask2(gl,H, cds):
+    n = len(H)
+    nl= len(gl)
+    s = set()
+    o = set()
+    mask = np.zeros((nl,nl),'int')
+    np.fill_diagonal(mask,-1)
+    for i in xrange(nl):
+        for j in xrange(i+1,nl):
+            if gl[i] & gl[j]: continue
+            gnum = gl[i] | gl[j]
+            if skip_conflictors(gnum, cds): continue
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                if bfu.call_u_equals(g, H): s.add(gnum)
+                mask[i,j] = gnum
+                mask[j,i] = gnum
+            elif bfu.overshoot(g, H): o.add(gnum)
+    return mask, s, o # mask, found eqc members, overshoots
+
+def patchmerge(ds, H, cds):
+    n = len(H)
+    l = set()
+    s = set()
+    o = set()
+    for gkey in ds:
+        for num in ds[gkey]:
+            if gkey & num: continue
+            gnum = gkey | num
+            if gnum is s: continue
+            if skip_conflictors(gnum, cds): continue
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                l.add(gnum)
+                if bfu.call_u_equals(g, H): s.add(gnum)
+            elif not gnum in o and bfu.overshoot(g, H): o.add(gnum)
+    return l, s, o
+
+def quadmerge2(gl, H, cds):
+    n = len(H)
+
+    mask, s, o = edgemask2(gl, H, cds)
+    #ipdb.set_trace()
+    ds = edgedsg(mask)
+    l, ss, oo = patchmerge(ds, H, cds)
+
+    o = o | oo
+    s = s | ss
+
+    print 'overshoots: ', len(o)
+
+    return list(l), s
+
+def quadmerge21(gl, H, cds):
+    n = len(H)
+    l = set()
+
+    mask, ss, o = edgemask2(gl, H, cds)
+    idx = np.triu_indices(mask.shape[0], 1)
+    print len(o)
+    for i in range(len(idx[0])):
+        if mask[idx[0][i],idx[1][i]]: l.add(mask[idx[0][i],idx[1][i]])
+
+    return list(l), ss
+
+def dceqclass2(H):
+    """Find all graphs in the same equivalence class with respect to H
+
+    Arguments:
+    - `H`: an undersampled graph
+    """
+    if cmp.isSclique(H):
+        print 'not running on superclique'
+        return set()
+    n = len(H)
+    s = set()
+    cp = confpairs(H)
+    confs = conflictor_set(H)
+    ccf = conflictors(H)
+
+    def prune_loops(gl, H):
+        l = []
+        for e in gl:
+            if e[0] == e[1] and not (e[1] in H[e[0]] and (1,0) in H[e[0]][e[1]]): continue
+            l.append(e)
+        return l
+    edges = gk.edgelist(gk.complement(bfu.num2CG(0,n)))
+    edges = prune_loops(edges, H)
+    glist = map(lambda x: e2num(x,n),edges)
+
+    #glist =  list(2**np.arange(n**2))
+    i = 0
+    while glist != []:
+        print 2**i, len(glist)
+        glist_prev = glist
+        glist, ss = quadmerge21(glist, H, confs)
+        s = s|ss
+        i += 1
+
+
+    ds = {x: edges for x in glist_prev}
+
+    for j in range(i, len(H)**2):
+        ds, ss = add2set_(ds, H, cp, ccf, iter=j, verbose=True)
+        s = s | ss
+        if not ds: break
+
+    return s
+
 
 def dceqclass(H):
     """Find all graphs in the same equivalence class with respect to H
