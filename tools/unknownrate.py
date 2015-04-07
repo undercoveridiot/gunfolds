@@ -21,7 +21,6 @@ import traversal as trv
 import graphkit as gk
 import comparison as cmp
 
-
 def memo(func):
     cache = {}                        # Stored subproblem solutions
     @wraps(func)                      # Make wrap look like func
@@ -98,7 +97,8 @@ def cacheconflicts(num, cache):
 
     Arguments:
     - `num`: the number representation of a graph
-    - `cache`: an iterable of number representations of conflicting graphs
+    - `cache`: an iterable of number representations of conflicting
+      graphs
     """
     conflict = False
     for c in cache:
@@ -156,6 +156,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
                         eset.add(ekey)
                         s.add(num)
                         if bfu.call_u_equals(g, H): ss.add(num)
+                        if capsize <= len(ss): break
                         #if bfu.call_u_equals2(g, gl2, H): ss.add(num)
                 gk.delanedge(g,e)
 
@@ -164,7 +165,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
             else:
                 dsr[gn] = elist
-		if capsize < len(ss): break
+		if capsize <= len(ss): return dsr, ss
 
     pbar.finish()
     return dsr, ss
@@ -266,10 +267,12 @@ def iteqclass(H, verbose=True, capsize=100):
 
     if verbose: print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-        ds, ss = add2set_(ds, H, cp, ccf, iter=i, verbose=verbose)
-        s = s | ss
-		if capsize < len(ss): break
-        if not ds: break
+		ds, ss = add2set_(ds, H, cp, ccf, iter=i,
+                          verbose=verbose,
+                          capsize=capsize)
+		s = s | ss
+		if capsize <= len(ss): break
+		if not ds: break
 
     return s
 
