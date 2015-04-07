@@ -7,7 +7,8 @@ import zickle as zkl
 import time, socket
 import scipy
 
-INPNUM = 3 # number of randomized starts per graph
+UMAX = 6
+INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
 if socket.gethostname().split('.')[0] == 'leibnitz':
@@ -26,28 +27,32 @@ else:
     PNUM=max((1,PNUM/INPNUM))
 print 'processes: ',PNUM, INPNUM
 
-def wrapper(fold, n=10, k=10):
+def wrapper_rate_agnostic(fold, n=10, k=10):
     scipy.random.seed()
+    l = {}
     while True:
         try:
-            g = bfutils.ringmore(n,k)
-            g2 = bfutils.increment_u(g,g)
-            print fold,': ',traversal.density(g),':',
-            startTime = int(round(time.time() * 1000))
-            s = traversal.g22g1(g2, capsize=CAPSIZE)
-            endTime = int(round(time.time() * 1000))
-            print len(s)
+            g = bfutils.ringmore(n,k) # random ring of given density
+            gs= bfutils.call_undersamples(g)
+            for u in range(1,min([len(gs),UMAX]):
+                g2 = bfutils.undersample(g,u)
+                print fold,': ',traversal.density(g),':',
+                startTime = int(round(time.time() * 1000))
+                s = traversal.iteqclass(g2, verbose=False)
+                endTime = int(round(time.time() * 1000))
+                print len(s)
+                l[u] = {'eq':s,'ms':endTime-startTime}
         except MemoryError:
             print 'memory error... retrying'
             continue
         break
-    return {'gt':g,'eq':s,'ms':endTime-startTime}
+    return {'gt':g,'solutions':l}
 
 def killall(l):
-    for e in l: 
+    for e in l:
         e.join(timeout=0.001)
         if not e.is_alive():
-            #print 'first result'            
+            #print 'first result'
             for p in l:
                 if p != e:
                     #print 'terminating ', p.name
@@ -82,12 +87,12 @@ def fan_wrapper(fold,n=10,k=10):
                     output.put({'gt':g,'eq':s,'ms':endTime-startTime})
                 except MemoryError:
                     print 'memory error...'
-		    raise            
+		    raise
             pl = [Process(target=inside_wrapper) for x in range(INPNUM)]
             for e in pl: e.start()
             while True:
                 if killall(pl): break
-            r = output.get()           
+            r = output.get()
         except MemoryError:
             print 'memory error... retrying'
             for p in pl:
@@ -114,9 +119,9 @@ for nodes in [15]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
-        print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')    
+        print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')
         e = bfutils.dens2edgenum(dens, n=nodes)
-        eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e), 
+        eqclasses = pool.map(functools.partial(fan_wrapper, n=nodes, k=e),
                              range(REPEATS))
         z[dens] = eqclasses
         zkl.save(z[dens],
