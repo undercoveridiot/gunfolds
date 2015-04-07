@@ -248,6 +248,23 @@ def call_u_conflicts(G_star, H, checkrate=0):
         glist.append(g)
     return True
 
+def call_u_conflicts2(G_star, H):
+    glist = [G_star]
+    while True:
+        g = increment_u(G_star, glist[-1])
+        if gk.isedgesubset(g,H): return False, glist
+        if g in glist: return True, glist
+        glist.append(g)
+    return True, glist
+
+def call_u_equals2(G_star, glist, H):
+    while True:
+        g = increment_u(G_star, glist[-1])
+        if g == H: return True
+        if g in glist: return False
+        glist.append(g)
+    return False
+
 def call_u_equals(G_star, H):
     glist = [G_star]
     while True:
