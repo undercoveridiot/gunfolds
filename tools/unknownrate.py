@@ -114,7 +114,7 @@ def start_progress_bar(iter, n, verbose = True):
     if verbose:
         pbar = ProgressBar(widgets=['%3s' % str(iter) +
                                 '%10s' % str(n)+' ',
-                                Bar(), ' '],
+                                Bar('-'), ' '],
                         maxval=n).start()
     else:
         pbar = nobar()
@@ -149,11 +149,14 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
                     continue
                 if not num in s:
                     if not bfu.call_u_conflicts(g, H):
+                    #cf, gl2 = bfu.call_u_conflicts2(g, H)
+                    #if not cf:
                         glist.append((num,ekey))
                         elist.append(e)
                         eset.add(ekey)
                         s.add(num)
                         if bfu.call_u_equals(g, H): ss.add(num)
+                        #if bfu.call_u_equals2(g, gl2, H): ss.add(num)                            
                 gk.delanedge(g,e)
 
         for gn,e in glist:
