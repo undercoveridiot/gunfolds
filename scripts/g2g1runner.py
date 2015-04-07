@@ -1,6 +1,7 @@
 import sys, os
 sys.path.append('./tools/')
 import traversal, bfutils, graphkit
+import unknownrate as ur
 from multiprocessing import Pool,Process, Queue, cpu_count, current_process
 import functools
 import zickle as zkl
@@ -34,11 +35,11 @@ def wrapper_rate_agnostic(fold, n=10, k=10):
         try:
             g = bfutils.ringmore(n,k) # random ring of given density
             gs= bfutils.call_undersamples(g)
-            for u in range(1,min([len(gs),UMAX]):
+            for u in range(1,min([len(gs),UMAX])):
                 g2 = bfutils.undersample(g,u)
                 print fold,': ',traversal.density(g),':',
                 startTime = int(round(time.time() * 1000))
-                s = traversal.iteqclass(g2, verbose=False)
+                s = ur.iteqclass(g2, verbose=False)
                 endTime = int(round(time.time() * 1000))
                 print len(s)
                 l[u] = {'eq':s,'ms':endTime-startTime}
