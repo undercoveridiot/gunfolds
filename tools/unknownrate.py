@@ -120,7 +120,7 @@ def start_progress_bar(iter, n, verbose = True):
         pbar = nobar()
     return pbar
 
-def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
+def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
     n = len(H)
     n2 = n*n +n
     dsr = {}
@@ -156,7 +156,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
                         eset.add(ekey)
                         s.add(num)
                         if bfu.call_u_equals(g, H): ss.add(num)
-                        #if bfu.call_u_equals2(g, gl2, H): ss.add(num)                            
+                        #if bfu.call_u_equals2(g, gl2, H): ss.add(num)
                 gk.delanedge(g,e)
 
         for gn,e in glist:
@@ -164,6 +164,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True):
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
             else:
                 dsr[gn] = elist
+		if capsize < len(ss): break
 
     pbar.finish()
     return dsr, ss
@@ -244,7 +245,7 @@ def confpairs(H):
     return d
 
 
-def iteqclass(H, verbose=True):
+def iteqclass(H, verbose=True, capsize=100):
     '''
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
@@ -267,6 +268,7 @@ def iteqclass(H, verbose=True):
     for i in range(len(H)**2):
         ds, ss = add2set_(ds, H, cp, ccf, iter=i, verbose=verbose)
         s = s | ss
+		if capsize < len(ss): break
         if not ds: break
 
     return s
