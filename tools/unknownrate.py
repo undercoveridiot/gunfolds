@@ -15,6 +15,7 @@ from progressbar import ProgressBar, Percentage, \
 TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
+
 import pprint
 import bfutils as bfu
 import traversal as trv
