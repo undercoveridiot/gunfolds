@@ -8,7 +8,7 @@ import zickle as zkl
 import time, socket
 import scipy
 
-UMAX = 6
+UMAX = 5
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
@@ -104,8 +104,9 @@ def fan_wrapper(fold,n=10,k=10):
     for p in pl: p.join()
     return r
 
-densities = {6: [0.2, 0.25],
-             8: [0.3],
+densities = {6: [0.25],
+             7: [0.2],
+             8: [0.15, 0.2],             
              10:[0.1],# 0.15, 0.2, 0.25, 0.3],
              15:[0.25, 0.3],
              20:[0.1],# 0.15, 0.2, 0.25, 0.3],
@@ -116,7 +117,7 @@ densities = {6: [0.2, 0.25],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [6]:
+for nodes in [7]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
