@@ -7,6 +7,7 @@ import time
 import sys,os
 import numpy as np
 import ipdb
+import operator
 import gmpy as gmp
 from matplotlib.cbook import flatten
 from progressbar import ProgressBar, Percentage, \
@@ -220,7 +221,7 @@ def conflictor_set(H):
 def conflictors(H):
     s = conflictor_set(H)
     ds = {}
-    num = reduce(np.bitwise_or,s)
+    num = reduce(operator.or_,s)
     for i in xrange(gmp.bit_length(num)):
         if num & 1<<i:
             ds[1<<i] = [x for x in s if x&(1<<i)]
@@ -718,6 +719,12 @@ def eqclass_list(H):
 
     return s
 
+def loop2graph(l,n):
+    g = {str(i):{} for i in range(1,n+1)}
+    for i in range(len(l)-1):
+        g[l[i]][l[i+1]] = set([(0,1)])
+    g[l[-1]][l[0]] = set([(0,1)])
+    return g
 
 
 
