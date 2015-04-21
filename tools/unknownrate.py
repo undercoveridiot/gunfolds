@@ -137,6 +137,8 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
         gnum = bfu.g2num(g)
         c += 1
         pbar.update(c)
+        if c > pbar.last_update_time:
+            pbar.widgets[1].marker='-'
         glist = []
         elist = []
         eset = set()
@@ -150,15 +152,17 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
                     continue
                 if not num in s:
                     if not bfu.call_u_conflicts(g, H):
-                    #cf, gl2 = bfu.call_u_conflicts2(g, H)
-                    #if not cf:
+                        #cf, gl2 = bfu.call_u_conflicts2(g, H)
+                        #if not cf:
                         glist.append((num,ekey))
                         elist.append(e)
                         eset.add(ekey)
                         s.add(num)
-                        if bfu.call_u_equals(g, H): ss.add(num)
+                        if bfu.call_u_equals(g, H):
+                            pbar.widgets[1].marker='.'
+                            ss.add(num)
+                            #if bfu.call_u_equals2(g, gl2, H): ss.add(num)
                         if capsize <= len(ss): break
-                        #if bfu.call_u_equals2(g, gl2, H): ss.add(num)
                 gk.delanedge(g,e)
 
         for gn,e in glist:
@@ -720,7 +724,38 @@ def eqclass_list(H):
     return s
 
 
+def set_loop(loop, graph):
+    for i in range(0,len(loop)-1):
+        graph[loop[i]][loop[i+1]] = set([(0,1)])
+    graph[loop[-1]][loop[0]] = set([(0,1)])
 
+def rotate(l,n): return l[n:] + l[:n]
+def get_perm(loop1, loop2, n=None):
+    if not n: n = len(loop1)
+    basel = [str(i) for i in xrange(1,n+1)]
+    diff1 = set(basel) - set(loop1)
+    diff2 = set(basel) - set(loop2)
+    if loop1[0] in loop2:
+        l2 = rotate(loop2, loop2.index(loop1[0]))
+    else:
+        l2 = loop2
+    mp = {}
+    for x,y in zip(loop1+list(diff1),l2+list(diff2)):
+        mp[x] = y
+    return mp
+
+def permute(g, perm):
+    gn = {x:{} for x in g}
+    for e in g:
+        gn[perm[e]] = {perm[x]:g[e][x] for x in g[e]}
+    return gn
+
+def permuteset(s, perm):
+    n = len(perm)
+    ns = set()
+    for e in s:
+        ns.add(bfu.g2num(permute(bfu.num2CG(e,n),perm)))
+    return ns
 
 def main():
     g = bfu.ringmore(6,1);
