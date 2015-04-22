@@ -138,7 +138,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
         gnum = bfu.g2num(g)
         c += 1
         pbar.update(c)
-        if c > pbar.last_update_time:
+        if pbar._need_update():
             pbar.widgets[1].marker='-'
         glist = []
         elist = []
