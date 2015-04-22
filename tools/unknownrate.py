@@ -757,12 +757,36 @@ def permute(g, perm):
         gn[perm[e]] = {perm[x]:g[e][x] for x in g[e]}
     return gn
 
-def permuteset(s, perm):
+def permuteAset(s, perm):
     n = len(perm)
     ns = set()
     for e in s:
         ns.add(bfu.g2num(permute(bfu.num2CG(e,n),perm)))
     return ns
+
+def noverlap_loops(loops):
+    d = {}
+    for l in loops:
+        el = []
+        for k in loops:
+            if not set(l) & set(k):
+                el.append(tuple(k))
+                #d.setdefault(tuple(l),set()).add(tuple(k))
+        d[tuple(l)] = noverlap_loops(el)
+    return d
+def loop_combinations(loops):
+    s = set()
+    d = noverlap_loops(loops)
+    def dfs_traverse(d, gs):
+        if d:
+            for e in d:
+                dfs_traverse(d[e], gs|set([e]))
+        else:
+            s.add(frozenset(gs))
+    for e in d:
+        dfs_traverse(d[e],set([e]))
+    return s
+
 
 def main():
     g = bfu.ringmore(6,1);
