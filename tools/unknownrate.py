@@ -22,6 +22,7 @@ import bfutils as bfu
 import traversal as trv
 import graphkit as gk
 import comparison as cmp
+import simpleloops as sl
 
 def memo(func):
     cache = {}                        # Stored subproblem solutions
@@ -785,7 +786,24 @@ def loop_combinations(loops):
             s.add(frozenset(gs))
     for e in d:
         dfs_traverse(d[e],set([e]))
+    return list(s)
+
+def sorted_loops(g):
+    l = [x for x in sl.simple_loops(g,0)]
+    s = {}
+    for e in l:
+        s.setdefault(len(e),[]).append(e)
     return s
+
+def loopgroups(g, n=None):
+    d = sorted_loops(g)
+    if n:
+        return loop_combinations(d[n])
+    else:
+        l=[]
+        for key in d:
+            l.append(loop_combinations(d[key]))
+        return l
 
 
 def main():
