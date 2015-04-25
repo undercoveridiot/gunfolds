@@ -344,7 +344,6 @@ def liteqclass(H, verbose=True, capsize=100):
 
     if verbose: print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-        print i, len(ds)
         ds, ss = add2set_loop(ds, H, cp, ccf, iter=i,
                               verbose=verbose,
                               capsize=capsize)
