@@ -125,7 +125,8 @@ def start_progress_bar(iter, n, verbose = True):
         pbar = nobar()
     return pbar
 
-def add2set_loop(ds, H, ccf, iter=1, verbose=True, capsize=100):
+def add2set_loop(ds, H, ccf, iter=1, verbose=True,
+                 capsize=100, currsize=0):
     n = len(H)
     n2 = n*n +n
     dsr = {}
@@ -152,9 +153,8 @@ def add2set_loop(ds, H, ccf, iter=1, verbose=True, capsize=100):
                     eset.add(sloop)
                     if bfu.call_u_equals(g, H):
                         ss.add(num)
-                        if capsize <= len(ss): break
-            if capsize <= len(ss): return dsr, ss
-
+                        if capsize <= len(ss)+currsize: return dsr, ss
+                        
         for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
             #if capsize <= len(ss): return dsr, ss
 
@@ -346,7 +346,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
 
         #cp = confpairs(H)
     #ccf = conflictors(H)
-    ccf = lconflictors(H)    
+    ccf = lconflictors(H)
 
     if asl:
         sloops = asl
@@ -358,9 +358,10 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     for i in range(len(H)**2):
         ds, ss = add2set_loop(ds, H, ccf, iter=i,
                               verbose=verbose,
-                              capsize=capsize)
+                              capsize=capsize,
+                              currsize=len(s))
         s = s | ss
-        if capsize <= len(ss): break
+        if capsize <= len(s): break
         if not ds: break
 
     return s
