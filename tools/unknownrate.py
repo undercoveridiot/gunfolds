@@ -149,12 +149,11 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
                 g = bfu.num2CG(num, n)
                 if not bfu.call_u_conflicts(g, H):
                     s.add(num)
+                    gset.add((num,sloop))
+                    eset.add(sloop)                    
                     if bfu.call_u_equals(g, H):
                         ss.add(num)
                         if capsize <= len(ss): break
-                    else:
-                        gset.add((num,sloop))
-                        eset.add(sloop)
 
         for gn in gset:
             dsr[gn[0]] = eset - set([gn[1]])
