@@ -9,6 +9,8 @@ import numpy as np
 import ipdb
 import operator
 import gmpy as gmp
+from scipy.misc import comb
+import math
 from matplotlib.cbook import flatten
 from progressbar import ProgressBar, Percentage, \
     Bar, RotatingMarker, ETA, FileTransferSpeed
@@ -774,6 +776,7 @@ def noverlap_loops(loops):
                 #d.setdefault(tuple(l),set()).add(tuple(k))
         d[tuple(l)] = noverlap_loops(el)
     return d
+
 def loop_combinations(loops):
     s = set()
     d = noverlap_loops(loops)
@@ -787,6 +790,11 @@ def loop_combinations(loops):
         dfs_traverse(d[e],set([e]))
     return s
 
+def count_loops(n):
+    s = 0
+    for i in range(1,n+1):
+        s += comb(n,i) * math.factorial(i-1)
+    return s
 
 def main():
     g = bfu.ringmore(6,1);
