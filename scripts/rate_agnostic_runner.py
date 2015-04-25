@@ -118,7 +118,7 @@ densities = {6: [0.2, .25, .3],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [8,9,10]:
+for nodes in [6,7,8,9,10]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
