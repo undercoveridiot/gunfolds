@@ -1,6 +1,6 @@
 #BFS implementation of subgraph and supergraph
 #Gu to G1 algorithm
-from itertools import combinations
+from itertools import combinations, permutations
 from functools import wraps
 import copy
 import time
@@ -8,6 +8,8 @@ import sys,os
 import numpy as np
 import ipdb
 import operator
+from scipy.misc import comb
+import math
 import gmpy as gmp
 from scipy.misc import comb
 import math
@@ -24,6 +26,7 @@ import bfutils as bfu
 import traversal as trv
 import graphkit as gk
 import comparison as cmp
+import simpleloops as sl
 
 def memo(func):
     cache = {}                        # Stored subproblem solutions
@@ -124,6 +127,43 @@ def start_progress_bar(iter, n, verbose = True):
         pbar = nobar()
     return pbar
 
+def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
+    n = len(H)
+    n2 = n*n +n
+    dsr = {}
+    s = set()
+    ss = set()
+
+    pbar = start_progress_bar(iter, len(ds), verbose = verbose)
+
+    c = 0
+
+    for gnum in ds:
+        c += 1
+        pbar.update(c)
+        gset = set()
+        eset = set()
+        for sloop in ds[gnum]:
+            num = sloop | gnum
+            if sloop in ccf and skip_conflictors(num,ccf[sloop]):
+                continue
+            if not num in s:
+                g = bfu.num2CG(num, n)
+                if not bfu.call_u_conflicts(g, H):
+                    s.add(num)
+                    gset.add((num,sloop))
+                    eset.add(sloop)                    
+                    if bfu.call_u_equals(g, H):
+                        ss.add(num)
+                        if capsize <= len(ss): break
+
+        for gn in gset:
+            dsr[gn[0]] = eset - set([gn[1]])
+        if capsize <= len(ss): return dsr, ss
+
+    pbar.finish()
+    return dsr, ss
+
 def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
     n = len(H)
     n2 = n*n +n
@@ -137,7 +177,6 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
 
     for gnum in ds:
         g = bfu.num2CG(gnum, n)
-        gnum = bfu.g2num(g)
         c += 1
         pbar.update(c)
         if pbar._need_update():
@@ -281,6 +320,37 @@ def iteqclass(H, verbose=True, capsize=100):
 		s = s | ss
 		if capsize <= len(ss): break
 		if not ds: break
+
+    return s
+
+def liteqclass(H, verbose=True, capsize=100):
+    '''
+    Find all graphs in the same equivalence class with respect to
+    graph H and any undesampling rate.
+    '''
+    if cmp.isSclique(H):
+        print 'not running on superclique'
+        return None
+    g = {n:{} for n in H}
+    s = set()
+    Hnum = bfu.ug2num(H)
+    if Hnum[1]==0: s.add(Hnum[0])
+
+    cp = confpairs(H)
+    ccf = conflictors(H)
+
+    sloops = allsloops(len(H))
+    ds = {0: sloops}
+
+    if verbose: print '%3s'%'i'+'%10s'%' graphs'
+    for i in range(len(H)**2):
+        print i, len(ds)
+        ds, ss = add2set_loop(ds, H, cp, ccf, iter=i,
+                              verbose=verbose,
+                              capsize=capsize)
+        s = s | ss
+        if capsize <= len(ss): break
+        if not ds: break
 
     return s
 
@@ -788,12 +858,55 @@ def loop_combinations(loops):
             s.add(frozenset(gs))
     for e in d:
         dfs_traverse(d[e],set([e]))
+    return list(s)
+
+def sorted_loops(g):
+    l = [x for x in sl.simple_loops(g,0)]
+    s = {}
+    for e in l:
+        s.setdefault(len(e),[]).append(e)
     return s
+
+def loopgroups(g, n=None):
+    d = sorted_loops(g)
+    if n:
+        return loop_combinations(d[n])
+    else:
+        l=[]
+        for key in d:
+            l.append(loop_combinations(d[key]))
+        return l
+
 
 def count_loops(n):
     s = 0
     for i in range(1,n+1):
         s += comb(n,i) * math.factorial(i-1)
+    return s
+
+def perm_cyclic(l): return [l[i:]+l[:i] for i in range(len(l))]
+def perm_circular(l):
+    s = [l]
+    c = perm_cyclic(l)
+    for e in permutations(l):
+        if not e in c:
+            s.append(e)
+            c.extend(perm_cyclic(e))
+    return s
+
+def gen_loops(n):
+    l = [str(i) for i in range(1,n+1)]
+    s = []
+    for i in range(1,n+1):
+        for e in combinations(l,i):
+            s.extend(perm_circular(e))
+    return s
+
+def allsloops(n):
+    s = []
+    l = gen_loops(n)
+    for e in l:
+        s.append(bfu.g2num(loop2graph(e,n)))
     return s
 
 def main():
