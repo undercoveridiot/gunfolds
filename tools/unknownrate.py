@@ -127,7 +127,7 @@ def start_progress_bar(iter, n, verbose = True):
         pbar = nobar()
     return pbar
 
-def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
+def add2set_loop(ds, H, ccf, iter=1, verbose=True, capsize=100):
     n = len(H)
     n2 = n*n +n
     dsr = {}
@@ -145,21 +145,20 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
         eset = set()
         for sloop in ds[gnum]:
             num = sloop | gnum
-            if sloop in ccf and skip_conflictors(num,ccf[sloop]):
-                continue
+            if sloop in ccf and skip_conflictors(num,ccf[sloop]):continue
             if not num in s:
                 g = bfu.num2CG(num, n)
                 if not bfu.call_u_conflicts(g, H):
                     s.add(num)
                     gset.add((num,sloop))
-                    eset.add(sloop)                    
+                    eset.add(sloop)
                     if bfu.call_u_equals(g, H):
                         ss.add(num)
                         if capsize <= len(ss): break
+            if capsize <= len(ss): return dsr, ss
 
-        for gn in gset:
-            dsr[gn[0]] = eset - set([gn[1]])
-        if capsize <= len(ss): return dsr, ss
+        for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
+            #if capsize <= len(ss): return dsr, ss
 
     pbar.finish()
     return dsr, ss
@@ -258,10 +257,8 @@ def conflictor(e,H):
 
 def conflictor_set(H):
     s = set()
-    for x in gk.inedgelist(H):
-        s = s | conflictor(x,H)
-    for x in gk.inbedgelist(H):
-        s = s | bconflictor(x,H)
+    for x in gk.inedgelist(H):  s = s | conflictor(x,H)
+    for x in gk.inbedgelist(H): s = s | bconflictor(x,H)
     return s
 
 def conflictors(H):
@@ -271,6 +268,19 @@ def conflictors(H):
     for i in xrange(gmp.bit_length(num)):
         if num & 1<<i:
             ds[1<<i] = [x for x in s if x&(1<<i)]
+    return ds
+
+def lconflictors(H):
+    sloops = allsloops(len(H))
+    s = conflictor_set(H)
+    ds = {}
+    num = reduce(operator.or_,s)
+    for i in xrange(gmp.bit_length(num)):
+        if num & 1<<i:
+            cset = [x for x in s if x&(1<<i)]
+            for sloop in sloops:
+                if sloop & 1<<i:
+                    ds.setdefault(sloop,[]).extend(cset)
     return ds
 
 def confpairs(H):
@@ -323,7 +333,7 @@ def iteqclass(H, verbose=True, capsize=100):
 
     return s
 
-def liteqclass(H, verbose=True, capsize=100):
+def liteqclass(H, verbose=True, capsize=100, asl=None):
     '''
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
@@ -336,15 +346,19 @@ def liteqclass(H, verbose=True, capsize=100):
     Hnum = bfu.ug2num(H)
     if Hnum[1]==0: s.add(Hnum[0])
 
-    cp = confpairs(H)
-    ccf = conflictors(H)
+        #cp = confpairs(H)
+    #ccf = conflictors(H)
+    ccf = lconflictors(H)    
 
-    sloops = allsloops(len(H))
+    if asl:
+        sloops = asl
+    else:
+        sloops = allsloops(len(H))
     ds = {0: sloops}
 
     if verbose: print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-        ds, ss = add2set_loop(ds, H, cp, ccf, iter=i,
+        ds, ss = add2set_loop(ds, H, ccf, iter=i,
                               verbose=verbose,
                               capsize=capsize)
         s = s | ss
