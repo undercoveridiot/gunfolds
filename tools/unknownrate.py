@@ -154,7 +154,7 @@ def add2set_loop(ds, H, ccf, iter=1, verbose=True,
                     if bfu.call_u_equals(g, H):
                         ss.add(num)
                         if capsize <= len(ss)+currsize: return dsr, ss
-                        
+
         for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
             #if capsize <= len(ss): return dsr, ss
 
@@ -268,8 +268,17 @@ def conflictors(H):
             ds[1<<i] = [x for x in s if x&(1<<i)]
     return ds
 
+def prune_loops(loops, H):
+    l = []
+    n = len(H)
+    for loop in loops:
+        g = bfu.num2CG(loop, n)
+        if not bfu.call_u_conflicts(g, H):
+            l.append(loop)
+    return l
+
 def lconflictors(H):
-    sloops = allsloops(len(H))
+    sloops = prune_loops(allsloops(len(H)),H)
     s = conflictor_set(H)
     ds = {}
     num = reduce(operator.or_,s)
@@ -338,31 +347,29 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     '''
     if cmp.isSclique(H):
         print 'not running on superclique'
-        return None
+        return set()
     g = {n:{} for n in H}
     s = set()
-    Hnum = bfu.ug2num(H)
-    if Hnum[1]==0: s.add(Hnum[0])
 
-        #cp = confpairs(H)
-    #ccf = conflictors(H)
     ccf = lconflictors(H)
 
     if asl:
         sloops = asl
     else:
-        sloops = allsloops(len(H))
+        sloops = prune_loops(allsloops(len(H)),H)
+
     ds = {0: sloops}
 
     if verbose: print '%3s'%'i'+'%10s'%' graphs'
-    for i in range(len(H)**2):
+    i=0
+    while ds:
         ds, ss = add2set_loop(ds, H, ccf, iter=i,
                               verbose=verbose,
                               capsize=capsize,
                               currsize=len(s))
         s = s | ss
+        i += 1
         if capsize <= len(s): break
-        if not ds: break
 
     return s
 
@@ -887,7 +894,6 @@ def loopgroups(g, n=None):
         for key in d:
             l.append(loop_combinations(d[key]))
         return l
-
 
 def count_loops(n):
     s = 0
