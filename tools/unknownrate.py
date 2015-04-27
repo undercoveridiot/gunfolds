@@ -125,7 +125,7 @@ def start_progress_bar(iter, n, verbose = True):
         pbar = nobar()
     return pbar
 
-def add2set_loop(ds, H, ccf, iter=1, verbose=True,
+def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
                  capsize=100, currsize=0):
     n = len(H)
     n2 = n*n +n
@@ -154,6 +154,12 @@ def add2set_loop(ds, H, ccf, iter=1, verbose=True,
                     if bfu.call_u_equals(g, H):
                         ss.add(num)
                         if capsize <= len(ss)+currsize: return dsr, ss
+
+        # for gn,e in gset:
+        #     if e in cp:
+        #         dsr[gn] = eset - cp[e] - set([e])
+        #     else:
+        #         dsr[gn] = eset - set([e])
 
         for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
             #if capsize <= len(ss): return dsr, ss
@@ -277,8 +283,8 @@ def prune_loops(loops, H):
             l.append(loop)
     return l
 
-def lconflictors(H):
-    sloops = prune_loops(allsloops(len(H)),H)
+def lconflictors(H, sloops=None):
+    if not sloops: sloops = prune_loops(allsloops(len(H)),H)
     s = conflictor_set(H)
     ds = {}
     num = reduce(operator.or_,s)
@@ -307,6 +313,20 @@ def confpairs(H):
             d.setdefault(n2,set()).add(n1)
         gk.deledges(g,p)
 
+    return d
+
+def lconfpairs(H, cap=10, sloops=None):
+    n = len(H)
+    d = {}
+    if not sloops: sloops = prune_loops(allsloops(len(H)),H)
+    c = 0
+    for p in combinations(sloops,2):
+        g = bfu.num2CG(p[0]|p[1], n)
+        if bfu.call_u_conflicts(g, H):
+            d.setdefault(p[0],set()).add(p[1])
+            d.setdefault(p[1],set()).add(p[0])
+        if c >= cap: break
+        c +=1
     return d
 
 
@@ -347,23 +367,25 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     '''
     if cmp.isSclique(H):
         print 'not running on superclique'
-        return set()
+        return set([-1])
     g = {n:{} for n in H}
     s = set()
 
-    ccf = lconflictors(H)
+    cp  = []#lconfpairs(H)
+
 
     if asl:
         sloops = asl
     else:
         sloops = prune_loops(allsloops(len(H)),H)
 
+    ccf = lconflictors(H, sloops=sloops)
     ds = {0: sloops}
 
     if verbose: print '%3s'%'i'+'%10s'%' graphs'
     i=0
     while ds:
-        ds, ss = add2set_loop(ds, H, ccf, iter=i,
+        ds, ss = add2set_loop(ds, H, cp, ccf, iter=i,
                               verbose=verbose,
                               capsize=capsize,
                               currsize=len(s))
@@ -901,14 +923,14 @@ def count_loops(n):
         s += comb(n,i) * math.factorial(i-1)
     return s
 
-def perm_cyclic(l): return [l[i:]+l[:i] for i in range(len(l))]
+def perm_cyclic(l): return [tuple(l[i:]+l[:i]) for i in range(len(l))]
 def perm_circular(l):
     s = [l]
-    c = perm_cyclic(l)
+    c = set(perm_cyclic(l))
     for e in permutations(l):
         if not e in c:
             s.append(e)
-            c.extend(perm_cyclic(e))
+            c = c | set(perm_cyclic(e))
     return s
 
 def gen_loops(n):
@@ -926,10 +948,58 @@ def allsloops(n):
         s.append(bfu.g2num(loop2graph(e,n)))
     return s
 
+def reverse(H, verbose=True, capsize=1000):
+    n = len(H)
+    s = set()
+
+    g      = gk.superclique(n)
+    sloops = set(allsloops(n))
+
+    ds = {bfu.g2num(g): sloops}
+
+    if verbose: print '%3s'%'i'+'%10s'%' graphs'
+    i=0
+    while ds:
+        ds, ss = del_loop(ds, H, iter=i,
+                          verbose=verbose,
+                          capsize=capsize)
+        s = s | ss
+        i += 1
+        if capsize <= len(s): break
+
+    return s
+
+def del_loop(ds, H, iter=0, verbose=True, capsize=1000):
+    n = len(H)
+
+    dsr = {}
+    s = set()
+    ss = set()
+    print iter,
+    for gnum in ds:
+        gset = []
+        s = set()
+        for sloop in ds[gnum]:
+            rset = ds[gnum] - set([sloop])
+            num = reduce(operator.or_, rset)
+            if not num in s:
+                g = bfu.num2CG(num, n)
+                if bfu.overshoot(g, H):
+                    s.add(num)
+                    gset.append((num,rset))
+
+        if gset == []:
+            print '.',
+            ss.add(gnum)
+
+        for gn in gset: dsr[gn[0]] = gn[1]
+    print ''
+    return dsr, ss
+
 def main():
     g = bfu.ringmore(6,1);
     H = bfu.undersample(g,1);
-    ss = iteqclass(H)
+    ss = liteqclass(H)
     print ss
 
 if __name__ == "__main__":
