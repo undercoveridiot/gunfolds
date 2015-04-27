@@ -11,6 +11,8 @@ import operator
 from scipy.misc import comb
 import math
 import gmpy as gmp
+from scipy.misc import comb
+import math
 from matplotlib.cbook import flatten
 from progressbar import ProgressBar, Percentage, \
     Bar, RotatingMarker, ETA, FileTransferSpeed
@@ -887,6 +889,7 @@ def noverlap_loops(loops):
                 #d.setdefault(tuple(l),set()).add(tuple(k))
         d[tuple(l)] = noverlap_loops(el)
     return d
+
 def loop_combinations(loops):
     s = set()
     d = noverlap_loops(loops)
