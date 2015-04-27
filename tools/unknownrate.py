@@ -340,7 +340,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     '''
     if cmp.isSclique(H):
         print 'not running on superclique'
-        return None
+        return set([-1])
     g = {n:{} for n in H}
     s = set()
     Hnum = bfu.ug2num(H)

@@ -8,6 +8,7 @@ import zickle as zkl
 import time, socket
 import scipy
 
+KEY='ral'
 UMAX = 4
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
@@ -104,7 +105,8 @@ def fan_wrapper(fold,n=10,k=10):
     for p in pl: p.join()
     return r
 
-densities = {6: [0.2, .25, .3],
+densities = {5: [0.3],
+             6: [0.2, .25, .3],
              7: [0.2, .25, .3],
              8: [0.15, 0.2, 0.25, 0.3],
              9: [.15, .2, .25, .3],	             
@@ -118,7 +120,7 @@ densities = {6: [0.2, .25, .3],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [6,7,8,9,10]:
+for nodes in [7,8,9,10]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
@@ -129,10 +131,10 @@ for nodes in [6,7,8,9,10]:
         z[dens] = eqclasses
         zkl.save(z[dens],
                  socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_ral_.zkl')
+                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_'+KEY+'_.zkl')
         print ''
         print '----'
         print ''
     pool.close()
     pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_ral_.zkl')
+    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_'+KEY+'_.zkl')
