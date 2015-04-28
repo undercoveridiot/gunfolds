@@ -341,6 +341,19 @@ def checkequality(H,G_test, au = None):
         if graph == H: return True
     return False
 
+def isdedgesubset(g2star,g2):
+    '''
+    check if g2star edges are a subset of those of g2
+    '''
+    for n in g2star:
+        for h in g2star[n]:
+            if h in g2[n]:
+                if not (0,1) in g2[n][h]:
+                    return False
+            else:
+                    return False
+    return True
+
 def isedgesubset(g2star,g2):
     '''
     check if g2star edges are a subset of those of g2

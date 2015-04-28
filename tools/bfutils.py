@@ -64,6 +64,11 @@ def increment(g):
 
     return r
 
+def dincrement_u(G_star, G_u):
+    # directed edges
+    G_un = directed_inc(G_star,G_u)
+    return G_un
+
 def increment_u(G_star, G_u):
     # directed edges
     G_un = directed_inc(G_star,G_u)
@@ -239,11 +244,23 @@ def overshoot(G_star, H):
         glist.append(g)
     return False
 
+def call_u_conflicts_d(G_star, H, checkrate=0):
+    glist = [G_star]
+    while True:
+        g = dincrement_u(G_star, glist[-1])
+        if gk.isedgesubset(g,H): return False
+        if g in glist: return True
+        glist.append(g)
+    return True
+
 def call_u_conflicts(G_star, H, checkrate=0):
     glist = [G_star]
     while True:
-        g = increment_u(G_star, glist[-1])
-        if gk.isedgesubset(g,H): return False
+        #g = increment_u(G_star, glist[-1])
+        g = directed_inc(G_star, glist[-1])
+        if gk.isdedgesubset(g,H): return False
+        g = bidirected_inc(g, glist[-1])
+        if gk.isedgesubset(g,H): return False        
         if g in glist: return True
         glist.append(g)
     return True

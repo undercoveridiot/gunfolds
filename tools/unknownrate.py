@@ -161,13 +161,13 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
                         ss.add(num)
                         if capsize <= len(ss)+currsize: return dsr, ss
 
-        for gn,e in gset:
-            if e in cp:
-                dsr[gn] = eset - cp[e] - set([e])
-            else:
-                dsr[gn] = eset - set([e])
+        # for gn,e in gset:
+        #     if e in cp:
+        #         dsr[gn] = eset - cp[e] - set([e])
+        #     else:
+        #         dsr[gn] = eset - set([e])
 
-                #for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
+        for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
             #if capsize <= len(ss): return dsr, ss
 
     pbar.finish()
@@ -285,7 +285,7 @@ def prune_loops(loops, H):
     n = len(H)
     for loop in loops:
         g = bfu.num2CG(loop, n)
-        if not bfu.call_u_conflicts(g, H):
+        if not bfu.call_u_conflicts_d(g, H):
             l.append(loop)
     return l
 
@@ -377,7 +377,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     g = {n:{} for n in H}
     s = set()
 
-    cp  = lconfpairs(H)
+    cp  = []#lconfpairs(H)
 
 
     if asl:
