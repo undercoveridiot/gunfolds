@@ -930,8 +930,22 @@ def count_loops(n):
     return s
 
 def perm_cyclic(l): return [tuple(l[i:]+l[:i]) for i in range(len(l))]
+def hashloop(l):
+    t = [int(x) for x in l]
+    idx = np.argmin(t)
+    return tuple(l[idx:]+l[:idx])
+def perm_circular_slow2(l):
+    s = [tuple(l)]
+    c = {}
+    c[hashloop(l)] = True
+    for e in permutations(l):
+        if not hashloop(e) in c:
+            s.append(e)
+            c[hashloop(e)] = True
+    return s
+
 def perm_circular_slow(l):
-    s = [l]
+    s = [tuple(l)]
     c = set(perm_cyclic(l))
     for e in permutations(l):
         if not e in c:
