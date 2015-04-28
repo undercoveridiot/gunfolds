@@ -22,6 +22,7 @@ TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
 
+circp = zkl.load('circular_p.zkl')
 alloops = zkl.load('allloops.zkl')
 
 import pprint
