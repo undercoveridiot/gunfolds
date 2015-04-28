@@ -22,7 +22,7 @@ TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
 
-circp = zkl.load('circular_p.zkl')
+alloops = zkl.load('allloops.zkl')
 
 import pprint
 import bfutils as bfu
@@ -160,13 +160,13 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
                         ss.add(num)
                         if capsize <= len(ss)+currsize: return dsr, ss
 
-        # for gn,e in gset:
-        #     if e in cp:
-        #         dsr[gn] = eset - cp[e] - set([e])
-        #     else:
-        #         dsr[gn] = eset - set([e])
+        for gn,e in gset:
+            if e in cp:
+                dsr[gn] = eset - cp[e] - set([e])
+            else:
+                dsr[gn] = eset - set([e])
 
-        for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
+                #for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
             #if capsize <= len(ss): return dsr, ss
 
     pbar.finish()
@@ -376,7 +376,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     g = {n:{} for n in H}
     s = set()
 
-    cp  = []#lconfpairs(H)
+    cp  = lconfpairs(H)
 
 
     if asl:
@@ -967,7 +967,8 @@ def gen_loops(n):
             s.extend(perm_circular(e))
     return s
 
-def allsloops(n):
+def allsloops(n, asl = alloops):
+    if asl: return asl[n]
     s = []
     l = gen_loops(n)
     for e in l:
