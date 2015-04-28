@@ -12,6 +12,7 @@ from scipy.misc import comb
 import math
 import gmpy as gmp
 from scipy.misc import comb
+import zickle as zkl
 import math
 from matplotlib.cbook import flatten
 from progressbar import ProgressBar, Percentage, \
@@ -20,6 +21,8 @@ from progressbar import ProgressBar, Percentage, \
 TOOLSPATH='./tools/'
 sys.path.append(os.path.expanduser(TOOLSPATH))
 
+
+circp = zkl.load('circular_p.zkl')
 
 import pprint
 import bfutils as bfu
@@ -927,7 +930,7 @@ def count_loops(n):
     return s
 
 def perm_cyclic(l): return [tuple(l[i:]+l[:i]) for i in range(len(l))]
-def perm_circular(l):
+def perm_circular_slow(l):
     s = [l]
     c = set(perm_cyclic(l))
     for e in permutations(l):
@@ -935,6 +938,12 @@ def perm_circular(l):
             s.append(e)
             c = c | set(perm_cyclic(e))
     return s
+def perm_circular(l, cp=circp):
+    r = []
+    n = len(l)
+    for e in cp[n]:
+        r.append([l[i] for i in e])
+    return r
 
 def gen_loops(n):
     l = [str(i) for i in range(1,n+1)]
