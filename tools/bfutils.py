@@ -10,8 +10,18 @@ import networkx as nx
 import ecj
 import zickle as zkl
 import graphkit as gk
-from comparison import num2CG, nx2graph, isSclique
+from comparison import num2CG,nx2graph, isSclique
 
+
+def pure_directed_inc(G,D):
+    G_un = {}
+    # directed edges
+    for v in D:
+        G_un[v] = {}
+        for w in D[v]:
+            if G[w]:
+                for e in G[w]: G_un[v][e] = set([(0,1)])
+    return G_un
 
 def directed_inc(G,D):
     G_un = {}
@@ -66,7 +76,7 @@ def increment(g):
 
 def dincrement_u(G_star, G_u):
     # directed edges
-    G_un = directed_inc(G_star,G_u)
+    G_un = pure_directed_inc(G_star,G_u)
     return G_un
 
 def increment_u(G_star, G_u):
@@ -260,7 +270,7 @@ def call_u_conflicts(G_star, H, checkrate=0):
         g = directed_inc(G_star, glist[-1])
         if gk.isdedgesubset(g,H): return False
         g = bidirected_inc(g, glist[-1])
-        if gk.isedgesubset(g,H): return False        
+        if gk.isedgesubset(g,H): return False
         if g in glist: return True
         glist.append(g)
     return True

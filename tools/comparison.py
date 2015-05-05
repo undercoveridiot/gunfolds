@@ -15,14 +15,14 @@ def num2CG(num,n):
 
     """
     n2 = n*n
-    G = {str(i+1):{} for i in range(n)}
+    G = {'%i'%(i+1):{} for i in xrange(n)}
     if num == 0: return G
     bl = gmp.bit_length(num)
     idx = [n2-i-1 for i in xrange(bl) if num & (1<<i)]
     idx = np.unravel_index(idx,(n,n))
     x = idx[0]+1
     y = idx[1]+1
-    for i in range(len(x)):
+    for i in xrange(len(x)):
         G['%i' % x[i]]['%i' % y[i]] = set([(0,1)])
     return G
 

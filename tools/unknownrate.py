@@ -221,7 +221,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
                 dsr[gn] = [ekey2e(k,n) for k in eset - cp[e]]
             else:
                 dsr[gn] = elist
-		if capsize <= len(ss): return dsr, ss
+        if capsize <= len(ss): return dsr, ss
 
     pbar.finish()
     return dsr, ss
@@ -357,12 +357,12 @@ def iteqclass(H, verbose=True, capsize=100):
 
     if verbose: print '%3s'%'i'+'%10s'%' graphs'
     for i in range(len(H)**2):
-		ds, ss = add2set_(ds, H, cp, ccf, iter=i,
-                          verbose=verbose,
-                          capsize=capsize)
-		s = s | ss
-		if capsize <= len(ss): break
-		if not ds: break
+        ds, ss = add2set_(ds, H, cp, ccf, iter=i,
+                            verbose=verbose,
+                            capsize=capsize)
+        s = s | ss
+        if capsize <= len(ss): break
+        if not ds: break
 
     return s
 
@@ -478,20 +478,6 @@ def edgedsg(mask):
             if not ds[mask[i,j]]: ds.pop(mask[i,j])
     return ds
 
-def prune(gl, H):
-    l = []
-    ss = set()
-    for gnum in gl:
-        if gnum in cache:
-            if cache[gnum]: l.append(gnum)
-        else:
-            cache[gnum] = False
-            g = bfu.num2CG(gnum,n)
-            if not bfu.call_u_conflicts(g, H):
-                if bfu.call_u_equals(g, H): ss.add(gnum)
-                l.append(gnum)
-                cache[gnum] = True
-    return l
 
 def quadlister(glist, H, cds):
     n = len(H)
