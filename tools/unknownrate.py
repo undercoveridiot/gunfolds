@@ -285,8 +285,12 @@ def prune_loops(loops, H):
     n = len(H)
     for loop in loops:
         g = bfu.num2CG(loop, n)
-        if not bfu.call_u_conflicts_d(g, H):
-            l.append(loop)
+        x = [k for k in g if g[k]]
+        if len(x) == 1:
+            s = reduce(lambda x, s: s.union(x),
+                       [H[x[0]][w] for w in H[x[0]]])
+            if not (2,0) in s: continue
+        if not bfu.call_u_conflicts_d(g, H): l.append(loop)        
     return l
 
 def lconflictors(H, sloops=None):
@@ -377,7 +381,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     g = {n:{} for n in H}
     s = set()
 
-    cp  = lconfpairs(H)
+
 
 
     if asl:
@@ -385,6 +389,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     else:
         sloops = prune_loops(allsloops(len(H)),H)
 
+    cp  = lconfpairs(H, sloops=sloops)
     ccf = lconflictors(H, sloops=sloops)
     ds = {0: sloops}
 
