@@ -8,7 +8,7 @@ import zickle as zkl
 import time, socket
 import scipy
 
-KEY='ral'
+KEY='ral_async'
 UMAX = 4
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
@@ -129,11 +129,11 @@ def fan_wrapper(fold,n=10,k=10):
 
 densities = {5: [0.3],
              6: [0.2, .25, .3],
-             7: [0.2, .25, .3],
-             8: [0.15, 0.2, 0.25, 0.3],
-             9: [.15, .2, .25, .3],	             
-             10:[0.15, .2, .25, .3],# 0.15, 0.2, 0.25, 0.3],
-             15:[0.25, 0.3],
+             7: [0.2],
+             8: [0.2],
+             9: [0.2],	             
+             10:[0.2],# 0.15, 0.2, 0.25, 0.3],
+             15:[0.2],
              20:[0.1],# 0.15, 0.2, 0.25, 0.3],
              25:[0.1],
              30:[0.1],
@@ -142,19 +142,15 @@ densities = {5: [0.3],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [7,8,9,10]:
+for nodes in [5]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
         print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')
         e = bfutils.dens2edgenum(dens, n=nodes)
-        s = set()
-        while len(s) < 100:
-            g = bfutils.ringmore(n,e) # random ring of given density
-            s.add(g)
-        glist = list(s)
-        eqclasses = pool.map(functools.partial(ra_wrapper_preset,
-                                               glist=glist),
+        eqclasses = pool.map_async(functools.partial(ra_wrapper,
+                                               n=nodes,
+                                               k=e),
                              range(REPEATS))
         z[dens] = eqclasses
         zkl.save(z[dens],
