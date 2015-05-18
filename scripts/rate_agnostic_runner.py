@@ -29,12 +29,34 @@ else:
     PNUM=max((1,PNUM/INPNUM))
 print 'processes: ',PNUM, INPNUM
 
+
 def ra_wrapper(fold, n=10, k=10):
     scipy.random.seed()
     l = {}
     while True:
         try:
             g = bfutils.ringmore(n,k) # random ring of given density
+            gs= bfutils.call_undersamples(g)
+            for u in range(1,min([len(gs),UMAX])):
+                g2 = bfutils.undersample(g,u)
+                print fold,': ',traversal.density(g),':',
+                startTime = int(round(time.time() * 1000))
+                s = ur.liteqclass(g2, verbose=False, capsize=CAPSIZE)
+                endTime = int(round(time.time() * 1000))
+                print len(s), u
+                l[u] = {'eq':s,'ms':endTime-startTime}
+        except MemoryError:
+            print 'memory error... retrying'
+            continue
+        break
+    return {'gt':g,'solutions':l}
+
+def ra_wrapper_preset(fold, glist=[]):
+    scipy.random.seed()
+    l = {}
+    while True:
+        try:
+            g = glist[fold]
             gs= bfutils.call_undersamples(g)
             for u in range(1,min([len(gs),UMAX])):
                 g2 = bfutils.undersample(g,u)
@@ -126,6 +148,7 @@ for nodes in [9,10,15]:
     for dens in densities[nodes]:
         print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')
         e = bfutils.dens2edgenum(dens, n=nodes)
+        
         eqclasses = []
         for x in pool.imap(functools.partial(ra_wrapper, n=nodes, k=e),
                            range(REPEATS)):

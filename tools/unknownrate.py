@@ -43,7 +43,7 @@ def memo(func):
             cache[s] = func(*args)    # Compute & cache the solution
         return cache[s]               # Return the cached solution
     return wrap
-
+    
 def prune_conflicts(H, g, elist):
     """checks if adding an edge from the list to graph g causes a
     conflict with respect to H and if it does removes the edge
@@ -163,13 +163,10 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
                         if capsize <= len(ss)+currsize: return dsr, ss
 
         for gn,e in gset:
-             if e in cp:
-                 dsr[gn] = eset - cp[e] - set([e])
-             else:
-                 dsr[gn] = eset - set([e])
-
-                 #for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
-            #if capsize <= len(ss): return dsr, ss
+           if e in cp:
+               dsr[gn] = eset - cp[e] - set([e])
+           else:
+               dsr[gn] = eset - set([e])
 
     pbar.finish()
     return dsr, ss
