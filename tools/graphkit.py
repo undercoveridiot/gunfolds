@@ -42,7 +42,7 @@ def inedgelist(g): # missing directed iterator
         for i in xrange(1,n+1):
             w = str(i)
             if not w in g[v]:
-                yield (v,w)            
+                yield (v,w)
             elif not (0,1) in g[v][w]:
                 yield (v,w)
 def ibedgelist(g): # directed iterator
@@ -60,9 +60,9 @@ def inbedgelist(g): # missing bidirected iterator
        for w in g:
            if v!=w:
                if not w in g[v]:
-                   yield (v,w)                   
+                   yield (v,w)
                elif not (2,0) in g[v][w]:
-                   yield (v,w)                   
+                   yield (v,w)
 
 def bedgelist(g): # bidirected edge list with flips
     l = []
@@ -198,7 +198,8 @@ def gtranspose(G):                      # Transpose (rev. edges of) G
     GT = {u:{} for u in G}
     for u in G:
         for v in G[u]:
-            GT[v][u] = set([(0,1)])        # Add all reverse edges
+            if (0,1) in G[u][v]:
+                GT[v][u] = set([(0,1)])        # Add all reverse edges
     return GT
 
 def scale_free(n, alpha=0.7, beta=0.25,
@@ -307,6 +308,18 @@ def bidirected_no_fork(g):
             return True
     return False
 
+def fork_mismatch(g):
+    be = bedgelist(g)
+    benum = len(be)/2
+    forknum = 0
+    for v in g:
+        fn = len([w for w in g[v] if (0,1) in g[v][w]])
+        forknum += fn*(fn-1)/2.
+    if benum < len(g)*(len(g)-1)/2.:
+        return (forknum-benum) > benum
+    else:
+        return False
+
 def no_parents(g):
     T = gtranspose(g)
     for n in T:
@@ -373,7 +386,7 @@ def isedgesubset_(g,H):
     check if g edges are a subset of those of H
     '''
     for e in inbedgelist(H):
-        if e[1] in g[e[0]] and (2,0) in g[e[0]][e[1]]: return False    
+        if e[1] in g[e[0]] and (2,0) in g[e[0]][e[1]]: return False
     for e in inedgelist(H):
         if e[1] in g[e[0]] and (0,1) in g[e[0]][e[1]]: return False
     return True

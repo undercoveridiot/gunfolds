@@ -14,17 +14,14 @@ def save(object, filename, protocol = -1):
     """Save an object to a compressed disk file.
        Works well with huge objects.
     """
-    file = gzip.GzipFile(filename, 'wb')
-    cPickle.dump(object, file, protocol)
-    file.close()
+    with gzip.GzipFile(filename, 'wb') as file:
+        cPickle.dump(object, file, protocol)
 
 def load(filename):
     """Loads a compressed object from disk
     """
-    file = gzip.GzipFile(filename, 'rb')
-    object = cPickle.load(file)
-    file.close()
-
+    with gzip.GzipFile(filename, 'rb') as file:
+        object = cPickle.load(file)
     return object
 
 if __name__ == "__main__":

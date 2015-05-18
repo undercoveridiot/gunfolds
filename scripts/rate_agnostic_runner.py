@@ -29,7 +29,7 @@ else:
     PNUM=max((1,PNUM/INPNUM))
 print 'processes: ',PNUM, INPNUM
 
-    
+
 def ra_wrapper(fold, n=10, k=10):
     scipy.random.seed()
     l = {}
@@ -142,20 +142,22 @@ densities = {5: [0.3],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [5]:
+for nodes in [9,10,15]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
         print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')
         e = bfutils.dens2edgenum(dens, n=nodes)
-        eqclasses = pool.map_async(functools.partial(ra_wrapper,
-                                               n=nodes,
-                                               k=e),
-                             range(REPEATS))
-        z[dens] = eqclasses
-        zkl.save(z[dens],
-                 socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+str(dens)+'_'+KEY+'_.zkl')
+        eqclasses = []
+        for x in pool.imap(functools.partial(ra_wrapper, n=nodes, k=e),
+                           range(REPEATS)):
+            eqclasses.append(x)
+            z[dens] = eqclasses
+            zkl.save(z[dens],
+                     socket.gethostname().split('.')[0]+\
+                     '_nodes_'+str(nodes)+'_density_'+\
+                     str(dens)+'_'+KEY+'_.zkl')
+
         print ''
         print '----'
         print ''

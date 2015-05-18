@@ -11,6 +11,7 @@ import operator
 from scipy.misc import comb
 import math
 import gmpy as gmp
+import gmpy as gmp
 from scipy.misc import comb
 import zickle as zkl
 import math
@@ -166,9 +167,6 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
                dsr[gn] = eset - cp[e] - set([e])
            else:
                dsr[gn] = eset - set([e])
-
-        #for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
-            #if capsize <= len(ss): return dsr, ss
 
     pbar.finish()
     return dsr, ss
@@ -380,7 +378,6 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
         return set([-1])
     g = {n:{} for n in H}
     s = set()
-
 
 
 
