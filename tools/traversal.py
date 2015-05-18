@@ -768,6 +768,7 @@ def delacedge(g,v,b,mask):
 
 def rotate(l): return l[1:] + l[:1] # rotate a list
 def density(g): return len(gk.edgelist(g))/np.double(len(g)**2)
+def udensity(g): return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2.)/np.double(len(g)**2 + len(g)*(len(g)-1)/2.)    
 
 def esig(l,n):
     '''

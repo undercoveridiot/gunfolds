@@ -11,7 +11,7 @@ import ecj
 import zickle as zkl
 import graphkit as gk
 from comparison import num2CG,nx2graph, isSclique
-
+import itertools
 
 def pure_directed_inc(G,D):
     G_un = {}
@@ -460,4 +460,12 @@ def scale_free(n, alpha=0.7, beta=0.25,
     g = nx2graph(g)
     g = gtranspose(g)
     addAring(g)
+    return g
+
+def randH(n, d1, d2):
+    g = bfu.ringmore(n,d1)
+    pairs = [x for x in itertools.combinations(g.keys(),2)]
+    for p in np.random.permutation(pairs)[:d2]:
+        g[p[0]].setdefault(p[1],set()).add((2,0))
+        g[p[1]].setdefault(p[0],set()).add((2,0))
     return g
