@@ -43,7 +43,7 @@ def memo(func):
             cache[s] = func(*args)    # Compute & cache the solution
         return cache[s]               # Return the cached solution
     return wrap
-    
+
 def prune_conflicts(H, g, elist):
     """checks if adding an edge from the list to graph g causes a
     conflict with respect to H and if it does removes the edge
@@ -80,7 +80,7 @@ def eqclass(H):
             for i in range(n):
                 gk.addanedge(g,nedges[i])
                 if bfu.call_u_equals(g, H): s.add(bfu.g2num(g))
-                s.add(addedges(g,H,nedges[:i]+nedges[i+1:]))
+                addedges(g,H,nedges[:i]+nedges[i+1:])                    
                 gk.delanedge(g,nedges[i])
 
     edges = gk.edgelist(gk.complement(g))
@@ -278,6 +278,22 @@ def conflictors(H):
             ds[1<<i] = [x for x in s if x&(1<<i)]
     return ds
 
+def may_be_true_selfloop(n,H):
+    for v in H[n]:
+        if v == n: continue
+        if (0,1) in H[n][v] and not ((2,0) in H[n][v]): return False
+    return True
+
+def issingleloop(num):
+    bl = gmp.bit_length(num)
+    idx = [1 for i in xrange(bl) if num & (1<<i)]
+    return len(idx) == 1
+
+def nonbarren(H):
+    for v in H:
+        if H[v]: return v
+    return False
+
 def prune_loops(loops, H):
     l = []
     n = len(H)
@@ -422,6 +438,36 @@ def edgemask(gl,H, cds):
             if skip_conflict(gl[i], gl[j], cds): continue
 
             gnum = gl[i] | gl[j]
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                if bfu.call_u_equals(g, H): s.add(gnum)
+                mask[i,j] = gnum
+                mask[j,i] = gnum
+    return mask, s
+
+def ledgemask(gl,H, cds):
+    """given a list of encoded graphs and observed undersampled graph
+    H returns a matrix with -1 on diagonal, 0 at the conflicting graph
+    combination and encoded graph at non-conflicted
+    positions. Furthermore, returns a set of graphs that are in the
+    equivalence class of H
+
+    Arguments:
+    - `gl`: list of integer encoded graphs
+    - `H`: the observed undersampled graph
+    """
+    n = len(H)
+    nl= len(gl)
+    s = set()
+    mask = np.zeros((nl,nl),'int')
+    np.fill_diagonal(mask,-1)
+
+    for i in xrange(nl):
+        for j in xrange(i+1,nl):
+
+            if gl[i] & gl[j]: continue
+            gnum = gl[i] | gl[j]
+            if skip_conflictors(gnum, cds): continue
             g = bfu.num2CG(gnum,n)
             if not bfu.call_u_conflicts(g, H):
                 if bfu.call_u_equals(g, H): s.add(gnum)
@@ -716,6 +762,55 @@ def dceqclass(H):
         i += 1
     return s
 
+def ldceqclass(H,asl=None):
+    """Find all graphs in the same equivalence class with respect to H
+
+    Arguments:
+    - `H`: an undersampled graph
+    """
+    if cmp.isSclique(H):
+        print 'not running on superclique'
+        return set()
+    n = len(H)
+    s = set()
+    cds = lconfpairs(H)
+    if asl:
+        sloops = asl
+    else:
+        sloops = prune_loops(allsloops(len(H)),H)
+
+    glist =  sloops
+    i = 1
+    while glist != []:
+        print i, len(glist)
+        glist, ss = lquadmerge(glist, H, cds)
+        s = s|ss
+        i += 1
+    return s
+
+def lquadmerge(gl, H, cds):
+    n = len(H)
+    l = set()
+    s = set()
+    mask, ss = ledgemask(gl, H, cds)
+    s = s | ss
+    ds = edgeds(mask)
+
+    #pp = pprint.PrettyPrinter(indent=1)
+    #pp.pprint(ds)
+
+    for idx in ds:
+        for gn in ds[idx]:
+            if mask[idx]&gn: continue
+            if skip_conflictors(mask[idx], gn, cds): continue
+            gnum = mask[idx] | gn
+            if gnum in l or gnum in ss: continue
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                l.add(gnum)
+                if bfu.call_u_equals(g, H): s.add(gnum)
+
+    return list(l), s
 
 def quadmerge_(glist, H, ds):
     n = len(H)
