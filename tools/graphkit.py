@@ -13,6 +13,7 @@ import scipy
 import networkx as nx
 import igraph
 from numpy.random import randint
+from comparison import nx2graph
 
 def edgelist(g): # directed
     '''
@@ -248,7 +249,17 @@ def ringarcs(g,n):
 def ringmore(n,m):
     return ringarcs(ring(n),m)
 
+def digonly(H):
+    """returns a subgraph of H contatining all directed edges of H
 
+    Arguments:
+    - `H`: undersampled graph
+    """
+    g = {n:{} for n in H}
+    for v in g:
+        g[v] = {w:set([(0,1)]) for w in H[v] if not H[v][w] == set([(2,0)])}
+    return g
+    
 # Justin's ternary representation: 1 = directed edge; 2 = bidirected; 3 = both
 def justin2graph(g):
     r = {}
