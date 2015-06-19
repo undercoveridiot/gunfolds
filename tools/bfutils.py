@@ -198,8 +198,9 @@ def ug2num(g):
     num2 = 0
     for v in g:
         for w in g[v]:
-            mask = (1<<(n2 - int(v,10)*n - int(w,10)))
-            num |= mask
+            if (0,1) in g[v][w]:
+                mask = (1<<(n2 - int(v,10)*n - int(w,10)))
+                num |= mask
             if (2,0) in g[v][w]: num2 |= mask
     return num, num2
 
@@ -250,6 +251,16 @@ def overshoot(G_star, H):
         g = increment_u(G_star, glist[-1])
         if isSclique(g): return False
         if gk.isedgesubset(H,g): return True
+        if g in glist: return False
+        glist.append(g)
+    return False
+
+def forms_loop(G_star, loop):
+    glist = [G_star]
+    while True:
+        g = increment_u(G_star, glist[-1])
+        if (g2num(gk.digonly(g)) & loop) == loop:
+            return True
         if g in glist: return False
         glist.append(g)
     return False
