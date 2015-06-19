@@ -4,34 +4,20 @@ import graphkit as gk
 import bfutils as bfu
 import sys
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 
 sys.path.append('./tools/')
+#
 
+uplimit = 0.25
 
-l = ['hooke_nodes_10_samples_1000_density_0.15_noise_0.1_OCE_b_svar.zkl',
-     'hooke_nodes_10_samples_1000_density_0.2_noise_0.1_OCE_b_svar.zkl',
-     'hooke_nodes_10_samples_1000_density_0.25_noise_0.1_OCE_b_svar.zkl']
+#
 
-d10_01 = {0.15: zkl.load(l[0]),
-          0.2: zkl.load(l[1]),
-          0.25: zkl.load(l[2])}
-
-l = ['saturn_nodes_8_samples_1000_density_0.15_noise_0.1_OCE_b_svar_flatsigned_H.zkl',
-     'saturn_nodes_8_samples_1000_density_0.2_noise_0.1_OCE_b_svar_flatsigned_H.zkl',
-     'saturn_nodes_8_samples_1000_density_0.25_noise_0.1_OCE_b_svar_flatsigned_H.zkl']
-
-d08_01 = {0.15: zkl.load(l[0]),
-          0.2: zkl.load(l[1]),
-          0.25: zkl.load(l[2])}
-
-
-
-#d01 = zkl.load('neptune_nodes_8_samples_1000_noise_0.1_OCE_b_svar.zkl')
-d10 = zkl.load('saturn_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flatsigned.zkl')
-#d08 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_beta.zkl')
-d08 = zkl.load('leibnitz_nodes_8_samples_1000_noise_1.0_OCE_b_svar_flat.zkl')
-
+#d05 = zkl.load('leibnitz_nodes_5_samples_2000_noise_0.1_OCE_b_svar_beta_rasl_more.zkl')
+#d05 = zkl.load('oranos_nodes_5_samples_2000_noise_0.1_OCE_b_svar_beta_rasl_more.zkl')
+#d05 = zkl.load('leibnitz_nodes_6_samples_2000_noise_0.1_OCE_b_svar_beta_rasl.zkl')
+d05 = zkl.load('leibnitz_nodes_6_samples_2000_noise_0.1_OCE_b_svar_beta_rasl.zkl')
 
 def estOE(d):
     gt= d['gt']['graph']
@@ -51,7 +37,7 @@ def estCOE(d):
                   -len(gk.bedgelist(gt)))
     return (e['directed'][1]+e['bidirected'][1])/N
 
-d = d08_01
+d = d05#d08_01
 density = np.sort(d.keys())
 n = len(d[density[0]][0]['gt']['graph'])
 OE = [[gk.oerror(x) for x in d[dd]] for dd in density]
@@ -60,66 +46,71 @@ COE = [[gk.cerror(x) for x in d[dd]] for dd in density]
 eOE = [[estOE(x) for x in d[dd]] for dd in density]
 eCOE = [[estCOE(x) for x in d[dd]] for dd in density]
 
+samplesnum = 20
+denscol = [0.25]*samplesnum+[0.30]*samplesnum+[0.35]*samplesnum
+OE = OE[0]+OE[1]+OE[2]
+eOE = eOE[0]+eOE[1]+eOE[2]
+COE = COE[0]+COE[1]+COE[2]
+eCOE = eCOE[0]+eCOE[1]+eCOE[2]
+
+
+OE = pd.DataFrame(np.asarray([denscol+denscol, OE+eOE, pd.Categorical(['RASL']*samplesnum*3+['SVAR']*samplesnum*3)]).T, columns=['density', 'time', 'OE'])
+
+COE = pd.DataFrame(np.asarray([denscol+denscol, COE+eCOE, pd.Categorical(['RASL']*samplesnum*3+['SVAR']*samplesnum*3)]).T, columns=['density', 'time', 'COE'])
+
 
 shift = 0.15
 wds = 0.3
 fliersz = 2
 lwd = 1
 
-plt.figure(figsize=[10,6])
+plt.figure(figsize=[14,6])
 
 plt.subplot(121)
-g = sb.boxplot(eOE,names=map(lambda x: str(int(x*100))+"%",
-                                     density),
-              widths=wds, color="Reds", fliersize=fliersz, linewidth=lwd,
-              **{'positions':np.arange(len(density))-shift,
-                 'label':'$G_2$-space SVAR estimation error'})
+ax = sb.boxplot(x="density", y="time", hue="OE",
+                data=OE,
+                palette="Set2",
+                linewidth=lwd,
+                width=wds,
+                fliersize=fliersz)
+sb.stripplot(x="density", y="time", hue="OE",
+                data=OE,
+                palette='Set2',
+                size=4, jitter=True, edgecolor="gray")
+#ax.figure.get_axes()[0].set_yscale('log')
+plt.xticks([0,1,2],('25%','30%','35%'))
 
-g = sb.boxplot(OE,names=map(lambda x: str(int(x*100))+"%",
-                                      density),
-               widths=wds, color="Blues",fliersize=fliersz,
-               linewidth=lwd,
-               **{'positions':np.arange(len(density))+shift,
-                  'label':'$G_1$-space error'})
-
-# plt.plot(np.arange(len(densities))-shift,
-#         map(np.median,alltimes_old), 'ro-', lw=0.5, mec='k')
-# plt.plot(np.arange(len(densities))+shift,
-#         map(np.median,alltimes_new), 'bo-', lw=0.5, mec='k')
-#g.figure.get_axes()[0].set_yscale('log')
-plt.ylim([-0.02,1.02])
+plt.ylim([-0.02,uplimit])
 plt.xlabel('density (% of '+str(n**2)+' total possible edges)')
 plt.ylabel('Edge omission error')
-plt.title('100 '+str(n)+'-node graphs per density',
+plt.title(str(samplesnum)+' '+str(n)+'-node graphs per density',
           multialignment='center')
 plt.legend(loc=0)
+
 
 plt.subplot(122)
-g = sb.boxplot(eCOE,names=map(lambda x: str(int(x*100))+"%",
-                                     density),
-              widths=wds, color="Reds", fliersize=fliersz, linewidth=lwd,
-              **{'positions':np.arange(len(density))-shift,
-                 'label':'$G_2$-space SVAR estimation error'})
+ax = sb.boxplot(x="density", y="time", hue="COE",
+                data=COE,
+                palette="Set2",
+                linewidth=lwd,
+                width=wds,
+                fliersize=fliersz)
+sb.stripplot(x="density", y="time", hue="COE",
+                data=COE,
+                palette='Set2',
+                linewidth=lwd,
+                size=4, jitter=True, edgecolor="gray")
 
-g = sb.boxplot(COE,names=map(lambda x: str(int(x*100))+"%",
-                                      density),
-               widths=wds, color="Blues",fliersize=fliersz,
-               linewidth=lwd,
-               **{'positions':np.arange(len(density))+shift,
-                  'label':'$G_1$-space error'})
+#ax.figure.get_axes()[0].set_yscale('log')
+plt.xticks([0,1,2],('25%','30%','35%'))
 
-# plt.plot(np.arange(len(densities))-shift,
-#         map(np.median,alltimes_old), 'ro-', lw=0.5, mec='k')
-# plt.plot(np.arange(len(densities))+shift,
-#         map(np.median,alltimes_new), 'bo-', lw=0.5, mec='k')
-#g.figure.get_axes()[0].set_yscale('log')
-plt.ylim([-0.02,1.02])
+plt.ylim([-0.02,uplimit])
 plt.xlabel('density (% of '+str(n**2)+' total possible edges)')
 plt.ylabel('Edge comission error')
-plt.title('100 '+str(n)+'-node graphs per density',
+plt.title(str(samplesnum)+' '+str(n)+'-node graphs per density',
           multialignment='center')
-plt.legend(loc=0)
+plt.legend(loc=2)
 
-plt.subplots_adjust(right=0.99, left=0.2)
-sb.set_context("talk")
+sb.set_context('poster')
+plt.savefig('/tmp/RASL_simulation.svgz',transparent=False, bbox_inches='tight', pad_inches=0)
 plt.show()
