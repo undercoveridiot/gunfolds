@@ -2,7 +2,7 @@ import sys, os
 sys.path.append('./tools/')
 import traversal, bfutils, graphkit
 import unknownrate as ur
-from multiprocessing import Pool,Process, Queue, cpu_count, current_process
+from multiprocessing import Pool,Process, Queue, cpu_count, current_process, active_children
 import functools
 import zickle as zkl
 import time, socket
@@ -29,6 +29,43 @@ else:
     PNUM=max((1,PNUM/INPNUM))
 print 'processes: ',PNUM, INPNUM
 
+def multiprocess(argslist, ncpu):
+    total = len(argslist)
+    done = 0
+    result_queue = Queue()
+    jobs = []
+
+    def ra_wrapper_(fold, n=10, k=10):
+        scipy.random.seed()
+        l = {}
+        while True:
+            try:
+                g = bfutils.ringmore(n,k) # random ring of given density
+                gs= bfutils.call_undersamples(g)
+                for u in range(1,min([len(gs),UMAX])):
+                    g2 = bfutils.undersample(g,u)
+                    print fold,': ',traversal.density(g),':',
+                    startTime = int(round(time.time() * 1000))
+                    s = ur.liteqclass(g2, verbose=False, capsize=CAPSIZE)
+                    endTime = int(round(time.time() * 1000))
+                    print len(s), u
+                    l[u] = {'eq':s,'ms':endTime-startTime}
+            except MemoryError:
+                print 'memory error... retrying'
+                continue
+            break
+        result_queue.put( {'gt':g,'solutions':l} )
+
+    while argslist != [] and done<10 :
+        if len(active_children()) < ncpu:
+            p = Process(target=ra_wrapper_,args=(argslist.pop(),))
+            jobs.append(p)
+            p.start()
+            done+=1
+            print "\r",float(done)/total,"%",
+    #get results here
+    res = [result_queue.get() for p in jobs]
+    print res
 
 def ra_wrapper(fold, n=10, k=10):
     scipy.random.seed()
@@ -127,7 +164,7 @@ def fan_wrapper(fold,n=10,k=10):
     for p in pl: p.join()
     return r
 
-densities = {5: [0.3],
+densities = {5: [0.2],
              6: [0.2, .25, .3],
              7: [0.2, .25, .3],
              8: [0.15, 0.2, 0.25, 0.3],
@@ -142,26 +179,28 @@ densities = {5: [0.3],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [9,10,15]:
+for nodes in [5]:
     z = {}
-    pool=Pool(processes=PNUM)
+    #pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
         print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')
         e = bfutils.dens2edgenum(dens, n=nodes)
+
+        multiprocess([[i, nodes, e] for i in range(REPEATS)],PNUM)
         
-        eqclasses = []
-        for x in pool.imap(functools.partial(ra_wrapper, n=nodes, k=e),
-                           range(REPEATS)):
-            eqclasses.append(x)
-            z[dens] = eqclasses
-            zkl.save(z[dens],
-                     socket.gethostname().split('.')[0]+\
-                     '_nodes_'+str(nodes)+'_density_'+\
-                     str(dens)+'_'+KEY+'_.zkl')
+        # eqclasses = []
+        # for x in pool.imap(functools.partial(ra_wrapper, n=nodes, k=e),
+        #                    range(REPEATS)):
+        #     eqclasses.append(x)
+        #     z[dens] = eqclasses
+        #     zkl.save(z[dens],
+        #              socket.gethostname().split('.')[0]+\
+        #              '_nodes_'+str(nodes)+'_density_'+\
+        #              str(dens)+'_'+KEY+'_.zkl')
 
         print ''
         print '----'
         print ''
-    pool.close()
-    pool.join()
-    zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_'+KEY+'_.zkl')
+        #pool.close()
+        #pool.join()
+        #zkl.save(z,socket.gethostname().split('.')[0]+'_nodes_'+str(nodes)+'_'+KEY+'_.zkl')
