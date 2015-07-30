@@ -195,6 +195,7 @@ def ug2num(g):
     n = len(g)
     n2 = n**2 + n
     num = 0
+    mask = 0
     num2 = 0
     for v in g:
         for w in g[v]:
