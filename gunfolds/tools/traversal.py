@@ -1,5 +1,5 @@
 from gunfolds.tools import bfutils as bfu
-from gunfolds.tools import comparison
+from gunfolds.tools.conversions import g2num, graph2nx
 from gunfolds.tools import ecj
 from gunfolds.tools import graphkit as gk
 
@@ -54,7 +54,7 @@ def try_till_d_path(g, d, gt, order=None):
 
 def try_till_path(g, gt):
     d = len(g) - 1
-    gx = comparison.graph2nx(g)
+    gx = graph2nx(g)
     sccl = [x for x in strongly_connected_components(gx)]
     # take the largest
     ln = [len(x) for x in sccl]
@@ -367,7 +367,7 @@ def isApath(v):
 
 
 def checker(n, ee):
-    g = bfu.ringmore(n, ee)
+    g = gk.ringmore(n, ee)
     g2 = bfu.increment(g)
     d = checkable(g2)
     t = [len(d[x]) for x in d]
@@ -380,7 +380,7 @@ def checker(n, ee):
 
 
 def checkerDS(n, ee):
-    g = bfu.ringmore(n, ee)
+    g = gk.ringmore(n, ee)
     g2 = bfu.increment(g)
     gg = checkable(g2)
     d, p, idx = conformanceDS(g2, gg, gg.keys())
@@ -922,7 +922,7 @@ def gsig(g):
     '''
     turns input graph g into a hash string using edges
     '''
-    return bfu.g2num(g)
+    return g2num(g)
 
 
 def signature(g, edges):
@@ -988,7 +988,7 @@ def eqsearch(g2, rate=1):
                 for i in range(n):
                     mask = addanedge(g, nedges[i])
                     if bfu.undersample(g, rate) == g2:
-                        s.add(bfu.g2num(g))
+                        s.add(g2num(g))
                     addnodes(g, g2, nedges[:i] + nedges[i + 1:])
                     delanedge(g, nedges[i], mask)
                 return s
@@ -1026,7 +1026,7 @@ def supergraphs_in_eq(g, g2, rate=1):
             if n:
                 for i in range(n):
                     mask = addanedge(g, nedges[i])
-                    s.add(bfu.g2num(g))
+                    s.add(g2num(g))
                     addnodes(g, g2, nedges[:i] + nedges[i + 1:])
                     delanedge(g, nedges[i], mask)
 
@@ -1057,7 +1057,7 @@ def edge_backtrack2g1(g2, capsize=None):
                 if gk.isedgesubset(bfu.increment(g), g2):
                     r = nodesearch(g, g2, edges, s)
                     if r and bfu.increment(r) == g2:
-                        s.add(bfu.g2num(r))
+                        s.add(g2num(r))
                         if capsize and len(s) > capsize:
                             raise ValueError('Too many elements in eqclass')
                 del2edges(g, e, n, mask)
@@ -1110,7 +1110,7 @@ def edge_backtrack2g1_directed(g2, capsize=None):
                 if gk.isedgesubsetD(bfu.increment(g), g2):
                     r = nodesearch(g, g2, edges, s)
                     if r and edgeset(bfu.increment(r)) == edgeset(g2):
-                        s.add(bfu.g2num(r))
+                        s.add(g2num(r))
                         if capsize and len(s) > capsize:
                             raise ValueError('Too many elements in eqclass')
                 del2edges(g, e, n, mask)
@@ -1152,7 +1152,7 @@ def g22g1(g2, capsize=None):
     def nodesearch(g, g2, edges, s):
         if edges:
             if bfu.increment(g) == g2:
-                s.add(bfu.g2num(g))
+                s.add(g2num(g))
                 if capsize and len(s) > capsize:
                     raise ValueError('Too many elements')
                 return g
@@ -1169,7 +1169,7 @@ def g22g1(g2, capsize=None):
                 del2edges(g, e, n, mask)
 
         elif bfu.increment(g) == g2:
-            s.add(bfu.g2num(g))
+            s.add(g2num(g))
             if capsize and len(s) > capsize:
                 raise ValueError('Too many elements in eqclass')
             return g
@@ -1217,7 +1217,7 @@ def backtrack_more(g2, rate=1, capsize=None):
     def nodesearch(g, g2, edges, s):
         if edges:
             if bfu.undersample(g, rate) == g2:
-                s.add(bfu.g2num(g))
+                s.add(g2num(g))
                 if capsize and len(s) > capsize:
                     raise ValueError('Too many elements')
                 return g
@@ -1234,7 +1234,7 @@ def backtrack_more(g2, rate=1, capsize=None):
                 delaVpath(g, e, n, mask)
 
         elif bfu.undersample(g, rate) == g2:
-            s.add(bfu.g2num(g))
+            s.add(g2num(g))
             if capsize and len(s) > capsize:
                 raise ValueError('Too many elements in eqclass')
             return g
@@ -1300,7 +1300,7 @@ def vg22g1(g2, capsize=None):
                 if gk.isedgesubset(bfu.increment(g), g2):
                     r = nodesearch(g, g2, edges, s)
                     if r and bfu.increment(r) == g2:
-                        s.add(bfu.g2num(r))
+                        s.add(g2num(r))
                         if capsize and len(s) > capsize:
                             raise ValueError('Too many elements')
                 remover(g, key, n, mask)
@@ -1356,7 +1356,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
     def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
         if order:
             if bfu.increment(g) == g2:
-                s.add(bfu.g2num(g))
+                s.add(g2num(g))
                 if capsize and len(s) > capsize:
                     raise ValueError('Too many elements')
                 s.update(supergraphs_in_eq(g, g2))
@@ -1390,7 +1390,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
                     remover(g, key, n, mask)
 
         elif bfu.increment(g) == g2:
-            s.add(bfu.g2num(g))
+            s.add(g2num(g))
             if capsize and len(s) > capsize:
                 raise ValueError('Too many elements')
             return g
@@ -1414,14 +1414,14 @@ def v2g22g1(g2, capsize=None, verbose=True):
                         mask = adder(g, key, n)
                         r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
                         if r and bfu.increment(r) == g2:
-                            s.add(bfu.g2num(r))
+                            s.add(g2num(r))
                             if capsize and len(s) > capsize:
                                 raise ValueError('Too many elements')
                         remover(g, key, n, mask)
                     else:
                         r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
                         if r and bfu.increment(r) == g2:
-                            s.add(bfu.g2num(r))
+                            s.add(g2num(r))
                             if capsize and len(s) > capsize:
                                 raise ValueError('Too many elements')
             elif tocheck:
@@ -1429,7 +1429,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
                 mask = adder(g, key, n)
                 r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
                 if r and bfu.increment(r) == g2:
-                    s.add(bfu.g2num(r))
+                    s.add(g2num(r))
                     if capsize and len(s) > capsize:
                         raise ValueError('Too many elements')
                 remover(g, key, n, mask)
@@ -1488,7 +1488,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
     def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
         if order:
             if bfu.undersample(g, rate) == g2:
-                s.add(bfu.g2num(g))
+                s.add(g2num(g))
                 if capsize and len(s) > capsize:
                     raise ValueError('Too many elements')
                 s.update(supergraphs_in_eq(g, g2, rate=rate))
@@ -1522,7 +1522,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
                     remover(g, key, n, mask)
 
         elif bfu.undersample(g, rate) == g2:
-            s.add(bfu.g2num(g))
+            s.add(g2num(g))
             if capsize and len(s) > capsize:
                 raise ValueError('Too many elements')
             return g

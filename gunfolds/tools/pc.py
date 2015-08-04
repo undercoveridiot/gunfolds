@@ -153,7 +153,7 @@ def dpc(data, pval=0.05):
         gk.clean_leaf_nodes(g)
 
     g  = gk.superclique(n)
-    gtr = bfu.gtranspose(g)
+    gtr = gk.gtranspose(g)
 
     el = gk.edgelist(g)
     for counter in range(n):

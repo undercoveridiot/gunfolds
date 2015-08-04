@@ -1,5 +1,5 @@
 # tools to construct (random) graphs
-from gunfolds.tools.comparison import nx2graph
+from gunfolds.tools.conversions import nx2graph
 from gunfolds.tools import ecj
 import igraph
 import networkx as nx

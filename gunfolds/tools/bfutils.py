@@ -1,14 +1,15 @@
-from gunfolds.tools.comparison import num2CG, nx2graph, isSclique
-from gunfolds.tools.ecj import isSclique
+from gunfolds.tools.conversions import g2num, ug2num, num2CG
+from gunfolds.tools.ecj import isSclique, directed_inc, bidirected_inc, increment_u
 import gunfolds.tools.zickle as zkl
 import gunfolds.tools.graphkit as gk
-
 import itertools
-import networkx as nx
 from numpy.random import randint
 import numpy as np
 import scipy
 
+
+
+#### Undersampling functions
 
 def pure_directed_inc(G, D):
     G_un = {}
@@ -20,32 +21,6 @@ def pure_directed_inc(G, D):
                 for e in G[w]:
                     G_un[v][e] = set([(0, 1)])
     return G_un
-
-
-def directed_inc(G, D):
-    G_un = {}
-    # directed edges
-    for v in D:
-        G_un[v] = {}
-        for w in D[v]:
-            if G[w] and (0, 1) in D[v][w]:
-                for e in G[w]:
-                    G_un[v][e] = set([(0, 1)])
-    return G_un
-
-
-def bidirected_inc(G, D):
-    # bidirected edges
-    for w in G:
-        # transfer old bidirected edges
-        for l in D[w]:
-            if (2, 0) in D[w][l]:
-                G[w].setdefault(l, set()).add((2, 0))
-        # new bidirected edges
-        l = [e for e in D[w] if (0, 1) in D[w][e]]
-        for pair in itertools.permutations(l, 2):
-            G[pair[0]].setdefault(pair[1], set()).add((2, 0))
-    return G
 
 
 def increment(g):
@@ -83,14 +58,6 @@ def dincrement_u(G_star, G_u):
     return G_un
 
 
-def increment_u(G_star, G_u):
-    # directed edges
-    G_un = directed_inc(G_star, G_u)
-    # bidirected edges
-    G_un = bidirected_inc(G_un, G_u)
-    return G_un
-
-
 def undersample(G, u):
     Gu = G
     for i in range(u):
@@ -110,6 +77,45 @@ def all_undersamples(G_star):
         glist.append(g)
     return glist
 
+
+def call_undersamples(G_star):
+    glist = [G_star]
+    while True:
+        g = increment_u(G_star, glist[-1])
+        if g in glist:
+            return glist
+        glist.append(g)
+    return glist
+
+
+def compact_call_undersamples(G_star, steps=None):
+    glist = [ug2num(G_star)]
+    lastgraph = G_star
+    while True:
+        g = increment_u(G_star, lastgraph)
+        if ug2num(g) in glist:
+            return glist
+        glist.append(ug2num(g))
+        lastgraph = g
+    return glist
+
+
+def cc_undersamples(G_star, steps=1):
+    glist = [ug2num(G_star)]
+    lastgraph = G_star
+    for i in xrange(steps):
+        g = increment_u(G_star, lastgraph)
+        n = ug2num(g)
+        if n in glist:
+            return []
+        glist.append(n)
+        lastgraph = g
+    return glist[-1]
+
+
+
+
+#### Adjacency matrix functions
 
 def graph2adj(G):
     n = len(G)
@@ -165,110 +171,10 @@ def vec2g(v, n):
     A, B = vec2adj(v, n)
     return adjs2graph(A, B)
 
-# tried mutable ctypes buffer - not faster :(
 
 
-def graph2str(G):
-    n = len(G)
-    d = {((0, 1),): '1', ((2, 0),): '0',((2, 0), (0, 1),):'1',((0, 1), (2, 0),):'1'}
-    A = ['0'] * (n*n)
-    for v in G:
-        for w in G[v]:
-            A[n * (int(v, 10)-1)+int(w, 10)-1] = d[tuple(G[v][w])]
-    return ''.join(A)
 
-
-def graph2bstr(G):
-    n = len(G)
-    d = {((0, 1),): '0', ((2, 0),): '1',((2, 0), (0, 1),):'1',((0, 1), (2, 0),):'1'}
-    A = ['0'] * (n*n)
-    for v in G:
-        for w in G[v]:
-            A[n * (int(v, 10)-1)+int(w, 10)-1] = d[tuple(G[v][w])]
-    return ''.join(A)
-
-
-def adj2num(A):
-    s = reduce(lambda y, x: y + str(x),
-               A.flatten().tolist(), '')
-    return int(s, 2)
-
-# def g2num(G): return int(graph2str(G),2) #adj2num(graph2adj(G))
-
-
-def g2num(g):
-    n = len(g)
-    n2 = n ** 2 + n
-    num = 0
-    for v in range(1, n + 1):
-        for w in g[str(v)]:
-            num |= (1 << (n2 - v*n - int(w, 10)))
-    return num
-
-
-def ug2num(g):
-    n = len(g)
-    n2 = n ** 2 + n
-    num = 0
-    mask = 0
-    num2 = 0
-    for v in g:
-        for w in g[v]:
-            if (0, 1) in g[v][w]:
-                mask = (1 << (n2 - int(v, 10)*n - int(w, 10)))
-                num |= mask
-            if (2, 0) in g[v][w]:
-                num2 |= mask
-    return num, num2
-
-
-def bg2num(g):
-    n = len(g)
-    n2 = n ** 2 + n
-    num = 0
-    for v in g:
-        for w in g[v]:
-            if (2, 0) in g[v][w]:
-                num = num | (1 << (n2 - int(v)*n - int(w)))
-    return num
-
-# def bg2num(G): return int(graph2bstr(G),2)#adj2num(graph2badj(G))
-# def ug2num(G): return (g2num(G),bg2num(G))#(adj2num(graph2adj(G)),adj2num(graph2badj(G)))
-
-
-def num2adj(num, n):
-    l = list(bin(num)[2:])
-    l = ['0' for i in range(0, n ** 2 - len(l))] + l
-    return scipy.reshape(map(int, l), [n, n])
-
-
-def add_bd_by_adj(G, adj):
-    c = 0
-    for e in adj:
-        for v in range(len(e)):
-            if e[v] == 1:
-                try:
-                    G[str(c + 1)][str(v+1)].add((2, 0))
-                except KeyError:
-                    G[str(c + 1)][str(v+1)] = set([(2, 0)])
-        c += 1
-    return G
-
-
-def tuple2graph(t, n):
-    g = num2CG(t[0], n)
-    return add_bd_by_adj(g, num2adj(t[1], n))
-
-
-def call_undersamples(G_star):
-    glist = [G_star]
-    while True:
-        g = increment_u(G_star, glist[-1])
-        if g in glist:
-            return glist
-        glist.append(g)
-    return glist
-
+#### Misc graph functions
 
 def overshoot(G_star, H):
     glist = [G_star]
@@ -359,31 +265,6 @@ def call_u_equals(G_star, H):
     return False
 
 
-def compact_call_undersamples(G_star, steps=None):
-    glist = [ug2num(G_star)]
-    lastgraph = G_star
-    while True:
-        g = increment_u(G_star, lastgraph)
-        if ug2num(g) in glist:
-            return glist
-        glist.append(ug2num(g))
-        lastgraph = g
-    return glist
-
-
-def cc_undersamples(G_star, steps=1):
-    glist = [ug2num(G_star)]
-    lastgraph = G_star
-    for i in xrange(steps):
-        g = increment_u(G_star, lastgraph)
-        n = ug2num(g)
-        if n in glist:
-            return []
-        glist.append(n)
-        lastgraph = g
-    return glist[-1]
-
-
 def compatible(d1, d2):
     idx = scipy.where(scipy.array([[r == l for l in d2] for r in d1]))
     return idx
@@ -438,13 +319,6 @@ def make_rect(l):
     return nl
 
 
-def uniqseq(l):
-    s = []
-    ltr = map(lambda *a: list(a), *l)
-    for i in range(len(ltr)):
-        s.append(len(np.unique(ltr[i])))
-
-
 def loadgraphs(fname):
     g = zkl.load(fname)
     return g
@@ -453,74 +327,6 @@ def loadgraphs(fname):
 def savegraphs(l, fname):
     zkl.save(l, fname)
 
-
-def jason2graph(g):
-    r = {}
-    d = {1: set([(0, 1)]),
-         2: set([(2, 0)]),
-         3: set([(0, 1), (2, 0)])}
-    for head in g:
-        r[head] = {}
-        for tail in g[head]:
-            r[head][tail] = d[g[head][tail]]
-    return r
-
-
-def graph2jason(g):
-    r = {}
-    for head in g:
-        r[head] = {}
-        for tail in g[head]:
-            if g[head][tail] == set([(0, 1)]):
-                r[head][tail] = 1
-            elif g[head][tail] == set([(2, 0)]):
-                r[head][tail] = 2
-            elif g[head][tail] == set([(0, 1), (2, 0)]):
-                r[head][tail] = 3
-    return r
-
-
-def ring(n):
-    g = {}
-    for i in range(1, n):
-        g[str(i)] = {str(i + 1): set([(0, 1)])}
-    g[str(n)] = {'1': set([(0, 1)])}
-    return g
-
-
-def addAring(g):
-    for i in range(1, len(g)):
-        if str(i + 1) in g[str(i)]:
-            g[str(i)][str(i + 1)].add((0, 1))
-        else:
-            g[str(i)][str(i + 1)] = set([(0, 1)])
-    if '1' in g[str(len(g))]:
-        g[str(len(g))]['1'].add((0, 1))
-    else:
-        g[str(len(g))]['1'] = set([(0, 1)])
-
-
-def upairs(n, k):
-    '''
-    n unique nonsequential pairs
-    '''
-    s = set()
-    for p in randint(n, size=(3 * k, 2)):
-        if p[1] - p[0] == 1:
-            continue
-        s.add(tuple(p))
-    l = [e for e in s]
-    return l[:k]
-
-
-def ringarcs(g, n):
-    for edge in upairs(len(g), n):
-        g[str(edge[0] + 1)][str(edge[1]+1)] = set([(0, 1)])
-    return g
-
-
-def ringmore(n, m):
-    return ringarcs(ring(n), m)
 
 # talking about extra edges on top of the ring
 
@@ -533,66 +339,13 @@ def edgenum2dens(e, n=10):
     return np.double(e + n)/n**2
 
 
-def gtranspose(G):                      # Transpose (rev. edges of) G
-    GT = {u: {} for u in G}
-    for u in G:
-        for v in G[u]:
-            GT[v][u] = set([(0, 1)])        # Add all reverse edges
-    return GT
-
-
-def scale_free(n, alpha=0.7, beta=0.25,
-               delta_in=0.2, delta_out=0.2):
-    g = nx.scale_free_graph(n, alpha=alpha,
-                            beta=beta,
-                            delta_in=delta_in, delta_out=delta_out)
-    g = nx2graph(g)
-    g = gtranspose(g)
-    addAring(g)
-    return g
-
-
 def randH(n, d1, d2):
-    g = bfu.ringmore(n, d1)
+    g = gk.ringmore(n, d1)
     pairs = [x for x in itertools.combinations(g.keys(), 2)]
     for p in np.random.permutation(pairs)[:d2]:
         g[p[0]].setdefault(p[1], set()).add((2, 0))
         g[p[1]].setdefault(p[0], set()).add((2, 0))
     return g
-
-
-def dict_format_converter(H):
-    """ Convert a graph from the set style dictionary format to the integer style
-
-        >>> test = {'1': {'1': {(0, 1)},
-        ...   '2': {(0, 1), (2, 0)},
-        ...   '3': {(0, 1), (2, 0)},
-        ...   '4': {(2, 0)},
-        ...   '5': {(0, 1)}},
-        ...  '2': {'1': {(2, 0)}, '2': {(0, 1)}, '5': {(0, 1), (2, 0)}},
-        ...  '3': {'1': {(0, 1), (2, 0)}, '2': {(0, 1)}, '5': {(0, 1)}},
-        ...  '4': {'1': {(2, 0)},
-        ...   '2': {(0, 1)},
-        ...   '3': {(0, 1)},
-        ...   '4': {(0, 1)},
-        ...   '5': {(0, 1)}},
-        ...  '5': {'1': {(0, 1)}, '2': {(0, 1), (2, 0)}, '5': {(0, 1)}}}
-        >>> dict_format_converter(test)
-        {1: {1: 1, 2: 3, 3: 3, 4: 2, 5: 1}, 2: {1: 2, 2: 1, 5: 3}, 3: {1: 3, 2: 1, 5: 1}, 4: {1: 2, 2: 1, 3: 1, 4: 1, 5: 1}, 5: {1: 1, 2: 3, 5: 1}}
-        >>>
-    """
-    H_new = {}
-    for vert_a in H:
-        H_new[int(vert_a)] = {}
-        for vert_b in H[vert_a]:
-            edge_val = 0
-            if (0, 1) in H[vert_a][vert_b]:
-                edge_val = 1
-            if (2, 0) in H[vert_a][vert_b]:
-                edge_val = 2 if edge_val == 0 else 3
-            if edge_val:
-                H_new[int(vert_a)][int(vert_b)] = edge_val
-    return H_new
 
 
 def checkconflict(H, G_test, au=None):
@@ -613,7 +366,7 @@ def checkconflict_(Hnum, G_test, au=None):
         allundersamples = au
     # Hnum = ug2num(H)
     for graph in allundersamples:
-        gnum = bfu.ug2num(graph)
+        gnum = ug2num(graph)
         if gnum[0] & Hnum[0] == gnum[0] and gnum[1] & Hnum[1] == gnum[1]:
             return False
     return True

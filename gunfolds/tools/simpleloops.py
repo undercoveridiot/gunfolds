@@ -1,5 +1,4 @@
-from gunfolds.tools.bfutils import g2num, num2CG
-from gunfolds.tools.comparison import graph2nx
+from gunfolds.tools.conversions import g2num, num2CG, graph2nx
 from gunfolds.tools.ecj import undersample
 import networkx
 from numpy import argsort

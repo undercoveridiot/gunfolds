@@ -1,33 +1,3 @@
-N = {
-'a': set('bcd'),
-'b': set('ce'),
-'c': set('d'),
-'d': set('e'),
-'e': set('f'),
-'f': set('cgh'),
-'g': set('fh'),
-'h': set('fg')
-}
-
-N2 = {
-'a': set('bcf'),
-'b': set('c'),
-'c': set('de'),
-'d': set('e'),
-'e': set(),
-'f': set(),
-}
-
-N4 = {
-'a': set('bdc'),
-'b': set('d'),
-'c': set('d'),
-'d': set('efg'),
-'e': set('g'),
-'f': set('g'),
-'g': set(),
-}
-
 """
 Each  edge is a  tuple (t,w),  where t  signifies its  type and  w its
 integer time length:

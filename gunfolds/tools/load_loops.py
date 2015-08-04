@@ -1,5 +1,4 @@
 import os
-import sys
 import zickle as zkl
 
 DIR_NAME = os.path.dirname(__file__)

@@ -2,6 +2,7 @@ import copy
 import functools
 from gunfolds.tools.calc_procs import get_process_count
 from gunfolds.tools import bfutils as bfu
+from gunfolds.tools.conversions import num2CG
 from gunfolds.tools import graphkit as gk
 from gunfolds.tools import linear_model as lm
 from gunfolds.tools import pc
@@ -152,7 +153,7 @@ def wrapper(fold, n=10, dens=0.1):
         #    return None
         counter += 1
     print ''
-    oce = [gk.OCE(bfu.num2CG(x, n), g) for x in s]
+    oce = [gk.OCE(num2CG(x, n), g) for x in s]
     cum_oce = [sum(x['directed']) + sum(x['bidirected']) for x in oce]
     idx = np.argmin(cum_oce)
     print "{:2}: {:8} : {:4}  {:10} seconds".\

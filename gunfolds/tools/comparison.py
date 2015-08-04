@@ -1,3 +1,4 @@
+from gunfolds.tools.conversions import num2CG
 from gunfolds.tools import ecj
 import gmpy as gmp
 import networkx as nx
@@ -6,25 +7,6 @@ import operator
 import scipy
 
 np.random.RandomState()
-
-
-def num2CG(num, n):
-    """num2CG - converts a number  whose binary representaion encodes edge
-    presence/absence into a compressed graph representaion
-
-    """
-    n2 = n * n
-    G = {'%i' % (i + 1): {} for i in xrange(n)}
-    if num == 0:
-        return G
-    bl = gmp.bit_length(num)
-    idx = [n2 - i - 1 for i in xrange(bl) if num & (1 << i)]
-    idx = np.unravel_index(idx, (n, n))
-    x = idx[0] + 1
-    y = idx[1] + 1
-    for i in xrange(len(x)):
-        G['%i' % x[i]]['%i' % y[i]] = set([(0, 1)])
-    return G
 
 
 def hasSelfLoops(G):
@@ -82,16 +64,6 @@ def hasSink(G):
 
 def hasRoot(G):
     return hasSink(ecj.tr(G))
-
-
-def isSclique(G):
-    n = len(G)
-    for v in G:
-        if sum([(0, 1) in G[v][w] for w in G[v]]) < n:
-            return False
-        if sum([(2, 0) in G[v][w] for w in G[v]]) < n - 1:
-            return False
-    return True
 
 
 def graph2nx(G):

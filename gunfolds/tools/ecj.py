@@ -1,5 +1,5 @@
 from gunfolds.tools.testgraphs import *
-from itertools import combinations
+from itertools import combinations, permutations, izip, izip_longest
 import scipy
 
 
@@ -405,14 +405,12 @@ def undersample(G, d, bid=True):
                         N[v].update({u: set([(edge_type['bidirected'], 0)])})
     return N
 
-import itertools as itt
-
 
 def exist_equal_paths(h, G, a, b):
     Sa, Sb, Dff = set(), set(), set()
     ag = iterate_allpaths(G, h, a, 0, [], True)
     bg = iterate_allpaths(G, h, b, 0, [], True)
-    for v in itt.izip_longest(ag, bg):
+    for v in izip_longest(ag, bg):
         print v
         Sa.add(v[0])
         Sb.add(v[1])
@@ -430,7 +428,7 @@ def iexist_equal_paths(h, G, a, b):
     Pa, Pb = [], []
     ag = iddfs(G, h, a)
     bg = iddfs(G, h, b)
-    for v in itt.izip(ag, bg):
+    for v in izip(ag, bg):
         print v
         Sa.add(len(v[0]))
         Pa.append(v[0])
@@ -526,33 +524,24 @@ def directed_inc(G, D):
     # directed edges
     for v in D:
         G_un[v] = {}
-        for w in [el for el in D[v] if (0, 1) in D[v][el]]:
-            for e in G[w]:
-                G_un[v][e] = set([(0, 1)])
+        for w in D[v]:
+            if G[w] and (0, 1) in D[v][w]:
+                for e in G[w]:
+                    G_un[v][e] = set([(0, 1)])
     return G_un
 
 
 def bidirected_inc(G, D):
     # bidirected edges
-    for w in D:
+    for w in G:
         # transfer old bidirected edges
-        l = [e for e in D[w] if (2, 0) in D[w][e]]
-        for p in l:
-            try:
-                G[w][p].add((2, 0))
-            except KeyError:
-                G[w][p] = set([(2, 0)])
-        # new bidirected dges
+        for l in D[w]:
+            if (2, 0) in D[w][l]:
+                G[w].setdefault(l, set()).add((2, 0))
+        # new bidirected edges
         l = [e for e in D[w] if (0, 1) in D[w][e]]
-        for p in list(combinations(l, 2)):
-            try:
-                G[p[0]][p[1]].add((2, 0))
-            except KeyError:
-                G[p[0]][p[1]] = set([(2, 0)])
-            try:
-                G[p[1]][p[0]].add((2, 0))
-            except KeyError:
-                G[p[1]][p[0]] = set([(2, 0)])
+        for pair in permutations(l, 2):
+            G[pair[0]].setdefault(pair[1], set()).add((2, 0))
     return G
 
 

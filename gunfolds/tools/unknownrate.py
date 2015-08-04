@@ -2,14 +2,15 @@
 # Gu to G1 algorithm
 from functools import wraps
 import gmpy as gmp
-from gunfolds.tools import bfutils as bfu
-from gunfolds.tools import traversal as trv
-from gunfolds.tools import graphkit as gk
-from gunfolds.tools import comparison as cmp
-from gunfolds.tools import simpleloops as sl
-from gunfolds.tools import zickle as zkl
-from gunfolds.tools import simpleloops as sls
-from gunfolds.tools import load_loops
+import gunfolds.tools.bfutils as bfu
+from gunfolds.tools.conversions import g2num, ug2num, num2CG
+import gunfolds.tools.ecj as ecj
+import gunfolds.tools.traversal as trv
+import gunfolds.tools.graphkit as gk
+import gunfolds.tools.simpleloops as sl
+import gunfolds.tools.zickle as zkl
+import gunfolds.tools.simpleloops as sls
+import gunfolds.tools.load_loops as load_loops
 import ipdb
 from itertools import combinations
 import math
@@ -76,7 +77,7 @@ def eqclass(H):
             for i in range(n):
                 gk.addanedge(g, nedges[i])
                 if bfu.call_u_equals(g, H):
-                    s.add(bfu.g2num(g))
+                    s.add(g2num(g))
                 addedges(g, H, nedges[:i] + nedges[i+1:])
                 gk.delanedge(g, nedges[i])
     edges = gk.edgelist(gk.complement(g))
@@ -173,7 +174,7 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
             if sloop in ccf and skip_conflictors(num, ccf[sloop]):
                 continue
             if not num in s:
-                g = bfu.num2CG(num, n)
+                g = num2CG(num, n)
                 if not bfu.call_u_conflicts(g, H):
                     s.add(num)
                     gset.add((num, sloop))
@@ -205,7 +206,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
     c = 0
 
     for gnum in ds:
-        g = bfu.num2CG(gnum, n)
+        g = num2CG(gnum, n)
         c += 1
         pbar.update(c)
         glist = []
@@ -214,7 +215,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
         for e in ds[gnum]:
             if not e[1] in g[e[0]]:
                 gk.addanedge(g, e)
-                num = bfu.g2num(g)
+                num = g2num(g)
                 ekey = (1 << (n2 - int(e[0], 10)*n - int(e[1], 10)))
                 if ekey in ccf and skip_conflictors(num, ccf[ekey]):
                     gk.delanedge(g, e)
@@ -334,7 +335,7 @@ def prune_loops(loops, H):
     l = []
     n = len(H)
     for loop in loops:
-        g = bfu.num2CG(loop, n)
+        g = num2CG(loop, n)
         if not bfu.call_u_conflicts_d(g, H):
             l.append(loop)
     return l
@@ -382,7 +383,7 @@ def lconfpairs(H, cap=10, sloops=None):
         sloops = prune_loops(allsloops(len(H)), H)
     c = 0
     for p in combinations(sloops, 2):
-        g = bfu.num2CG(p[0] | p[1], n)
+        g = num2CG(p[0] | p[1], n)
         if bfu.call_u_conflicts(g, H):
             d.setdefault(p[0], set()).add(p[1])
             d.setdefault(p[1], set()).add(p[0])
@@ -397,12 +398,12 @@ def iteqclass(H, verbose=True, capsize=100):
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
     '''
-    if cmp.isSclique(H):
+    if ecj.isSclique(H):
         print 'not running on superclique'
         return None
     g = {n: {} for n in H}
     s = set()
-    Hnum = bfu.ug2num(H)
+    Hnum = ug2num(H)
     if Hnum[1] == 0:
         s.add(Hnum[0])
 
@@ -410,7 +411,7 @@ def iteqclass(H, verbose=True, capsize=100):
     ccf = conflictors(H)
 
     edges = gk.edgelist(gk.complement(g))
-    ds = {bfu.g2num(g): edges}
+    ds = {g2num(g): edges}
 
     if verbose:
         print '%3s' % 'i'+'%10s'%' graphs'
@@ -432,7 +433,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
     '''
-    if cmp.isSclique(H):
+    if ecj.isSclique(H):
         print 'not running on superclique'
         return set([-1])
     g = {n: {} for n in H}
@@ -490,7 +491,7 @@ def edgemask(gl, H, cds):
                 continue
 
             gnum = gl[i] | gl[j]
-            g = bfu.num2CG(gnum, n)
+            g = num2CG(gnum, n)
             if not bfu.call_u_conflicts(g, H):
                 if bfu.call_u_equals(g, H):
                     s.add(gnum)
@@ -524,7 +525,7 @@ def ledgemask(gl, H, cds):
             gnum = gl[i] | gl[j]
             if skip_conflictors(gnum, cds):
                 continue
-            g = bfu.num2CG(gnum, n)
+            g = num2CG(gnum, n)
             if not bfu.call_u_conflicts(g, H):
                 if bfu.call_u_equals(g, H):
                     s.add(gnum)
@@ -619,7 +620,7 @@ def quadlister(glist, H, cds):
                     mask[j, i] = gnum
             else:
                 cache[gnum] = False
-                g = bfu.num2CG(gnum, n)
+                g = num2CG(gnum, n)
                 if not bfu.call_u_conflicts(g, H):
                     if bfu.call_u_equals(g, H):
                         ss.add(gnum)
@@ -649,7 +650,7 @@ def dceqc(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if cmp.isSclique(H):
+    if ecj.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -687,7 +688,7 @@ def quadmerge(gl, H, cds):
             gnum = mask[idx] | gn
             if gnum in l or gnum in ss:
                 continue
-            g = bfu.num2CG(gnum, n)
+            g = num2CG(gnum, n)
             if not bfu.call_u_conflicts(g, H):
                 l.add(gnum)
                 if bfu.call_u_equals(g, H):
@@ -720,7 +721,7 @@ def edgemask2(gl, H, cds):
             gnum = gl[i] | gl[j]
             if skip_conflictors(gnum, cds):
                 continue
-            g = bfu.num2CG(gnum, n)
+            g = num2CG(gnum, n)
             if not bfu.call_u_conflicts(g, H):
                 if bfu.call_u_equals(g, H):
                     s.add(gnum)
@@ -745,7 +746,7 @@ def patchmerge(ds, H, cds):
                 continue
             if skip_conflictors(gnum, cds):
                 continue
-            g = bfu.num2CG(gnum, n)
+            g = num2CG(gnum, n)
             if not bfu.call_u_conflicts(g, H):
                 l.add(gnum)
                 if bfu.call_u_equals(g, H):
@@ -791,7 +792,7 @@ def dceqclass2(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if cmp.isSclique(H):
+    if ecj.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -807,7 +808,7 @@ def dceqclass2(H):
                 continue
             l.append(e)
         return l
-    edges = gk.edgelist(gk.complement(bfu.num2CG(0, n)))
+    edges = gk.edgelist(gk.complement(num2CG(0, n)))
     edges = prune_loops(edges, H)
     glist = map(lambda x: e2num(x, n), edges)
 
@@ -837,7 +838,7 @@ def dceqclass(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if cmp.isSclique(H):
+    if ecj.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -859,7 +860,7 @@ def ldceqclass(H, asl=None):
     Arguments:
     - `H`: an undersampled graph
     """
-    if cmp.isSclique(H):
+    if ecj.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -900,7 +901,7 @@ def lquadmerge(gl, H, cds):
             gnum = mask[idx] | gn
             if gnum in l or gnum in ss:
                 continue
-            g = bfu.num2CG(gnum, n)
+            g = num2CG(gnum, n)
             if not bfu.call_u_conflicts(g, H):
                 l.add(gnum)
                 if bfu.call_u_equals(g, H):
@@ -926,7 +927,7 @@ def quadmerge_(glist, H, ds):
             continue
         if gnum in gl:
             continue
-        g = bfu.num2CG(gnum, n)
+        g = num2CG(gnum, n)
         if not bfu.call_u_conflicts(g, H):
             gl.add(gnum)
             if bfu.call_u_equals(g, H):
@@ -942,7 +943,7 @@ def ecmerge(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if cmp.isSclique(H):
+    if ecj.isSclique(H):
         print 'not running on superclique'
         return None
     n = len(H)
@@ -975,7 +976,7 @@ def withrates(s, H):
     n = len(H)
     d = {g: set() for g in s}
     for g in s:
-        d[g] = getrates(bfu.num2CG(g, n), H)
+        d[g] = getrates(num2CG(g, n), H)
     return d
 
 
@@ -988,11 +989,11 @@ def add2set(gset, elist, H):
     eremove = {e: True for e in elist}
 
     for gnum in gset:
-        g = bfu.num2CG(gnum, n)
+        g = num2CG(gnum, n)
         for e in elist:
             if not e[1] in g[e[0]]:
                 gk.addanedge(g, e)
-                num = bfu.g2num(g)
+                num = g2num(g)
                 if not num in s:
                     au = bfu.call_undersamples(g)
                     if not bfu.checkconflict(H, g, au=au):
@@ -1020,7 +1021,7 @@ def eqclass_list(H):
     edges = gk.edgelist(gk.complement(g))
     # edges = prune_conflicts(H, g, edges)
 
-    gset = set([bfu.g2num(g)])
+    gset = set([g2num(g)])
     for i in range(len(H) ** 2):
         print i
         gset, ss, edges = add2set(gset, edges, H)
@@ -1076,7 +1077,7 @@ def permuteAset(s, perm):
     n = len(perm)
     ns = set()
     for e in s:
-        ns.add(bfu.g2num(permute(bfu.num2CG(e, n), perm)))
+        ns.add(g2num(permute(num2CG(e, n), perm)))
     return ns
 
 
@@ -1187,7 +1188,7 @@ def allsloops(n, asl = alloops):
     s = []
     l = gen_loops(n)
     for e in l:
-        s.append(bfu.g2num(loop2graph(e, n)))
+        s.append(g2num(loop2graph(e, n)))
     return s
 
 
@@ -1198,7 +1199,7 @@ def reverse(H, verbose=True, capsize=1000):
     g = gk.superclique(n)
     sloops = set(allsloops(n))
 
-    ds = {bfu.g2num(g): sloops}
+    ds = {g2num(g): sloops}
 
     if verbose:
         print '%3s' % 'i'+'%10s'%' graphs'
@@ -1235,7 +1236,7 @@ def build_loop_step(ds, loop, n, iter=1):
         for sloop in ds[gnum]:
             num = sloop | gnum
             if not num in s:
-                g = bfu.num2CG(num, n)
+                g = num2CG(num, n)
                 s.add(num)
                 if bfu.forms_loop(g, loop):
                     ss.add(num)
@@ -1274,10 +1275,10 @@ def forward_loop_match(loop, n):
 def delAloop(g, loop):
     n = len(g)
     l = []
-    l = [bfu.g2num(ur.loop2graph(s, n)) for s in sls.simple_loops(g, 0)]
+    l = [g2num(ur.loop2graph(s, n)) for s in sls.simple_loops(g, 0)]
     l = [num for num in l if not num == loop]
     print loop, ': ',  l
-    return bfu.num2CG(reduce(operator.or_, l), n)
+    return num2CG(reduce(operator.or_, l), n)
 
 
 def reverse_loop_match(g, loop):
@@ -1291,10 +1292,10 @@ def reverse_loop_match(g, loop):
     n = len(g)
 
     def prune(g):
-        numh = bfu.g2num(g)
+        numh = g2num(g)
         cannotprune = True
         for l in sls.simple_loops(gk.digonly(g), 0):
-            gg = delAloop(g, bfu.g2num(loop2graph(l, n)))
+            gg = delAloop(g, g2num(loop2graph(l, n)))
             if bfu.forms_loop(gg, loop):
                 cannotprune = False
                 prune(gg)
@@ -1317,7 +1318,7 @@ def reverse_edge_match(g, loop):
     n = len(g)
 
     def prune(g):
-        numh = bfu.g2num(g)
+        numh = g2num(g)
         cannotprune = True
         for l in gk.edgelist(gk.digonly(g)):
             gk.delanedge(g, l)
@@ -1326,7 +1327,7 @@ def reverse_edge_match(g, loop):
                 prune(g)
             gk.addanedge(g, l)
         if cannotprune:
-            s.add(bfu.g2num(g))
+            s.add(g2num(g))
 
     prune(g)
     return s
@@ -1343,7 +1344,7 @@ def matchAloop(loop, n):
     l = forward_loop_match(loop, n)
     print len(l)
     for g in l:
-        s = s | reverse_edge_match(bfu.num2CG(g, n), loop)
+        s = s | reverse_edge_match(num2CG(g, n), loop)
 
     return s
 
@@ -1364,7 +1365,7 @@ def del_loop(ds, H, iter=0, verbose=True, capsize=1000):
             rset = ds[gnum] - set([sloop])
             num = reduce(operator.or_, rset)
             if not num in s:
-                g = bfu.num2CG(num, n)
+                g = num2CG(num, n)
                 if bfu.overshoot(g, H):
                     s.add(num)
                     gset.append((num, rset))
@@ -1380,7 +1381,7 @@ def del_loop(ds, H, iter=0, verbose=True, capsize=1000):
 
 
 def main():
-    g = bfu.ringmore(6, 1);
+    g = gk.ringmore(6, 1);
     H = bfu.undersample(g, 1);
     ss = liteqclass(H)
     print ss

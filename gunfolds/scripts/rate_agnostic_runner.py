@@ -1,8 +1,9 @@
 from gunfolds.tools.calc_procs import get_process_count
 from gunfolds.tools import bfutils
+import gunfolds.tools.graphkit as gk
 from gunfolds.tools import traversal
-from gunfolds.tools import unknownrate as ur
-from gunfolds.tools import zickle as zkl
+import gunfolds.tools.unknownrate as ur
+import gunfolds.tools.zickle as zkl
 from multiprocessing import Pool, Process, Queue, current_process, active_children
 import functools
 import time
@@ -28,7 +29,7 @@ def multiprocess(argslist, ncpu):
         l = {}
         while True:
             try:
-                g = bfutils.ringmore(n, k)  # random ring of given density
+                g = gk.ringmore(n, k)  # random ring of given density
                 gs = bfutils.call_undersamples(g)
                 for u in range(1, min([len(gs), UMAX])):
                     g2 = bfutils.undersample(g, u)
@@ -61,7 +62,7 @@ def ra_wrapper(fold, n=10, k=10):
     l = {}
     while True:
         try:
-            g = bfutils.ringmore(n, k)  # random ring of given density
+            g = gk.ringmore(n, k)  # random ring of given density
             gs = bfutils.call_undersamples(g)
             for u in range(1, min([len(gs), UMAX])):
                 g2 = bfutils.undersample(g, u)
@@ -123,7 +124,7 @@ def fan_wrapper(fold, n=10, k=10):
     output = Queue()
     while True:
         try:
-            g = bfutils.ringmore(n, k)
+            g = gk.ringmore(n, k)
             gdens = traversal.density(g)
             g2 = bfutils.increment_u(g, g)
             # g2 = bfutils.undersample(g,2)
