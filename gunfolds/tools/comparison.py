@@ -1,4 +1,5 @@
 from gunfolds.tools.conversions import num2CG
+from gunfolds.tools.bfutils import undersample
 from gunfolds.tools import ecj
 import gmpy as gmp
 import networkx as nx
@@ -26,7 +27,7 @@ def randSCC(n):
 def SM_fixed(Gstar, G, iter=5):
     compat = []
     for j in range(0, iter):
-        if Gstar == ecj.undersample(G, j):
+        if Gstar == undersample(G, j):
             compat.append(j)
     return compat
 
@@ -42,13 +43,13 @@ def SM_converging(Gstar, G):
     if G == Gstar:
         return [0]
     j = 1
-    G = ecj.undersample(GG, j)
+    G = undersample(GG, j)
     while not (G == Gprev):
         if Gstar == G:
             compat.append(j)
         j += 1
         Gprev = G
-        G = ecj.undersample(GG, j)
+        G = undersample(GG, j)
     return compat
 
 

@@ -19,20 +19,6 @@ def edgelist(g):  # directed
     return l
 
 
-def edgenumber(g):
-    return sum([sum([len(g[y][x]) for x in g[y]]) for y in g])
-
-
-def iedgelist(g):  # directed iterator
-    '''
-    iterate over the list of tuples for edges of g
-    '''
-    for v in g:
-        for w in g[v]:
-            if (0, 1) in g[v][w]:
-                yield (v, w)
-
-
 def inedgelist(g):  # missing directed iterator
     '''
     iterate over the list of tuples for edges of g
@@ -44,16 +30,6 @@ def inedgelist(g):  # missing directed iterator
             if not w in g[v]:
                 yield (v, w)
             elif not (0, 1) in g[v][w]:
-                yield (v, w)
-
-
-def ibedgelist(g):  # directed iterator
-    '''
-    iterate over the list of tuples for edges of g
-    '''
-    for v in g:
-        for w in g[v]:
-            if (2, 0) in g[v][w]:
                 yield (v, w)
 
 
@@ -79,104 +55,6 @@ def bedgelist(g):  # bidirected edge list with flips
     return l
 
 
-def rnd_edges(n):
-    """ generate a random uniformly distributed mask
-    """
-    rnum = std_random.getrandbits(n ** 2)
-    l = list(bin(rnum)[2:])
-    l = ['0' for i in range(0, n ** 2 - len(l))] + l
-    return l
-
-
-def list2dbn(l):
-    """ convert list of edge presences/absences (0,1) to a DBN graph
-    """
-    n = scipy.sqrt(len(l))
-    l = scipy.reshape(map(int, l), [n, n])
-    G = ecj.adj2DBN(l)
-    return G
-
-
-def list2CG(l):
-    """ convert list of edge presences/absences (0,1) to a compressed
-    graph (CG) representation
-    """
-    n = scipy.sqrt(len(l))
-    l = scipy.reshape(map(int, l), [n, n])
-    G = adj2graph(l)
-    return G
-
-
-def rnd_dbn(n):
-    return list2dbn(rnd_edges(n))
-
-
-def rnd_cg(n):
-    return list2CG(rnd_edges(n))
-
-
-def rnd_adj(n, maxindegree=5):
-    l = scipy.zeros([n, n])
-    for u in range(0, n):
-        cap = scipy.random.randint(min([n, maxindegree + 1]))
-        idx = scipy.random.randint(n, size=cap)
-        l[u, idx] = 1
-    return l
-
-
-def sp_rnd_edges(n, maxindegree=5):
-    '''
-    a sparse set of random edges
-    '''
-    l = rnd_adj(n, maxindegree=maxdegree)
-    return scipy.reshape(l, n ** 2)
-
-
-def sp_rnd_dbn(n, maxindegree=3):
-    '''
-    a sparse random DBN graph
-    '''
-    l = sp_rnd_edges(n)
-    return list2dbn(l)
-
-
-def emptyG(n):
-    A = [[0 for j in range(n)] for i in range(n)]
-    return adj2graph(np.asarray(A))
-
-
-def fullG(n):
-    A = [[1 for j in range(n)] for i in range(n)]
-    return adj2graph(np.asarray(A))
-
-
-def CG2uCG(cg):
-    """
-    convert to an undirected graph
-    """
-    G = {}
-    for u in cg:
-        G[u] = cg[u].copy()
-    for u in cg:
-        for v in cg[u]:
-            G[v][u] = cg[u][v]
-    return G
-
-
-def connected(cg):
-    n = len(cg)
-    return sum(1 for _ in ecj.traverse(CG2uCG(cg), '1')) == n
-
-
-def sp_rnd_CG(n, maxindegree=3, force_connected=False):
-    l = sp_rnd_edges(n, maxindegree=maxindegree)
-    cg = list2CG(l)
-    if force_connected:
-        while not connected(cg):
-            cg = list2CG(sp_rnd_edges(n, maxindegree=maxindegree))
-    return cg
-
-
 def CG2adj(G):
     n = len(G)
     A = [[0 for i in range(0, n)] for j in range(0, n)]
@@ -187,14 +65,6 @@ def CG2adj(G):
                 A[int(w) - 1][int(v) - 1] = 1
     A = np.double(np.asarray(A))
     return A
-
-
-def adj2graph(A):
-    G = {str(i): {} for i in range(1, A.shape[0] + 1)}
-    idx = np.where(A == 1)
-    for i in range(len(idx[0])):
-        G['%i' % (idx[0][i] + 1)]['%i' % (idx[1][i]+1)] = set([(0, 1)])
-    return G
 
 
 def g2ig(g):
@@ -344,19 +214,6 @@ def bidirected_no_fork(g):
     return False
 
 
-def fork_mismatch(g):
-    be = bedgelist(g)
-    benum = len(be) / 2
-    forknum = 0
-    for v in g:
-        fn = len([w for w in g[v] if (0, 1) in g[v][w]])
-        forknum += fn * (fn - 1) / 2.
-    if benum < len(g) * (len(g) - 1) / 2.:
-        return (forknum - benum) > benum
-    else:
-        return False
-
-
 def no_parents(g):
     T = gtranspose(g)
     for n in T:
@@ -404,7 +261,7 @@ def deledges(g, es):
 
 def isdedgesubset(g2star, g2):
     '''
-    check if g2star edges are a subset of those of g2
+    check if g2star directed edges are a subset of those of g2
     '''
     for n in g2star:
         for h in g2star[n]:
@@ -416,44 +273,15 @@ def isdedgesubset(g2star, g2):
     return True
 
 
-def isedgesubsetD(g2star, g2):
-    '''
-    check if g2star edges are a subset of those of g2
-    '''
-    for n in g2star:
-        for h in g2star[n]:
-            if (0, 1) in g2star[n][h]:
-                if h in g2[n]:
-                    if not (0, 1) in g2[n][h]:
-                        return False
-                else:
-                    return False
-    return True
-
-
 def isedgesubset(g2star, g2):
     '''
-    check if g2star edges are a subset of those of g2
+    check if all g2star edges are a subset of those of g2
     '''
     for n in g2star:
         for h in g2star[n]:
             if h in g2[n]:
-                # if not (0,1) in g2[n][h]:
                 if not g2star[n][h].issubset(g2[n][h]):
                     return False
             else:
                 return False
-    return True
-
-
-def isedgesubset_(g, H):
-    '''
-    check if g edges are a subset of those of H
-    '''
-    for e in inbedgelist(H):
-        if e[1] in g[e[0]] and (2, 0) in g[e[0]][e[1]]:
-            return False
-    for e in inedgelist(H):
-        if e[1] in g[e[0]] and (0, 1) in g[e[0]][e[1]]:
-            return False
     return True

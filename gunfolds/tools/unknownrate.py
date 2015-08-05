@@ -4,7 +4,6 @@ from functools import wraps
 import gmpy as gmp
 import gunfolds.tools.bfutils as bfu
 from gunfolds.tools.conversions import g2num, ug2num, num2CG
-import gunfolds.tools.ecj as ecj
 import gunfolds.tools.traversal as trv
 import gunfolds.tools.graphkit as gk
 import gunfolds.tools.simpleloops as sl
@@ -398,7 +397,7 @@ def iteqclass(H, verbose=True, capsize=100):
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
     '''
-    if ecj.isSclique(H):
+    if bfu.isSclique(H):
         print 'not running on superclique'
         return None
     g = {n: {} for n in H}
@@ -433,7 +432,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
     '''
-    if ecj.isSclique(H):
+    if bfu.isSclique(H):
         print 'not running on superclique'
         return set([-1])
     g = {n: {} for n in H}
@@ -650,7 +649,7 @@ def dceqc(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if ecj.isSclique(H):
+    if bfu.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -792,7 +791,7 @@ def dceqclass2(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if ecj.isSclique(H):
+    if bfu.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -838,7 +837,7 @@ def dceqclass(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if ecj.isSclique(H):
+    if bfu.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -860,7 +859,7 @@ def ldceqclass(H, asl=None):
     Arguments:
     - `H`: an undersampled graph
     """
-    if ecj.isSclique(H):
+    if bfu.isSclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -943,7 +942,7 @@ def ecmerge(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if ecj.isSclique(H):
+    if bfu.isSclique(H):
         print 'not running on superclique'
         return None
     n = len(H)

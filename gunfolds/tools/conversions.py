@@ -5,6 +5,7 @@ from numpy import unravel_index
 
 
 def g2num(g):
+    """ Convert a graph into a binary format """
     n = len(g)
     n2 = n ** 2 + n
     num = 0
@@ -15,6 +16,7 @@ def g2num(g):
 
 
 def ug2num(g):
+    """ Convert non-empty edges into a binary format """
     n = len(g)
     n2 = n ** 2 + n
     num = 0
@@ -31,6 +33,7 @@ def ug2num(g):
 
 
 def bg2num(g):
+    """ Convert bidirected edges into a binary format """
     n = len(g)
     n2 = n ** 2 + n
     num = 0

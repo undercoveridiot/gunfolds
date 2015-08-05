@@ -1,5 +1,4 @@
 from gunfolds.tools.conversions import g2num, ug2num, num2CG
-from gunfolds.tools.ecj import isSclique, directed_inc, bidirected_inc, increment_u
 import gunfolds.tools.zickle as zkl
 import gunfolds.tools.graphkit as gk
 import itertools
@@ -10,6 +9,50 @@ import scipy
 
 
 #### Undersampling functions
+
+def isSclique(G):
+    n = len(G)
+    for v in G:
+        if sum([(0, 1) in G[v][w] for w in G[v]]) < n:
+            return False
+        if sum([(2, 0) in G[v][w] for w in G[v]]) < n - 1:
+            return False
+    return True
+
+
+def directed_inc(G, D):
+    G_un = {}
+    # directed edges
+    for v in D:
+        G_un[v] = {}
+        for w in D[v]:
+            if G[w] and (0, 1) in D[v][w]:
+                for e in G[w]:
+                    G_un[v][e] = set([(0, 1)])
+    return G_un
+
+
+def bidirected_inc(G, D):
+    # bidirected edges
+    for w in G:
+        # transfer old bidirected edges
+        for l in D[w]:
+            if (2, 0) in D[w][l]:
+                G[w].setdefault(l, set()).add((2, 0))
+        # new bidirected edges
+        l = [e for e in D[w] if (0, 1) in D[w][e]]
+        for pair in permutations(l, 2):
+            G[pair[0]].setdefault(pair[1], set()).add((2, 0))
+    return G
+
+
+def increment_u(G_star, G_u):
+    # directed edges
+    G_un = directed_inc(G_star, G_u)
+    # bidirected edges
+    G_un = bidirected_inc(G_un, G_u)
+    return G_un
+
 
 def pure_directed_inc(G, D):
     G_un = {}

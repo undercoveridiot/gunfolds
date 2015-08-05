@@ -1,3 +1,4 @@
+from gunfolds.tools.bfutils import undersample
 from gunfolds.tools import ecj
 from gunfolds.tools.testgraphs import *
 from gunfolds.tools import zickle
@@ -13,7 +14,7 @@ colors = zickle.load('{}/../data/colors.zkl'.format(ABS_PATH))
 
 
 def graph2dict(g):
-    D = {}
+    D = {}`
     for v in range(0, len(g.vs)):
         D[g.vs[v]["label"]] = {}
         for u in g.neighbors(v, mode="OUT"):
@@ -261,7 +262,7 @@ def cdbnwrap(G, u, name='AAA', R=1, gap=0.5):
     print >>output, "\\node[right=" + str(gap) + "cm of " + name + str(u - 1)\
         + ",scale=0.7](" + name + str(u) + "){"
     print >>output, "\\begin{tikzpicture}"
-    s = cdbnprint(ecj.undersample(G, u), mtype='lahid', bend=25, curve=10, R=R)
+    s = cdbnprint(undersample(G, u), mtype='lahid', bend=25, curve=10, R=R)
     print >>output, s.getvalue()
     s.close()
     print >>output, "\\end{tikzpicture}"
@@ -282,7 +283,7 @@ def cdbnsingle(g, scale=0.7, R=1, gap=0.5, mtype="lahid"):
 
 
 def cdbn_single(G, u, scale=0.7, R=1, gap=0.5, mtype="lahid"):
-    return cdbnsingle(ecj.undersample(G, u), scale=scale, R=R, gap=gap, mtype=mtype)
+    return cdbnsingle(undersample(G, u), scale=scale, R=R, gap=gap, mtype=mtype)
 
 
 def gsingle(g, scale=0.7, R=1, gap=0.5, mtype="lahid", layout=None):
@@ -298,13 +299,13 @@ def gsingle(g, scale=0.7, R=1, gap=0.5, mtype="lahid", layout=None):
 
 
 def g_single(G, u, scale=0.7, R=1, gap=0.5, mtype="lahid", layout=None):
-    g = ecj.undersample(G, u)
+    g = undersample(G, u)
     return gsingle(g, scale=scale, R=R, gap=gap, mtype=mtype, layout=layout)
 
 
 def unfoldplot(G, steps=7, repeats=5, gap=0.5, R=1, hg=0.1, wgap=0.7, name='AAA', stl=''):
     u = 0
-    dbnprint(ecj.undersample(G, u), repeats, w_gap=wgap,
+    dbnprint(undersample(G, u), repeats, w_gap=wgap,
              h_gap=hg, mname=name + str(u), type='hid', stl=stl)
     print "\\node[left=" + str(gap) + "cm of " + name + str(u) + ",scale=0.7] (C) {"
     print "\\begin{tikzpicture}"
@@ -312,12 +313,12 @@ def unfoldplot(G, steps=7, repeats=5, gap=0.5, R=1, hg=0.1, wgap=0.7, name='AAA'
     print "\\end{tikzpicture}"
     print "};"
     for u in range(1, steps):
-        dbnprint(ecj.undersample(G, u), repeats, w_gap=wgap, h_gap=hg, mname=name +
+        dbnprint(undersample(G, u), repeats, w_gap=wgap, h_gap=hg, mname=name +
                  str(u), type='ahid', stl=', below=0.25cm of ' + name + str(u - 1))
 
         print "\\node[left=" + str(gap) + "cm of " + name + str(u) + ",scale=0.7] () {"
         print "\\begin{tikzpicture}"
-        cdbnprint(ecj.undersample(G, u), mtype='lahid', bend=15, curve=5, R=R)
+        cdbnprint(undersample(G, u), mtype='lahid', bend=15, curve=5, R=R)
         print "\\end{tikzpicture}"
         print "};"
     emacs_vars()

@@ -105,16 +105,6 @@ def independent_(x, y, alpha = 0.05):
     return fdrCutoff(alpha, ps) > alpha
 
 
-def addallb(g):
-    n = len(g)
-    for i in range(n):
-        for j in range(n):
-            if str(j+1) in g[str(i+1)]:
-                g[str(i+1)][str(j+1)].add((2, 0))
-            else:
-                g[str(i+1)][str(j+1)] = set([(2, 0)])
-    return g
-
 def dpc(data, pval=0.05):
     n = data.shape[0]
     # stack the data: first n rows is t-1 slice, the next n are slice t

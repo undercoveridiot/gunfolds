@@ -1,6 +1,5 @@
 from gunfolds.tools import bfutils as bfu
 from gunfolds.tools.conversions import g2num, graph2nx
-from gunfolds.tools import ecj
 from gunfolds.tools import graphkit as gk
 
 from networkx import strongly_connected_components
@@ -23,14 +22,6 @@ def chunks(l, n):
 def purgepath(path, l):
     for i in range(1, len(path) - 1):
         l.remove((path[i], path[i + 1]))
-
-
-def next_or_none(it):
-    try:
-        n = it.next()
-    except StopIteration:
-        return None
-    return n
 
 
 def try_till_d_path(g, d, gt, order=None):
@@ -123,10 +114,9 @@ def childrenedges(n, c, el, bl):
         c.remove(e)
     return l
 
-# an empty fork is a for without the bidirected edge
-
 
 def make_emptyforks(n, c, el, bl):
+    """ an empty fork is a fork without the bidirected edge """
     return forks(n, c, el, bl, doempty=lambda x, y: not x in y)
 
 
@@ -391,25 +381,6 @@ def checkerDS(n, ee):
     for i in range(1, len(t)):
         r.append(sum(np.log10(t[:i])) - ee * np.log10(n))
     return r
-
-
-def fordens(n, denslist, repeats=100):
-    rl = {}
-    for d in denslist:
-        ee = bfu.dens2edgenum(d, n)
-        l = [checker(n, ee)[-1] for i in range(repeats)]
-        rl[d] = (round(scipy.mean(l), 3), round(scipy.std(l), 3))
-    return rl
-
-
-def fordensDS(n, denslist, repeats=100):
-    rl = {}
-    for d in denslist:
-        print d
-        ee = bfu.dens2edgenum(d, n)
-        l = [checkerDS(n, ee)[-1] for i in range(repeats)]
-        rl[d] = (round(scipy.mean(l), 3), round(scipy.std(l), 3))
-    return rl
 
 
 def checkable(g2):
@@ -1039,7 +1010,7 @@ def edge_backtrack2g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if ecj.isSclique(g2):
+    if bfu.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1089,7 +1060,7 @@ def edge_backtrack2g1_directed(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if ecj.isSclique(g2):
+    if bfu.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1107,7 +1078,7 @@ def edge_backtrack2g1_directed(g2, capsize=None):
                 if (n, e) in single_cache:
                     continue
                 mask = add2edges(g, e, n)
-                if gk.isedgesubsetD(bfu.increment(g), g2):
+                if gk.isedgesubset(bfu.increment(g), g2):
                     r = nodesearch(g, g2, edges, s)
                     if r and edgeset(bfu.increment(r)) == edgeset(g2):
                         s.add(g2num(r))
@@ -1126,7 +1097,7 @@ def edge_backtrack2g1_directed(g2, capsize=None):
     for e in edges:
         for n in g2:
             mask = add2edges(g, e, n)
-            if not gk.isedgesubsetD(bfu.increment(g), g2):
+            if not gk.isedgesubset(bfu.increment(g), g2):
                 single_cache[(n, e)] = False
             del2edges(g, e, n, mask)
 
@@ -1142,7 +1113,7 @@ def g22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if ecj.isSclique(g2):
+    if bfu.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1200,7 +1171,7 @@ def backtrack_more(g2, rate=1, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if ecj.isSclique(g2):
+    if bfu.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1272,7 +1243,7 @@ def vg22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if ecj.isSclique(g2):
+    if bfu.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1329,7 +1300,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if ecj.isSclique(g2):
+    if bfu.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1469,7 +1440,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if ecj.isSclique(g2):
+    if bfu.isSclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 

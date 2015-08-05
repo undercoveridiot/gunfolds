@@ -10,15 +10,6 @@ import gunfolds.tools.zickle as zkl
 import gunfolds.tools.dbn2latex as d2l
 
 
-def ring(n):
-    g = {}
-    g['1'] = {'1': {(0, 1)}, '2': {(0, 1)}}
-    for i in range(2, n):
-        g[str(i)] = {str(i + 1): {(0, 1)}}
-    g[str(n)] = {'1': {(0, 1)}}
-    return g
-
-
 def listplot(fname, mname='JJ', stl='', width=5):
     l = zkl.load(fname)
     y = min(width, len(l))

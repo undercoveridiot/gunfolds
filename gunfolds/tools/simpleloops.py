@@ -1,5 +1,5 @@
 from gunfolds.tools.conversions import g2num, num2CG, graph2nx
-from gunfolds.tools.ecj import undersample
+from gunfolds.tools.bfutils import undersample
 import networkx
 from numpy import argsort
 
@@ -18,16 +18,3 @@ def print_loops(g, u):
     lens = map(len, l)
     for i in argsort(lens):
         print l[i]
-
-
-def ul(l):
-    """
-    returns list elements that are present only once
-    """
-    u, r = set(), set()
-    for e in l:
-        if e not in u:
-            u.add(e)
-        else:
-            r.add(e)
-    return u.difference(r)
