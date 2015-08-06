@@ -1,4 +1,4 @@
-from gunfolds.tools.conversions import num2CG
+from gunfolds.tools.conversions import num2CG, graph2nx, nx2graph
 from gunfolds.tools.bfutils import undersample
 from gunfolds.tools import ecj
 import gmpy as gmp
@@ -10,7 +10,14 @@ import scipy
 np.random.RandomState()
 
 
-def hasSelfLoops(G):
+
+
+##++++ CONVERTED ++++##
+
+
+
+
+def has_self_loops(G):
     for u in G:
         if G[u].has_key(u):
             return True
@@ -53,32 +60,18 @@ def SM_converging(Gstar, G):
     return compat
 
 
-def searchMatch(Gstar, G, iter=5):
+def search_match(Gstar, G, iter=5):
     if gcd4scc(G) > 1:
         return SM_fixed(Gstar, G, iter=iter)
     return SM_converging(Gstar, G)
 
 
-def hasSink(G):
+def has_sink(G):
     return not reduce(operator.and_, [bool(G[n]) for n in G], True)
 
 
-def hasRoot(G):
-    return hasSink(ecj.tr(G))
-
-
-def graph2nx(G):
-    g = nx.DiGraph()
-    for v in G:
-        g.add_edges_from([(v, x) for x in G[v] if (0, 1) in G[v][x]])
-    return g
-
-
-def nx2graph(G):
-    g = {str(n + 1): {} for n in G}
-    for n in G:
-        g['%i' % (n + 1)] = {'%i' % (x + 1): set([(0, 1)]) for x in G[n]}
-    return g
+def has_root(G):
+    return has_sink(ecj.tr(G))
 
 
 def gcd4scc(SCC):
@@ -86,7 +79,7 @@ def gcd4scc(SCC):
     return ecj.listgcd(map(lambda x: len(x) - 1, nx.simple_cycles(g)))
 
 
-def compatibleAtU(uGstar):
+def compatible_at_u(uGstar):
     compat = []
     n = len(uGstar)
     numG = 2 ** (n ** 2)
@@ -96,7 +89,7 @@ def compatibleAtU(uGstar):
         # pbar.update(i+1)
         if len(ecj.scc(G)) > 1:
             continue
-        l = searchMatch(uGstar, G, iter=5)
+        l = search_match(uGstar, G, iter=5)
         if l:
             compat.append((l, G))
     # pbar.finish()

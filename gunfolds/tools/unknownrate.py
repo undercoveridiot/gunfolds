@@ -995,10 +995,10 @@ def add2set(gset, elist, H):
                 num = g2num(g)
                 if not num in s:
                     au = bfu.call_undersamples(g)
-                    if not bfu.checkconflict(H, g, au=au):
+                    if not bfu.check_conflict(H, g, au=au):
                         eremove[e] = False
                         s.add(num)
-                        if bfu.checkequality(H, g, au=au):
+                        if bfu.check_equality(H, g, au=au):
                             ss.add(num)
                 gk.delanedge(g, e)
 

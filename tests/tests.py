@@ -3,6 +3,7 @@ from gunfolds.tools import conversions
 from gunfolds.tools import graphkit
 from gunfolds.tools import unknownrate as ur
 from gunfolds.tools import zickle as zkl
+import numpy as np
 import os
 import unittest
 
@@ -76,14 +77,41 @@ class TestBFUtilsFunctions(unittest.TestCase):
                 3: {1: 3, 2: 3, 3: 1, 4: 3},
                 4: {1: 3, 2: 3, 3: 3, 4: 1}}
 
-        self.assertEqual(bfutils.is_sclique(sc_1), True)
+        self.assertTrue(bfutils.is_sclique(sc_1))
 
         no_sc_1 = {1: {1: 1, 2: 3, 4: 3},
                    2: {1: 3, 2: 1, 3: 3, 4: 3},
                    3: {1: 3, 2: 3, 4: 3},
                    4: {1: 3, 2: 3, 3: 3, 4: 1}}
 
-        self.assertEqual(bfutils.is_sclique(no_sc_1), False)
+        self.assertFalse(bfutils.is_sclique(no_sc_1))
+
+    def test__to_adj_matrix(self):
+        g = {1: {1: 1, 2: 2, 3: 1},
+             2: {1: 2, 2: 1, 3: 1, 4: 1},
+             3: {1: 1, 2: 1, 3: 1, 4: 1},
+             4: {1: 1, 2: 1, 3: 1, 5: 1},
+             5: {1: 3}}
+
+        expected_a = np.array([[1, 0, 1, 0, 0],
+                               [0, 1, 1, 1, 0],
+                               [1, 1, 1, 1, 0],
+                               [1, 1, 1, 0, 1],
+                               [1, 0, 0, 0, 0]], dtype=np.int8)
+
+        expected_b = np.array([[0, 1, 0, 0, 0],
+                               [1, 0, 0, 0, 0],
+                               [0, 0, 0, 0, 0],
+                               [0, 0, 0, 0, 0],
+                               [1, 0, 0, 0, 0]], dtype=np.int8)
+
+        self.assertTrue((bfutils.graph2adj(g) == expected_a).all())
+        self.assertTrue((bfutils.graph2badj(g) == expected_b).all())
+
+        # test round trip
+        A = bfutils.graph2adj(g)
+        B = bfutils.graph2badj(g)
+        self.assertEqual(bfutils.adjs2graph(A, B), g)
 
 
 

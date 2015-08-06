@@ -2,6 +2,7 @@
 from gunfolds.tools.conversions import nx2graph
 from gunfolds.tools import ecj
 import igraph
+from itertools import combinations
 import networkx as nx
 import numpy as np
 from numpy.random import randint
@@ -116,6 +117,16 @@ def scale_free(n, alpha=0.7, beta=0.25,
     g = nx2graph(g)
     g = gtranspose(g)
     addAring(g)
+    return g
+
+
+def randH(n, d1, d2):
+    """ Generate a random H with n nodes """
+    g = ringmore(n, d1)
+    pairs = [x for x in combinations(g.keys(), 2)]
+    for p in np.random.permutation(pairs)[:d2]:
+        g[p[0]].setdefault(p[1], set()).add((2, 0))
+        g[p[1]].setdefault(p[0], set()).add((2, 0))
     return g
 
 

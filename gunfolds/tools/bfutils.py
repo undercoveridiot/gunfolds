@@ -8,6 +8,11 @@ import scipy
 
 
 
+##++++ CONVERTED ++++##
+
+
+
+
 #### Undersampling functions
 
 def is_sclique(G):
@@ -58,8 +63,6 @@ def increment_u(G_star, G_u):
 
 
 def pure_directed_inc(G, D):
-    """ helper function for determining directed edges in an undersampled
-        graph given a previously undersampled graph """
     G_un = {}
     # directed edges
     for vert1 in D:
@@ -113,6 +116,7 @@ def undersample(G, u):
 
 
 def all_undersamples(G_star):
+    """ return a list of all undersampled graphs (excluding superclique) """
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
@@ -126,6 +130,7 @@ def all_undersamples(G_star):
 
 
 def call_undersamples(G_star):
+    """ return a list of all undersampled graphs (including superclique) """
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
@@ -135,14 +140,17 @@ def call_undersamples(G_star):
     return glist
 
 
-def compact_call_undersamples(G_star, steps=None):
+def compact_call_undersamples(G_star):
+    """ return a list of all undersampled graphs (including superclique)
+        in binary encoded format """
     glist = [ug2num(G_star)]
     lastgraph = G_star
     while True:
         g = increment_u(G_star, lastgraph)
-        if ug2num(g) in glist:
+        n = ug2num(g)
+        if n in glist:
             return glist
-        glist.append(ug2num(g))
+        glist.append(n)
         lastgraph = g
     return glist
 
@@ -165,37 +173,39 @@ def cc_undersamples(G_star, steps=1):
 #### Adjacency matrix functions
 
 def graph2adj(G):
+    """ Convert the directed edges to an adjacency matrix """
     n = len(G)
     A = scipy.zeros((n, n), dtype=np.int8)
     for v in G:
-        A[int(v) - 1, [int(w)-1 for w in G[v] if (0, 1) in G[v][w]]] = 1
+        A[int(v) - 1, [int(w)-1 for w in G[v] if G[v][w] in (1,3)]] = 1
     return A
 
 
 def graph2badj(G):
+    """ Convert the bidirected edges to an adjacency matrix """
     n = len(G)
     A = scipy.zeros((n, n), dtype=np.int8)
     for v in G:
-        A[int(v) - 1, [int(w)-1 for w in G[v] if (2, 0) in G[v][w]]] = 1
+        A[int(v) - 1, [int(w)-1 for w in G[v] if G[v][w] in (2,3)]] = 1
     return A
 
 
-def adjs2graph(A, B):
-    names = [str(i) for i in range(1, A.shape[0] + 1)]
+def adjs2graph(directed, bidirected):
+    """ Convert an adjacency matrix of directed and bidirected edges to a graph """
     G = {}
-    for name in names:
+    for name in xrange(1, directed.shape[0] + 1):
         G[name] = {}
-    for i in range(A.shape[0]):
-        for name in map(str, np.where(A[i,:] == 1)[0]+1):
-            G[str(i + 1)][name] = set([(0, 1)])
+    for i in xrange(directed.shape[0]):
+        for name in np.where(directed[i,:] == 1)[0] + 1:
+            G[i + 1][name] = 1
 
-    for i in range(B.shape[0]):
-        for j in range(B.shape[1]):
-            if B[i, j]:
-                if str(j + 1) in G[str(i+1)]:
-                    G[str(i + 1)][str(j+1)].add((2, 0))
+    for i in xrange(bidirected.shape[0]):
+        for j in xrange(bidirected.shape[1]):
+            if bidirected[i, j]:
+                if j + 1 in G[i + 1]:
+                    G[i + 1][j + 1] = 3
                 else:
-                    G[str(i + 1)][str(j+1)] = set([(2, 0)])
+                    G[i + 1][j + 1] = 2
     return G
 
 
@@ -386,16 +396,7 @@ def edgenum2dens(e, n=10):
     return np.double(e + n)/n**2
 
 
-def randH(n, d1, d2):
-    g = gk.ringmore(n, d1)
-    pairs = [x for x in itertools.combinations(g.keys(), 2)]
-    for p in np.random.permutation(pairs)[:d2]:
-        g[p[0]].setdefault(p[1], set()).add((2, 0))
-        g[p[1]].setdefault(p[0], set()).add((2, 0))
-    return g
-
-
-def checkconflict(H, G_test, au=None):
+def check_conflict(H, G_test, au=None):
     if not au:
         allundersamples = call_undersamples(G_test)
     else:
@@ -406,7 +407,7 @@ def checkconflict(H, G_test, au=None):
     return True
 
 
-def checkconflict_(Hnum, G_test, au=None):
+def check_conflict_(Hnum, G_test, au=None):
     if not au:
         allundersamples = call_undersamples(G_test)
     else:
@@ -419,7 +420,7 @@ def checkconflict_(Hnum, G_test, au=None):
     return True
 
 
-def checkequality(H, G_test, au=None):
+def check_equality(H, G_test, au=None):
     if not au:
         allundersamples = call_undersamples(G_test)
     else:

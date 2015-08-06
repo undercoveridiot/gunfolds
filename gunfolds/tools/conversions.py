@@ -4,19 +4,26 @@ import networkx as nx
 from numpy import unravel_index
 
 
+
+##++++ CONVERTED ++++##
+
+
+
+
+
 def g2num(g):
     """ Convert a graph into a binary format """
     n = len(g)
     n2 = n ** 2 + n
     num = 0
     for v in range(1, n + 1):
-        for w in g[str(v)]:
-            num |= (1 << (n2 - v * n - int(w, 10)))
+        for w in g[v]:
+            num |= (1 << (n2 - v * n - w))
     return num
 
 
 def ug2num(g):
-    """ Convert non-empty edges into a binary format """
+    """ Convert non-empty edges into a tuple of (directed, bidriected) in binary format """
     n = len(g)
     n2 = n ** 2 + n
     num = 0
@@ -24,10 +31,10 @@ def ug2num(g):
     num2 = 0
     for v in g:
         for w in g[v]:
-            if (0, 1) in g[v][w]:
-                mask = (1 << (n2 - int(v, 10) * n - int(w, 10)))
+            if g[v][w] in (1, 3):
+                mask = (1 << (n2 - v * n - w))
                 num |= mask
-            if (2, 0) in g[v][w]:
+            if g[v][w] in (2, 3):
                 num2 |= mask
     return num, num2
 
@@ -39,22 +46,22 @@ def bg2num(g):
     num = 0
     for v in g:
         for w in g[v]:
-            if (2, 0) in g[v][w]:
-                num = num | (1 << (n2 - int(v) * n - int(w)))
+            if g[v][w] in (2, 3):
+                num = num | (1 << (n2 - v * n - w))
     return num
 
 
 def graph2nx(G):
     g = nx.DiGraph()
     for v in G:
-        g.add_edges_from([(v, x) for x in G[v] if (0, 1) in G[v][x]])
+        g.add_edges_from([(v, x) for x in G[v] if G[v][x] in (1, 3)])
     return g
 
 
 def nx2graph(G):
-    g = {str(n + 1): {} for n in G}
+    g = {n: {} for n in G}
     for n in G:
-        g['%i' % (n + 1)] = {'%i' % (x + 1): set([(0, 1)]) for x in G[n]}
+        g[n] = {x: 1 for x in G[n]}
     return g
 
 
@@ -64,7 +71,7 @@ def num2CG(num, n):
 
     """
     n2 = n * n
-    G = {'%i' % (i + 1): {} for i in xrange(n)}
+    G = {i + 1: {} for i in xrange(n)}
     if num == 0:
         return G
     bl = gmp.bit_length(num)
@@ -73,7 +80,7 @@ def num2CG(num, n):
     x = idx[0] + 1
     y = idx[1] + 1
     for i in xrange(len(x)):
-        G['%i' % x[i]]['%i' % y[i]] = set([(0, 1)])
+        G[x[i]][y[i]] = 1
     return G
 
 
