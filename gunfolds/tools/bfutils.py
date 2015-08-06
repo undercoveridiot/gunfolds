@@ -10,39 +10,42 @@ import scipy
 
 #### Undersampling functions
 
-def isSclique(G):
+def is_sclique(G):
+    """ Tests if the graph is a superclique (all possible connections) """
     n = len(G)
-    for v in G:
-        if sum([(0, 1) in G[v][w] for w in G[v]]) < n:
-            return False
-        if sum([(2, 0) in G[v][w] for w in G[v]]) < n - 1:
+    row_sum = 3 * (n-1) + 1 # rows will have all connections plus a self loop
+    for vertex in G:
+        if G[vertex].get(vertex) != 1 or sum(G[vertex].values()) != row_sum:
             return False
     return True
 
 
 def directed_inc(G, D):
+    """ helper function for determining directed edges in an undersampled
+        graph given a previously undersampled graph """
     G_un = {}
     # directed edges
-    for v in D:
-        G_un[v] = {}
-        for w in D[v]:
-            if G[w] and (0, 1) in D[v][w]:
-                for e in G[w]:
-                    G_un[v][e] = set([(0, 1)])
+    for vert1 in D:
+        G_un[vert1] = {}
+        for vert2 in D[vert1]:
+            if G[vert2] and D[vert1][vert2] in (1,3):
+                for e in G[vert2]:
+                    G_un[vert1][e] = 1
     return G_un
 
 
 def bidirected_inc(G, D):
-    # bidirected edges
-    for w in G:
+    """ helper function for determining bidirected edges in an undersampled
+        graph given a previously undersampled graph """
+    for vert1 in G:
         # transfer old bidirected edges
-        for l in D[w]:
-            if (2, 0) in D[w][l]:
-                G[w].setdefault(l, set()).add((2, 0))
+        for vert2 in D[vert1]:
+            if D[vert1][vert2] in (2,3):
+                G[vert1][vert2] = 2 if G[vert1].get(vert2, 2) == 2 else 3
         # new bidirected edges
-        l = [e for e in D[w] if (0, 1) in D[w][e]]
-        for pair in permutations(l, 2):
-            G[pair[0]].setdefault(pair[1], set()).add((2, 0))
+        edges = [ e for e in D[vert1] if D[vert1][e] in (1,3) ]
+        for pair in itertools.permutations(edges, 2):
+            G[pair[0]][pair[1]] = 2 if G[pair[0]].get(pair[1], 2) == 2 else 3
     return G
 
 
@@ -55,44 +58,45 @@ def increment_u(G_star, G_u):
 
 
 def pure_directed_inc(G, D):
+    """ helper function for determining directed edges in an undersampled
+        graph given a previously undersampled graph """
     G_un = {}
     # directed edges
-    for v in D:
-        G_un[v] = {}
-        for w in D[v]:
-            if G[w]:
-                for e in G[w]:
-                    G_un[v][e] = set([(0, 1)])
+    for vert1 in D:
+        G_un[vert1] = {}
+        for prev_vert in D[vert1]:
+            for vert2 in G[prev_vert]:
+                G_un[vert1][vert2] = 1
     return G_un
 
 
-def increment(g):
+def increment(G):
     '''
-    undersample g by 2
-    only works for g1 to g2 directed
+    undersample G by 2
+    only works for G1 to G2 directed
     '''
-    r = {n: {} for n in g}
+    G2 = {n: {} for n in G}
 
-    for n in g:
-        for h in g[n]:
-            for e in g[h]:
-                if not e in r[n]:
-                    r[n][e] = set([(0, 1)])
+    for vert1 in G:
+        for h in G[vert1]:
+            for e in G[h]:
+                if not e in G2[vert1]:
+                    G2[vert1][e] = 1
 
-    for n in g:
-        for pair in itertools.combinations(g[n], 2):
+    for vert1 in G:
+        for pair in itertools.combinations(G[vert1], 2):
 
-            if pair[1] in r[pair[0]]:
-                r[pair[0]][pair[1]].add((2, 0))
+            if pair[1] in G2[pair[0]]:
+                G2[pair[0]][pair[1]] = 3
             else:
-                r[pair[0]][pair[1]] = set([(2, 0)])
+                G2[pair[0]][pair[1]] = 2
 
-            if pair[0] in r[pair[1]]:
-                r[pair[1]][pair[0]].add((2, 0))
+            if pair[0] in G2[pair[1]]:
+                G2[pair[1]][pair[0]] = 3
             else:
-                r[pair[1]][pair[0]] = set([(2, 0)])
+                G2[pair[1]][pair[0]] = 2
 
-    return r
+    return G2
 
 
 def dincrement_u(G_star, G_u):
@@ -112,7 +116,7 @@ def all_undersamples(G_star):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
-        if isSclique(g):
+        if is_sclique(g):
             return glist  # superclique convergence
         # this will (may be) capture DAGs and oscillations
         if g in glist:
@@ -223,7 +227,7 @@ def overshoot(G_star, H):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
-        if isSclique(g):
+        if is_sclique(g):
             return False
         if gk.isedgesubset(H, g):
             return True

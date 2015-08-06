@@ -1010,7 +1010,7 @@ def edge_backtrack2g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1060,7 +1060,7 @@ def edge_backtrack2g1_directed(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1113,7 +1113,7 @@ def g22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1171,7 +1171,7 @@ def backtrack_more(g2, rate=1, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1243,7 +1243,7 @@ def vg22g1(g2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1300,7 +1300,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1440,7 +1440,7 @@ def backtrack_more2(g2, rate=2, capsize=None):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 

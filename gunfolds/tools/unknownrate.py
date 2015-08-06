@@ -397,7 +397,7 @@ def iteqclass(H, verbose=True, capsize=100):
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
     '''
-    if bfu.isSclique(H):
+    if bfu.is_sclique(H):
         print 'not running on superclique'
         return None
     g = {n: {} for n in H}
@@ -432,7 +432,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
     '''
-    if bfu.isSclique(H):
+    if bfu.is_sclique(H):
         print 'not running on superclique'
         return set([-1])
     g = {n: {} for n in H}
@@ -649,7 +649,7 @@ def dceqc(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if bfu.isSclique(H):
+    if bfu.is_sclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -791,7 +791,7 @@ def dceqclass2(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if bfu.isSclique(H):
+    if bfu.is_sclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -837,7 +837,7 @@ def dceqclass(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if bfu.isSclique(H):
+    if bfu.is_sclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -859,7 +859,7 @@ def ldceqclass(H, asl=None):
     Arguments:
     - `H`: an undersampled graph
     """
-    if bfu.isSclique(H):
+    if bfu.is_sclique(H):
         print 'not running on superclique'
         return set()
     n = len(H)
@@ -942,7 +942,7 @@ def ecmerge(H):
     Arguments:
     - `H`: an undersampled graph
     """
-    if bfu.isSclique(H):
+    if bfu.is_sclique(H):
         print 'not running on superclique'
         return None
     n = len(H)
