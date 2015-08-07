@@ -1,5 +1,6 @@
 from gunfolds.tools.bfutils import undersample
 from gunfolds.tools import ecj
+from gunfolds.tools import load_data
 from gunfolds.tools.testgraphs import *
 from gunfolds.tools import zickle
 import igraph
@@ -7,10 +8,6 @@ import numpy as np
 import os
 import scipy
 import StringIO
-
-DIR_NAME = os.path.dirname(__file__)
-ABS_PATH = os.path.abspath(os.path.join(DIR_NAME))
-colors = zickle.load('{}/../data/colors.zkl'.format(ABS_PATH))
 
 
 def graph2dict(g):
@@ -148,7 +145,7 @@ def cdbnprint(G, mtype="obs", bend=5, curve=5, R=1):
     nodes = [nodes[i] for i in idx]
 
     g = dict2graph(ecj.cloneBfree(G))
-    paintSCC(g, colors)
+    paintSCC(g, load_data.colors)
 
     for i in range(0, n):
         node = g.vs[i]['label']
@@ -212,7 +209,7 @@ def gprint(G, mtype="obs", bend=5, curve=5, R=1, layout=None, scale=5):
     else:
         g = dict2graph(ecj.cloneBfree(G))
         cc = array(layout.coords)
-    paintSCC(g, colors)
+    paintSCC(g, load_data.colors)
     for i in range(0, n):
         node = g.vs[i]['label']
         rc = g.vs[i]["color"]

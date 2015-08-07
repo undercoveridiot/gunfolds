@@ -9,7 +9,7 @@ import gunfolds.tools.graphkit as gk
 import gunfolds.tools.simpleloops as sl
 import gunfolds.tools.zickle as zkl
 import gunfolds.tools.simpleloops as sls
-import gunfolds.tools.load_loops as load_loops
+from gunfolds.tools import load_data
 import ipdb
 from itertools import combinations
 import math
@@ -18,10 +18,6 @@ import operator
 import pprint
 from progressbar import ProgressBar, Bar
 from scipy.misc import comb
-
-
-alloops = load_loops.alloops
-circp = load_loops.circp
 
 
 def memo(func):
@@ -1164,7 +1160,10 @@ def perm_circular_slow(l):
     return s
 
 
-def perm_circular(l, cp=circp):
+def perm_circular(l, cp=None):
+    if cp is None:
+        # Delay import until its used
+        cp = load_data.circp
     r = []
     n = len(l)
     for e in cp[n]:
@@ -1181,7 +1180,9 @@ def gen_loops(n):
     return s
 
 
-def allsloops(n, asl = alloops):
+def allsloops(n, asl=None):
+    if asl is None:
+        asl = load_data.alloops
     if asl:
         return asl[n]
     s = []
