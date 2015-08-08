@@ -1,4 +1,4 @@
-from gunfolds.tools.testgraphs import *
+from gunfolds.data.testgraphs import *
 from itertools import combinations, permutations, izip, izip_longest
 import scipy
 

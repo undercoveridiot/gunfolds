@@ -31,14 +31,14 @@ def try_till_d_path(g, d, gt, order=None):
         if order:
             k = [x for x in length_d_paths(g, order(i), d)]
         else:
-            k = [x for x in length_d_paths(g, str(i), d)]
+            k = [x for x in length_d_paths(g, i, d)]
         i += 1
         if i > len(g):
             return []
 
     ld = []
     for i in range(min(10, len(k))):
-        ld.append(len(checkApath(['2'] + k[i], gt)))
+        ld.append(len(checkApath([2] + k[i], gt)))
     idx = np.argmin(ld)
     return k[0]
 
@@ -135,7 +135,7 @@ def make_longpaths(g, el):
         if len(k) < 5:
             break
         if k:
-            l.append(('2',) + tuple(k))
+            l.append((2,) + tuple(k))
             purgepath(l[-1], el)
             gpurgepath(gc, l[-1])
         else:
@@ -153,7 +153,7 @@ def make_allforks_and_rest(g, el, bl, dofullforks=True):
     random.shuffle(nodes)
     for n in nodes:
 
-        c = [e for e in g[n] if (0, 1) in g[n][e]]  # all children
+        c = [e for e in g[n] if g[n][e] in (1,3)]  # all children
         if len(c) == 1:
             if (n, c[0]) in el:
                 r.append((n, c[0]))
@@ -199,7 +199,7 @@ def threedges_pick(l):
 
 
 def longpaths_pick(l):
-    return [e for e in l if len(e) > 3 and e[0] == '2']
+    return [e for e in l if len(e) > 3 and e[0] == 2]
 
 
 def makechains(l):
@@ -213,10 +213,10 @@ def makechains(l):
 
         e = l.pop()
         if e[1] in starts and e[0] != e[1] and starts[e[1]] in l:
-            r.append(('0', e[0],) + starts[e[1]])
+            r.append((0, e[0],) + starts[e[1]])
             l.remove(starts[e[1]])
         elif e[0] in ends and e[0] != e[1] and ends[e[0]] in l:
-            r.append(('0',) + ends[e[0]] + (e[1],))
+            r.append((0,) + ends[e[0]] + (e[1],))
             l.remove(ends[e[0]])
         else:
             singles.append(e)
@@ -224,7 +224,7 @@ def makechains(l):
 
 
 def makesink(es):
-    return ('1', es[0][0],) + es[1]
+    return (1, es[0][0],) + es[1]
 
 
 def makesinks(l):
@@ -275,8 +275,8 @@ def checkedge(e, g2):
         l = [n for n in g2 if n in g2[n]]
         s = set()
         for v in g2[e[0]]:
-            s = s.union(g2[e[0]][v])
-        if not (2, 0) in s:
+            s.add(g2[e[0]][v])
+        if 2 not in s and 3 not in s:
             l.remove(e[0])
         return l
     else:
@@ -345,15 +345,15 @@ def isvedge(v):
 
 
 def isCedge(v):
-    return len(v) == 4 and v[0] == '0'  # a->b->c
+    return len(v) == 4 and v[0] == 0  # a->b->c
 
 
 def isAedge(v):
-    return len(v) == 4 and v[0] == '1'  # a->c<-b
+    return len(v) == 4 and v[0] == 1  # a->c<-b
 
 
 def isApath(v):
-    return len(v) >= 4 and v[0] == '2'  # a->b->...->z
+    return len(v) >= 4 and v[0] == 2  # a->b->...->z
 
 
 def checker(n, ee):
@@ -520,7 +520,7 @@ def inorder_checks(g2, gg):
     # ee = oo[0]
     random.shuffle(ee)
     d = {}  # new datastructure
-    d[ee[0]] = {('0'): gg[ee[0]]}
+    d[ee[0]] = {0: gg[ee[0]]}
     for i in range(len(ee) - 1):
         d[ee[i + 1]] = del_empty(inorder_check2(ee[i], ee[i + 1],
                                                 gg[ee[i]], gg[ee[i + 1]], g2)[0])

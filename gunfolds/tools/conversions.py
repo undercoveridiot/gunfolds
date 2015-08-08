@@ -142,16 +142,14 @@ def graph2badj(G):
 
 def adjs2graph(directed, bidirected):
     """ Convert an adjacency matrix of directed and bidirected edges to a graph """
-    G = {}
-    for name in xrange(1, directed.shape[0] + 1):
-        G[name] = {}
+    G = {i:{} for i in xrange(1, directed.shape[0] + 1)}
     for i in xrange(directed.shape[0]):
-        for name in np.where(directed[i,:] == 1)[0] + 1:
-            G[i + 1][name] = 1
+        for j in np.where(directed[i,:] == 1)[0] + 1:
+            G[i + 1][j] = 1
 
     for i in xrange(bidirected.shape[0]):
         for j in xrange(bidirected.shape[1]):
-            if bidirected[i, j]:
+            if bidirected[i, j] and j != i:
                 if j + 1 in G[i + 1]:
                     G[i + 1][j + 1] = 3
                 else:

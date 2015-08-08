@@ -8,6 +8,13 @@ from numpy.random import randint
 import random as std_random
 
 
+
+
+##++++ CONVERTED ++++##
+
+
+
+
 def edgelist(g):  # directed
     '''
     return a list of tuples for edges of g
@@ -63,23 +70,25 @@ def superclique(n):
     return g
 
 
-def complement(g):
-    n = len(g)
+def complement(G):
+    """ return the complement of G """
+    n = len(G)
     sq = superclique(n)
-    for v in g:
-        for w in g[v]:
-            sq[v][w].difference_update(g[v][w])
-            if not sq[v][w]:
-                sq[v].pop(w)
+    for v in G:
+        for w in G[v]:
+            sq[v][w] = sq[v][w] - G[v][w]
+            if sq[v][w] == 0:
+                del sq[v][w]
     return sq
 
 
-def gtranspose(G):                      # Transpose (rev. edges of) G
+def gtranspose(G):
+    """ Transpose (rev. edges of) G """
     GT = {u: {} for u in G}
     for u in G:
         for v in G[u]:
-            if (0, 1) in G[u][v]:
-                GT[v][u] = set([(0, 1)])        # Add all reverse edges
+            if G[u][v] in (1,3):
+                GT[v][u] = 1        # Add all reverse edges
     return GT
 
 
@@ -99,29 +108,30 @@ def randH(n, d1, d2):
     g = ringmore(n, d1)
     pairs = [x for x in combinations(g.keys(), 2)]
     for p in np.random.permutation(pairs)[:d2]:
-        g[p[0]].setdefault(p[1], set()).add((2, 0))
-        g[p[1]].setdefault(p[0], set()).add((2, 0))
+        g[p[0]][p[1]] = g[p[0]].get(p[1], 0) + 2
+        g[p[1]][p[0]] = g[p[1]].get(p[0], 0) + 2
     return g
 
 
 def ring(n):
     g = {}
     for i in range(1, n):
-        g[str(i)] = {str(i + 1): set([(0, 1)])}
-    g[str(n)] = {'1': set([(0, 1)])}
+        g[i] = {i + 1: 1}
+    g[n] = {1: 1}
     return g
 
 
 def addAring(g):
+    """ Add a ring to g in place """
     for i in range(1, len(g)):
-        if str(i + 1) in g[str(i)]:
-            g[str(i)][str(i + 1)].add((0, 1))
+        if g[i].get(i + 1) == 2:
+            g[i][i + 1] = 3
         else:
-            g[str(i)][str(i + 1)] = set([(0, 1)])
-    if '1' in g[str(len(g))]:
-        g[str(len(g))]['1'].add((0, 1))
+            g[i][i + 1] = 1
+    if g[i].get(1) == 2:
+        g[i][1] = 3
     else:
-        g[str(len(g))]['1'] = set([(0, 1)])
+        g[i][1] = 1
 
 
 def upairs(n, k):
@@ -133,13 +143,12 @@ def upairs(n, k):
         if p[1] - p[0] == 1:
             continue
         s.add(tuple(p))
-    l = [e for e in s]
-    return l[:k]
+    return list(s)[:k]
 
 
 def ringarcs(g, n):
     for edge in upairs(len(g), n):
-        g[str(edge[0] + 1)][str(edge[1] + 1)] = set([(0, 1)])
+        g[edge[0] + 1][edge[1] + 1] = 1
     return g
 
 
@@ -155,7 +164,7 @@ def digonly(H):
     """
     g = {n: {} for n in H}
     for v in g:
-        g[v] = {w: set([(0, 1)]) for w in H[v] if not H[v][w] == set([(2, 0)])}
+        g[v] = {w: 1 for w in H[v] if not H[v][w] == 2}
     return g
 
 
@@ -179,7 +188,7 @@ def OCE(g1, g2):
 
 def clean_leaf_nodes(g):
     for v in g:
-        g[v] = {w: g[v][w] for w in g[v] if g[v][w]}
+        g[v] = {w: g[v][w] for w in g[v] if g[v][w] > 0}
 
 
 def cerror(d):
@@ -227,7 +236,7 @@ def scc_unreachable(g):
 
 
 def addanedge(g, e):
-    g[e[0]][e[1]] = set([(0, 1)])
+    g[e[0]][e[1]] = 1
 
 
 def delanedge(g, e):
@@ -251,7 +260,8 @@ def isdedgesubset(g2star, g2):
     for n in g2star:
         for h in g2star[n]:
             if h in g2[n]:
-                if not (0, 1) in g2[n][h]:
+                # if g2star has a directed edge and g2 does not
+                if g2star[n][h] in (1,3) and g2[n][h] == 2:
                     return False
             else:
                 return False
@@ -265,8 +275,12 @@ def isedgesubset(g2star, g2):
     for n in g2star:
         for h in g2star[n]:
             if h in g2[n]:
-                if not g2star[n][h].issubset(g2[n][h]):
-                    return False
+                # Everything is a subset of 3 (both edge types)
+                if g2[n][h] != 3:
+                    # Either they both should have a directed edge, or 
+                    # both should have a bidirected edge
+                    if g2star[n][h] != g2[n][h]:
+                        return False
             else:
                 return False
     return True

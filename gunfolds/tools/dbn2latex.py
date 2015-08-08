@@ -1,7 +1,7 @@
+from gunfolds.data.testgraphs import *
 from gunfolds.tools.bfutils import undersample
 from gunfolds.tools import ecj
 from gunfolds.tools import load_data
-from gunfolds.tools.testgraphs import *
 from gunfolds.tools import zickle
 import igraph
 import math
@@ -357,7 +357,7 @@ def gmatrix_fold(G, m, n, R=1, mname='g', w_gap=0.5, h_gap=0.5, stl='', shift=0)
 
 
 def addselfedge(G, v):
-    G[v].update({v: set([(edge_type['directed'], 1)])})
+    G[v].update({v: 1})
 
 
 def gmatrix_list(l, m, n, R=1, mname='g', w_gap=0.5, h_gap=0.5, stl='', shift=0):

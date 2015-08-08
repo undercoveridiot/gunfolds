@@ -1,6 +1,6 @@
 from gunfolds.tools import ecj
 from gunfolds.tools import bfutils
-from gunfolds.tools.conversions import graph2adj
+from gunfolds.tools.conversions import graph2adj, adjs2graph
 from gunfolds.tools import graphkit as gk
 import numpy as np
 from progressbar import ProgressBar, Percentage
@@ -8,6 +8,14 @@ import scipy
 from scipy import linalg, optimize
 from statsmodels.tsa.api import VAR
 from sympy.matrices import SparseMatrix
+
+
+
+##++++ CONVERTED ++++##
+
+
+
+
 
 
 def symchol(M): # symbolic Cholesky
@@ -50,10 +58,10 @@ def bnf2CG(fname):
     d = eval(open(fname).read())
     G = {}
     for v in d:
-        G[v] = {u: set((0, 1)) for u in d[v]['pars']}
+        G[v] = {u: 1 for u in d[v]['pars']}
     G = ecj.tr(G)
     for v in G:
-        ld = {u: set([(0, 1)]) for u in G[v]}
+        ld = {u: 1 for u in G[v]}
         G[v] = ld
     return G
 
@@ -65,14 +73,11 @@ def npG2SVAR(G):
         B[i][i] = 1
 
     for v in G:
-        if G[v]:
-            directed = [w for w in G[v] if (0, 1) in G[v][w]]
-            bidirected = [w for w in G[v] if (2, 0) in G[v][w]]
-            for w in   directed:
-                A[int(w)-1][int(v)-1] = 1
-            for w in bidirected:
-                B[int(w)-1][int(v)-1] = 1
-
+        for w in G[v]:
+            if G[v][w] in (1,3):
+                A[w-1][v-1] = 1
+            if G[v][w] in (2,3):
+                B[w-1][v-1] = 1
     A = np.asarray(A)
     B = symchol(B)
     return A, B
@@ -387,39 +392,21 @@ def AB2intAB(A,B, th=0.09):
     B[amap(lambda x: np.abs(x) < 1, B)] = 0
     return A, B
 
-def intAB2graph(A, B):
-    n = A.shape[0]
-    g = {str(i):{} for i in range(1, n+1)}
-
-    for i in range(n):
-        for j in range(n):
-            if A[j, i]:
-                g[str(i+1)][str(j+1)] = set([(0, 1)])
-
-    for i in range(n):
-        for j in range(n):
-            if B[j, i] and j != i:
-                if str(j+1) in g[str(i+1)]:
-                    g[str(i+1)][str(j+1)].add((2, 0))
-                else:
-                    g[str(i+1)][str(j+1)] = set([(2, 0)])
-    return g
-
 def data2graph(data,x0=None):
     A, B = data2AB(data, x0=x0)
     Ab, Bb = AB2intAB(A, B)
-    return intAB2graph(Ab, Bb)
+    return adjs2graph(Ab, Bb)
 
 def data2VARgraph(data, pval=0.05):
     model = VAR(data.T)
     r = model.fit(1)
     A = r.coefs[0,:,:]
     n = A.shape[0]
-    g = {str(i):{} for i in range(1, n+1)}
+    g = {i:{} for i in range(1, n+1)}
 
     for i in range(n):
         for j in range(n):
             if np.abs(A[j, i]) > pval:
-                g[str(i+1)][str(j+1)] = set([(0, 1)])
+                g[i+1][j+1] = 1
 
     return g
