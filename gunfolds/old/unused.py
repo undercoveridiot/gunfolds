@@ -102,6 +102,20 @@ def graph2jason(g):
 
 """ from ecj.py """
 
+
+def traverse(G, s, qtype=set):
+    S, Q = set(), qtype()
+    Q.add(s)
+    while Q:
+        u = Q.pop()
+        if u in S:
+            continue
+        S.add(u)
+        for v in G[u]:
+            Q.add(v)
+        yield u
+        
+
 def bfs_print_tree(tree, r):
     """
     A modified single list solution
@@ -693,3 +707,28 @@ def next_or_none(it):
     except StopIteration:
         return None
     return n
+
+
+
+
+""" from dbn2latex.py """
+
+
+def unroll(G, steps):
+    N = {}
+    for i in range(0, steps):
+        N.update({v + str(i): set([u + str(i + 1) for u in G[v]]) for v in G})
+    N.update({v + str(steps): set() for v in G})
+    return N
+
+
+def unroll_undersample(G, steps):
+    # does not provide isochronal bidirectional edges
+    N = {}
+    steps += 2
+    U = unroll(G, steps)
+    nodes = G.keys()
+    for v in G:
+        N.update(
+            {v: set([nodes[k] for k in scipy.where([ecj.reachable(v + '0', U, u + str(steps - 1)) for u in G])[0]])})
+    return N

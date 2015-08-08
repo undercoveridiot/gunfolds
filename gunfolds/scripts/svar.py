@@ -2,7 +2,7 @@ import copy
 import functools
 from gunfolds.tools.calc_procs import get_process_count
 from gunfolds.tools import bfutils as bfu
-from gunfolds.tools.conversions import num2CG
+from gunfolds.tools.conversions import num2CG, g2vec, vec2g
 from gunfolds.tools import graphkit as gk
 from gunfolds.tools import linear_model as lm
 from gunfolds.tools import pc
@@ -73,14 +73,14 @@ def find_nearest_reachable(g2, max_depth=4):
         return s
     step = 1
     n = len(g2)
-    v = bfu.g2vec(g2)
+    v = g2vec(g2)
     while True:
         l = hamming_neighbors(v, step)
         pbar = ProgressBar(
             widgets=['neighbors checked @ step ' + str(step) + ': ', Percentage(), ' '], maxval=len(l)).start()
         c = 0
         for e in l:
-            g = bfu.vec2g(e, n)
+            g = vec2g(e, n)
             if not gk.scc_unreachable(g):
                 # s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
                 s = trv.v2g22g1(g, capsize=CAPSIZE, verbose=False)

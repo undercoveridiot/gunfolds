@@ -168,69 +168,6 @@ def cc_undersamples(G_star, steps=1):
     return glist[-1]
 
 
-
-
-#### Adjacency matrix functions
-
-def graph2adj(G):
-    """ Convert the directed edges to an adjacency matrix """
-    n = len(G)
-    A = scipy.zeros((n, n), dtype=np.int8)
-    for v in G:
-        A[int(v) - 1, [int(w)-1 for w in G[v] if G[v][w] in (1,3)]] = 1
-    return A
-
-
-def graph2badj(G):
-    """ Convert the bidirected edges to an adjacency matrix """
-    n = len(G)
-    A = scipy.zeros((n, n), dtype=np.int8)
-    for v in G:
-        A[int(v) - 1, [int(w)-1 for w in G[v] if G[v][w] in (2,3)]] = 1
-    return A
-
-
-def adjs2graph(directed, bidirected):
-    """ Convert an adjacency matrix of directed and bidirected edges to a graph """
-    G = {}
-    for name in xrange(1, directed.shape[0] + 1):
-        G[name] = {}
-    for i in xrange(directed.shape[0]):
-        for name in np.where(directed[i,:] == 1)[0] + 1:
-            G[i + 1][name] = 1
-
-    for i in xrange(bidirected.shape[0]):
-        for j in xrange(bidirected.shape[1]):
-            if bidirected[i, j]:
-                if j + 1 in G[i + 1]:
-                    G[i + 1][j + 1] = 3
-                else:
-                    G[i + 1][j + 1] = 2
-    return G
-
-
-def g2vec(g):
-    A = graph2adj(g)
-    B = graph2badj(g)
-    return np.r_[A.flatten(), B[np.triu_indices(B.shape[0])]]
-
-
-def vec2adj(v, n):
-    A = np.zeros((n, n))
-    B = np.zeros((n, n))
-    A[:] = v[:n ** 2].reshape(n, n)
-    B[np.triu_indices(n)] = v[n ** 2:]
-    B = B + B.T
-    return A, B
-
-
-def vec2g(v, n):
-    A, B = vec2adj(v, n)
-    return adjs2graph(A, B)
-
-
-
-
 #### Misc graph functions
 
 def overshoot(G_star, H):

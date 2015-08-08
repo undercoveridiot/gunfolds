@@ -4,18 +4,27 @@ from gunfolds.tools import load_data
 from gunfolds.tools.testgraphs import *
 from gunfolds.tools import zickle
 import igraph
+import math
 import numpy as np
 import os
 import scipy
+from scipy import array, cos, sin, deg2rad, rad2deg
 import StringIO
 
 
+
+
+##++++ CONVERTED ++++##
+
+
+
+
 def graph2dict(g):
-    D = {}`
+    D = {}
     for v in range(0, len(g.vs)):
         D[g.vs[v]["label"]] = {}
         for u in g.neighbors(v, mode="OUT"):
-            D[g.vs[v]["label"]][g.vs[u]["label"]] = set([(0, 1)])
+            D[g.vs[v]["label"]][g.vs[u]["label"]] = 1
     return D
 
 
@@ -43,31 +52,11 @@ def dict2graph(D):
         c += 1
     for v in nodes:
         for u in D[v]:
-            if not ((2, 0) in D[v][u]):
+            if D[v][u] not in (2,3):
                 A[indices[v], indices[u]] = 1
     g = igraph.Graph.Adjacency(A.tolist())
     g.vs["label"] = nodes
     return g
-
-
-def unroll(G, steps):
-    N = {}
-    for i in range(0, steps):
-        N.update({v + str(i): set([u + str(i + 1) for u in G[v]]) for v in G})
-    N.update({v + str(steps): set() for v in G})
-    return N
-
-
-def unroll_undersample(G, steps):
-    # does not provide isochronal bidirectional edges
-    N = {}
-    steps += 2
-    U = unroll(G, steps)
-    nodes = G.keys()
-    for v in G:
-        N.update(
-            {v: set([nodes[k] for k in scipy.where([ecj.reachable(v + '0', U, u + str(steps - 1)) for u in G])[0]])})
-    return N
 
 
 def matrix_start(mname='generic', w_gap=0.45, h_gap=0.5, stl=''):
@@ -97,7 +86,7 @@ def matrix_edges(G, s, mname='generic'):
     for v in nodes:
         idx1 = nodes.index(v) + 1
         for u in G[v]:
-            if G[v][u].intersection([(edge_type['directed'], 1)]):
+            if G[v][u] in (1,3):
                 idx2 = nodes.index(u) + 1
                 print '\\foreach \\x in{' + ','.join(map(str, range(1, s - 1))) + '}{'
                 print '  \\pgfmathtruncatemacro{\\xn}{\\x+1}'
@@ -116,9 +105,6 @@ def emacs_vars():
 def dbnprint(G, s, mname='generic', w_gap=0.5, h_gap=0.5, type="obs", stl=''):
     matrix_grid(G, s, mname=mname, w_gap=w_gap, h_gap=h_gap, type=type, stl=stl)
     matrix_edges(G, s, mname=mname)
-
-from scipy import array, cos, sin, deg2rad, rad2deg
-import math
 
 
 def getangle(A, B):
@@ -164,15 +150,15 @@ def cdbnprint(G, mtype="obs", bend=5, curve=5, R=1):
 
     for i in range(0, n):
         v = nodes[i]
-        ll = [v + '/' + u for u in G[v]]
+        ll = [str(v) + '/' + str(u) for u in G[v]]
         for l in ll:
             a, b = l.split('/')
-            if G[a][b].intersection([(edge_type['bidirected'], 0)]):
+            if G[a][b] in (2,3):
                 if not(BE.intersection([(a, b)]) or BE.intersection([(b, a)])):
                     ang_a = -nodes.index(a) * 360 / n + 180
                     ang_b = -nodes.index(b) * 360 / n + 180
                     print >>output, '  \\draw[pilip, on layer=back] (' + a + ') -- (' + b + ');'
-            if G[a][b].intersection([(edge_type['directed'], 1)]):
+            if G[a][b] in (1,3):
                 ang_a = -nodes.index(a) * 360 / n + 180
                 ang_b = -nodes.index(b) * 360 / n + 180
                 if a == b:
@@ -222,14 +208,14 @@ def gprint(G, mtype="obs", bend=5, curve=5, R=1, layout=None, scale=5):
 
     for i in range(0, n):
         v = g.vs[i]['label']
-        ll = [v + '/' + u for u in G[v]]
+        ll = [str(v) + '/' + str(u) for u in G[v]]
         for l in ll:
             a, b = l.split('/')
-            if G[a][b].intersection([(edge_type['bidirected'], 0)]):
+            if G[a][b] in (2,3):
                 if not(BE.intersection([(a, b)]) or BE.intersection([(b, a)])):
                     print >>output, '  \\draw[pilip, on layer=back] (' +\
                         a + ') -- (' + b + ');'
-            if G[a][b].intersection([(edge_type['directed'], 1)]):
+            if G[a][b] in (1,3):
                 if a == b:
                     dff = cc[g.vs['label'].index(a)] - scipy.mean(cc, 0)
                     ang = scipy.arctan2(dff[1], dff[0])

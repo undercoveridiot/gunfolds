@@ -1,6 +1,7 @@
 from gunfolds.tools import ecj
 from gunfolds.tools import bfutils
-from gunfolds.tools import  graphkit as gk
+from gunfolds.tools.conversions import graph2adj
+from gunfolds.tools import graphkit as gk
 import numpy as np
 from progressbar import ProgressBar, Percentage
 import scipy
@@ -115,7 +116,7 @@ def randweights(n, c=0.1, factor=9):
     return rw
 
 def transitionMatrix(cg, minstrength=0.1):
-    A = gk.CG2adj(cg)
+    A = graph2adj(cg)
     edges = scipy.where(A == 1)
     A[edges] = randweights(edges[0].shape[0], c=minstrength)
     l = linalg.eig(A)[0]
@@ -136,7 +137,7 @@ def sampleWeights(n, minstrength=0.1):
     return r
 
 def transitionMatrix2(cg, minstrength=0.1):
-    A = gk.CG2adj(cg)
+    A = graph2adj(cg)
     edges = scipy.where(A == 1)
     A[edges] = sampleWeights(edges[0].shape[0], minstrength=minstrength)
     l = linalg.eig(A)[0]
@@ -153,7 +154,7 @@ def transitionMatrix2(cg, minstrength=0.1):
     return A
 
 def transitionMatrix3(cg, x0=None, minstrength=0.1):
-    A = gk.CG2adj(cg)
+    A = graph2adj(cg)
     edges = scipy.where(A == 1)
 
     try:
@@ -233,7 +234,7 @@ def initRandomMatrix(A, edges, maxtries=100, distribution='beta', stable=True):
     return A
 
 def transitionMatrix4(g, minstrength=0.1, distribution='normal', maxtries=1000):
-    A = gk.CG2adj(g)
+    A = graph2adj(g)
     edges = np.where(A == 1)
     s = 2.0
     c = 0

@@ -1,13 +1,11 @@
 # tools to construct (random) graphs
-from gunfolds.tools.conversions import nx2graph
+from gunfolds.tools.conversions import nx2graph, graph2adj
 from gunfolds.tools import ecj
-import igraph
 from itertools import combinations
 import networkx as nx
 import numpy as np
 from numpy.random import randint
 import random as std_random
-import scipy
 
 
 def edgelist(g):  # directed
@@ -16,7 +14,7 @@ def edgelist(g):  # directed
     '''
     l = []
     for n in g:
-        l.extend([(n, e) for e in g[n] if (0, 1) in g[n][e]])
+        l.extend([(n, e) for e in g[n] if g[n][e] in (1, 3)])
     return l
 
 
@@ -27,11 +25,10 @@ def inedgelist(g):  # missing directed iterator
     n = len(g)
     for v in g:
         for i in xrange(1, n + 1):
-            w = str(i)
-            if not w in g[v]:
-                yield (v, w)
-            elif not (0, 1) in g[v][w]:
-                yield (v, w)
+            if not i in g[v]:
+                yield (v, i)
+            elif g[v][i] not in (1, 3):
+                yield (v, i)
 
 
 def inbedgelist(g):  # missing bidirected iterator
@@ -43,49 +40,26 @@ def inbedgelist(g):  # missing bidirected iterator
             if v != w:
                 if not w in g[v]:
                     yield (v, w)
-                elif not (2, 0) in g[v][w]:
+                elif g[v][w] not in (2, 3):
                     yield (v, w)
 
 
-def bedgelist(g):  # bidirected edge list with flips
+def bedgelist(g):
+    """ bidirected edge list with flips """
     l = []
     for n in g:
-        l.extend([tuple(sorted((n, e))) for e in g[n] if (2, 0) in g[n][e]])
+        l.extend([tuple(sorted((n, e))) for e in g[n] if g[n][e] in (2, 3)])
     l = list(set(l))
     l = l + map(lambda x: (x[1], x[0]), l)
     return l
 
 
-def CG2adj(G):
-    n = len(G)
-    A = [[0 for i in range(0, n)] for j in range(0, n)]
-    for v in G:
-        if G[v]:
-            directed = [w for w in G[v] if (0, 1) in G[v][w]]
-            for w in directed:
-                A[int(w) - 1][int(v) - 1] = 1
-    A = np.double(np.asarray(A))
-    return A
-
-
-def g2ig(g):
-    """
-    Converts our graph represenataion to an igraph for plotting
-    """
-    t = scipy.where(CG2adj(g) == 1)
-    l = zip(t[0], t[1])
-    ig = igraph.Graph(l, directed=True)
-    ig.vs["name"] = scipy.sort([u for u in g])
-    ig.vs["label"] = ig.vs["name"]
-    return ig
-
-
 def superclique(n):
+    """ All possible edges """
     g = {}
     for i in range(n):
-        g[str(i + 1)] = {str(j + 1): set([(0, 1), (2, 0)])
-                         for j in range(n) if j != i}
-        g[str(i + 1)][str(i + 1)] = set([(0, 1)])
+        g[i + 1] = {j + 1: 3 for j in range(n) if j != i}
+        g[i + 1][i + 1] = 1
     return g
 
 

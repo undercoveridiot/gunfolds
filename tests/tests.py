@@ -86,33 +86,6 @@ class TestBFUtilsFunctions(unittest.TestCase):
 
         self.assertFalse(bfutils.is_sclique(no_sc_1))
 
-    def test__to_adj_matrix(self):
-        g = {1: {1: 1, 2: 2, 3: 1},
-             2: {1: 2, 2: 1, 3: 1, 4: 1},
-             3: {1: 1, 2: 1, 3: 1, 4: 1},
-             4: {1: 1, 2: 1, 3: 1, 5: 1},
-             5: {1: 3}}
-
-        expected_a = np.array([[1, 0, 1, 0, 0],
-                               [0, 1, 1, 1, 0],
-                               [1, 1, 1, 1, 0],
-                               [1, 1, 1, 0, 1],
-                               [1, 0, 0, 0, 0]], dtype=np.int8)
-
-        expected_b = np.array([[0, 1, 0, 0, 0],
-                               [1, 0, 0, 0, 0],
-                               [0, 0, 0, 0, 0],
-                               [0, 0, 0, 0, 0],
-                               [1, 0, 0, 0, 0]], dtype=np.int8)
-
-        self.assertTrue((bfutils.graph2adj(g) == expected_a).all())
-        self.assertTrue((bfutils.graph2badj(g) == expected_b).all())
-
-        # test round trip
-        A = bfutils.graph2adj(g)
-        B = bfutils.graph2badj(g)
-        self.assertEqual(bfutils.adjs2graph(A, B), g)
-
 
 
 class TestConversionFunctions(unittest.TestCase):
@@ -144,6 +117,33 @@ class TestConversionFunctions(unittest.TestCase):
                     5: {1: 1}}
         converted = conversions.dict_format_converter(self._G)
         self.assertEqual(expected, converted)
+
+    def test__to_adj_matrix(self):
+        g = {1: {1: 1, 2: 2, 3: 1},
+             2: {1: 2, 2: 1, 3: 1, 4: 1},
+             3: {1: 1, 2: 1, 3: 1, 4: 1},
+             4: {1: 1, 2: 1, 3: 1, 5: 1},
+             5: {1: 3}}
+
+        expected_a = np.array([[1, 0, 1, 0, 0],
+                               [0, 1, 1, 1, 0],
+                               [1, 1, 1, 1, 0],
+                               [1, 1, 1, 0, 1],
+                               [1, 0, 0, 0, 0]], dtype=np.int8)
+
+        expected_b = np.array([[0, 1, 0, 0, 0],
+                               [1, 0, 0, 0, 0],
+                               [0, 0, 0, 0, 0],
+                               [0, 0, 0, 0, 0],
+                               [1, 0, 0, 0, 0]], dtype=np.int8)
+
+        self.assertTrue((conversions.graph2adj(g) == expected_a).all())
+        self.assertTrue((conversions.graph2badj(g) == expected_b).all())
+
+        # test round trip
+        A = conversions.graph2adj(g)
+        B = conversions.graph2badj(g)
+        self.assertEqual(conversions.adjs2graph(A, B), g)
 
 
 
