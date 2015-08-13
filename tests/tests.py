@@ -200,6 +200,21 @@ class TestTraversalFunctions(unittest.TestCase):
         g1 = traversal.v2g22g1(g2)
         self.assertEqual(expected, g1)
 
+    def test__supergraphs_in_eq(self):
+        g1 = {1: {1: 1, 2: 1, 3: 1},
+              2: {3: 1, 4: 1},
+              3: {1: 1, 2: 1, 3: 1, 4: 1},
+              4: {1: 1, 2: 1, 3: 1, 5: 1},
+              5: {2: 1}}
+        g2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
+              2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
+              3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
+              4: {1: 3, 2: 3, 3: 3, 4: 1},
+              5: {1: 3, 2: 2, 3: 3, 4: 1}}
+
+        expected = {30112680}
+        self.assertEqual(expected, trv.supergraphs_in_eq(g1, g2))
+
 
 
 if __name__ == '__main__':
