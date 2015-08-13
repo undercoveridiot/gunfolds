@@ -193,6 +193,11 @@ class TestTraversalFunctions(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Read in pickle file with results
+        cls._G1 = {1: {1: 1, 2: 1, 3: 1},
+                   2: {1: 1, 3: 1, 4: 1},
+                   3: {1: 1, 2: 1, 3: 1, 4: 1},
+                   4: {1: 1, 2: 1, 3: 1, 5: 1},
+                   5: {2: 1}}
         cls._G2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
                    2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
                    3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
@@ -202,31 +207,13 @@ class TestTraversalFunctions(unittest.TestCase):
         cls._ABS_PATH = os.path.abspath(os.path.join(DIR_NAME))
 
     def test__v2g22g1(self):
-        g2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
-              2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
-              3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
-              4: {1: 3, 2: 3, 3: 3, 4: 1},
-              5: {1: 3, 2: 2, 3: 3, 4: 1}}
         expected = zkl.load("{}/v2g22g1_output.zkl".format(self._ABS_PATH))
-        g1 = traversal.v2g22g1(g2)
+        g1 = traversal.v2g22g1(self._G2)
         self.assertEqual(expected, g1)
 
     def test__supergraphs_in_eq(self):
-        g1 = {1: {1: 1, 2: 1, 3: 1},
-              2: {3: 1, 4: 1},
-              3: {1: 1, 2: 1, 3: 1, 4: 1},
-              4: {1: 1, 2: 1, 3: 1, 5: 1},
-              5: {2: 1}}
-
         expected = {30112680}
-        self.assertEqual(expected, traversal.supergraphs_in_eq(g1, self._G2))
-
-    def test__vedgelist(self):
-        expected = sorted([(4, 1, 3), (4, 2, 4), (3, 5, 4), 
-                    (3, 1, 3), (2, 5, 4), (2, 1, 3), 
-                    (5, 1, 3), (1, 1, 3), (1, 2, 4), 
-                    (1, 2, 3, 2), (5, 4)])
-        self.assertEqual(expected, sorted(traversal.vedgelist(self._G2, pathtoo=False)))
+        self.assertEqual(expected, traversal.supergraphs_in_eq(self._G1, self._G2))
 
     def test__checkvedge(self):
         expected = sorted([(2, 2), (4, 1), (1, 2), 
@@ -264,6 +251,10 @@ class TestTraversalFunctions(unittest.TestCase):
     def test__checkedge(self):
         expected = [1, 2, 3, 4, 5]
         self.assertEqual(expected, sorted(traversal.checkedge((5, 4), self._G2)))
+
+    def test__ok2addanedge(self):
+        expected = None
+        self.assertEqual(expected, traversal.ok2addanedge(1, 5, self._G1, self._G2, rate=1))
 
 
 
