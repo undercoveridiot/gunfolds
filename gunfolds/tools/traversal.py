@@ -1,3 +1,4 @@
+from __future__ import division
 from gunfolds.tools import bfutils as bfu
 from gunfolds.tools.conversions import g2num, graph2nx
 from gunfolds.tools import graphkit as gk
@@ -153,7 +154,7 @@ def make_allforks_and_rest(g, el, bl, dofullforks=True):
     random.shuffle(nodes)
     for n in nodes:
 
-        c = [e for e in g[n] if g[n][e] in (1,3)]  # all children
+        c = [e for e in g[n] if g[n][e] in (1, 3)]  # all children
         if len(c) == 1:
             if (n, c[0]) in el:
                 r.append((n, c[0]))
@@ -532,14 +533,14 @@ def ok2addanedge1(s, e, g, g2, rate=1):
     """
     # directed edges
     for u in g:
-        if s in g[u] and not (e in g2[u] and g2[u][e] in (1,3)):
+        if s in g[u] and not (e in g2[u] and g2[u][e] in (1, 3)):
             return False
     for u in g[e]:  # s -> Ch(e)
-        if not (u in g2[s] and g2[s][u] in (1,3)):
+        if not (u in g2[s] and g2[s][u] in (1, 3)):
             return False
     # bidirected edges
     for u in g[s]:  # e <-> Ch(s)
-        if u != e and not (u in g2[e] and g2[e][u] in (2,3)):
+        if u != e and not (u in g2[e] and g2[e][u] in (2, 3)):
             return False
     return True
 
@@ -604,7 +605,7 @@ def addanedge(g, e):
     add edge e[0] -> e[1] to g
     '''
     mask = maskanedge(g, e)
-    g[e[0]][e[1]] = set([(0, 1)])
+    g[e[0]][e[1]] = 1
     return mask
 
 
@@ -623,7 +624,7 @@ def add2edges(g, e, p):
     and add them to g
     '''
     mask = mask2edges(g, e, p)
-    g[e[0]][p] = g[p][e[1]] = set([(0, 1)])
+    g[e[0]][p] = g[p][e[1]] = 1
     return mask
 
 
@@ -639,28 +640,28 @@ def del2edges(g, e, p, mask):
 
 def ok2addavedge(e, p, g, g2):
     if p[1] == e[0]:
-        if p[0] != p[1] and p[0] != e[2] and not (e[2] in g2[p[0]] and (2, 0) in g2[p[0]][e[2]]):
+        if p[0] != p[1] and p[0] != e[2] and not (e[2] in g2[p[0]] and g2[p[0]][e[2]] in (2, 3)):
             return False
-        if p[0] == p[1] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[0] == p[1] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
-        if p[0] == e[1] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[0] == e[1] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
 
     if p[0] == e[0]:
-        if p[0] != p[1] and p[1] != e[1] and not (e[1] in g2[p[1]] and (2, 0) in g2[p[1]][e[1]]):
+        if p[0] != p[1] and p[1] != e[1] and not (e[1] in g2[p[1]] and g2[p[1]][e[1]] in (2, 3)):
             return False
-        if p[0] == p[1] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[0] == p[1] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
-        if p[1] == e[2] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[1] == e[2] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
 
-    if p[0] == e[1] and p[1] == e[2] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+    if p[0] == e[1] and p[1] == e[2] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
         return False
-    if p[0] == e[2] and not (e[1] in g2[p[1]] and (0, 1) in g2[p[1]][e[1]]):
+    if p[0] == e[2] and not (e[1] in g2[p[1]] and g2[p[1]][e[1]] in (1, 3)):
         return False
-    if p[1] == e[1] and not (e[2] in g2[p[0]] and (0, 1) in g2[p[0]][e[2]]):
+    if p[1] == e[1] and not (e[2] in g2[p[0]] and g2[p[0]][e[2]] in (1, 3)):
         return False
-    if p[0] == p[1] == e[0] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+    if p[0] == p[1] == e[0] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
         return False
 
     if not edge_increment_ok(e[0], p[0], e[1], g, g2):
@@ -673,7 +674,7 @@ def ok2addavedge(e, p, g, g2):
 
 def addavedge(g, v, b):
     mask = maskavedge(g, v, b)
-    g[v[0]][b[0]] = g[v[0]][b[1]] = g[b[0]][v[1]] = g[b[1]][v[2]] = set([(0, 1)])
+    g[v[0]][b[0]] = g[v[0]][b[1]] = g[b[0]][v[1]] = g[b[1]][v[2]] = 1
     return mask
 
 
@@ -689,9 +690,9 @@ def delavedge(g, v, b, mask):
 
 
 def ok2addaAedge(e, p, g, g2):
-    if p[1] == e[1] and not (p[0] in g2[e[2]] and (0, 1) in g2[e[2]][p[0]]):
+    if p[1] == e[1] and not (p[0] in g2[e[2]] and g2[e[2]][p[0]] in (1, 3)):
         return False
-    if p[0] == e[2] and not (p[1] in g2[e[1]] and (0, 1) in g2[e[1]][p[1]]):
+    if p[0] == e[2] and not (p[1] in g2[e[1]] and g2[e[1]][p[1]] in (1, 3)):
         return False
 
     if not edge_increment_ok(e[1], p[0], e[3], g, g2):
@@ -704,7 +705,7 @@ def ok2addaAedge(e, p, g, g2):
 
 def addaAedge(g, v, b):
     mask = maskaAedge(g, v, b)
-    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[3]] = g[b[1]][v[3]] = set([(0, 1)])
+    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[3]] = g[b[1]][v[3]] = 1
     return mask
 
 
@@ -766,19 +767,17 @@ def ok2addaVpath(e, p, g, g2, rate=2):
 def addapath(g, v, b):
 
     mask = maskapath(g, v, b)
-    s = set([(0, 1)])
     for i in range(len(b)):
-        g[v[i + 1]][b[i]] = g[b[i]][v[i + 2]] = s
+        g[v[i + 1]][b[i]] = g[b[i]][v[i + 2]] = 1
 
     return mask
 
 
 def addaVpath(g, v, b):
     mask = maskaVpath(g, v, b)
-    s = set([(0, 1)])
     l = [v[0]] + list(b) + [v[1]]
     for i in range(len(l) - 1):
-        g[l[i]][l[i + 1]] = s
+        g[l[i]][l[i + 1]] = 1
     return mask
 
 
@@ -812,7 +811,7 @@ def ok2addacedge(e, p, g, g2):
             return False
         if not p[0] in g2[p[0]]:
             return False
-        if not (e[3] in g2[e[1]] and (0, 1) in g2[e[1]][e[3]]):
+        if not (e[3] in g2[e[1]] and g2[e[1]][e[3]] in (1, 3)):
             return False
 
     if not edge_increment_ok(e[1], p[0], e[2], g, g2):
@@ -825,7 +824,7 @@ def ok2addacedge(e, p, g, g2):
 
 def addacedge(g, v, b):  # chain
     mask = maskaCedge(g, v, b)
-    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[2]] = g[b[1]][v[3]] = set([(0, 1)])
+    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[2]] = g[b[1]][v[3]] = 1
     return mask
 
 
@@ -845,7 +844,7 @@ def density(g):
 
 
 def udensity(g):
-    return (len(gk.edgelist(g)) + len(gk.bedgelist(g)) / 2.) / np.double(len(g) ** 2 + len(g) * (len(g) - 1) / 2.)
+    return (len(gk.edgelist(g)) + len(gk.bedgelist(g)) / 2) / np.double(len(g) ** 2 + len(g) * (len(g) - 1) / 2)
 
 
 def esig(l, n):
@@ -853,7 +852,7 @@ def esig(l, n):
     turns edge list into a hash string
     '''
     z = len(str(n))
-    n = map(lambda x: ''.join(map(lambda y: y.zfill(z), x)), l)
+    n = map(lambda x: ''.join(map(lambda y: str(y).zfill(z), x)), l)
     n.sort()
     n = ''.join(n[::-1])
     return int('1' + n)
@@ -999,7 +998,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
     cds, order, idx = conformanceDS(g2, gg, keys)
     endTime = int(round(time.time() * 1000))
     if verbose:
-        print "precomputed in {:10} seconds".format(round((endTime - startTime) / 1000., 3))
+        print "precomputed in {:10} seconds".format(round((endTime - startTime) / 1000, 3))
     if 0 in [len(x) for x in order]:
         return set()
     g = cloneempty(g2)
@@ -1092,7 +1091,7 @@ def length_d_paths(G, s, d):
             return
 
         for u in G[s]:
-            if G[s][u] == set([(2, 0)]) or u in path:
+            if G[s][u] == 2 or u in path:
                 continue
             for v in recurse(G, u, d - 1, path + [u]):
                 yield v
@@ -1109,29 +1108,29 @@ def edge_increment_ok(s, m, e, g, g2):
     """
     # bidirected edges
     for u in g[s]:
-        if u != m and not (m in g2[u] and (2, 0) in g2[u][m]):
+        if u != m and not (m in g2[u] and g2[u][m] in (2, 3)):
             return False
 
     # directed edges
     if s == e:
-        if not (m in g2[m] and (0, 1) in g2[m][m]):
+        if not (m in g2[m] and g2[m][m] in (1, 3)):
             return False
-        if not (s in g2[s] and (0, 1) in g2[s][s]):
+        if not (s in g2[s] and g2[s][s] in (1, 3)):
             return False
     for u in g[m]:
-        if not (u in g2[s] and (0, 1) in g2[s][u]):
+        if not (u in g2[s] and g2[s][u] in (1, 3)):
             return False
         # bidirected edges
-        if u != e and not (e in g2[u] and (2, 0) in g2[u][e]):
+        if u != e and not (e in g2[u] and g2[u][e] in (2, 3)):
             return False
     for u in g[e]:
-        if not (u in g2[m] and (0, 1) in g2[m][u]):
+        if not (u in g2[m] and g2[m][u] in (1, 3)):
             return False
 
     for u in g:
-        if s in g[u] and not (m in g2[u] and (0, 1) in g2[u][m]):
+        if s in g[u] and not (m in g2[u] and g2[u][m] in (1, 3)):
             return False
-        if m in g[u] and not (e in g2[u] and (0, 1) in g2[u][e]):
+        if m in g[u] and not (e in g2[u] and g2[u][e] in (1, 3)):
             return False
 
     return True
@@ -1153,7 +1152,7 @@ def length_d_loopy_paths(G, s, dt, p):
 
             mask = add2edges(g, (p[-d - 2], p[-d - 1]), s)
             for u in g2[s]:
-                if g2[s][u] == set([(2, 0)]):
+                if g2[s][u] == 2:
                     continue
                 for v in recurse(g, g2, u, d - 1, path + [u]):
                     yield v

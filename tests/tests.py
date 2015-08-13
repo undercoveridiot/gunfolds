@@ -1,3 +1,4 @@
+from copy import deepcopy
 from gunfolds.tools import bfutils
 from gunfolds.tools import conversions
 from gunfolds.tools import graphkit
@@ -271,6 +272,33 @@ class TestTraversalFunctions(unittest.TestCase):
 
     def test__ok2addanedge1(self):
         self.assertFalse(traversal.ok2addanedge1(1, 5, self._G1, self._G2, rate=1))
+
+    def test__ok2addavedge(self):
+        g = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
+        self.assertTrue(traversal.ok2addavedge((1, 2, 4), (2, 2), g, self._G2))
+        self.assertFalse(traversal.ok2addavedge((1, 2, 4), (5, 1), g, self._G2))
+
+    def test__ok2add2edges(self):
+        g = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
+        self.assertTrue(traversal.ok2add2edges((5, 4), 1, g, self._G2))
+
+    def test__ok2addacedge(self):
+        g = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
+        self.assertTrue(traversal.ok2addacedge((0, 3, 2, 2), (5, 3), g, self._G2))
+        self.assertFalse(traversal.ok2addacedge((0, 3, 2, 2), (3, 5), g, self._G2))
+
+    def test__edge_increment_ok(self):
+        g = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
+        self.assertTrue(traversal.edge_increment_ok(5, 1, 4, g, self._G2))
+        self.assertFalse(traversal.edge_increment_ok(5, 1, 4, self._G1, self._G2))
+
+    def test__signature(self):
+        edges = [(3, 5, 4), (0, 3, 2, 2), (2, 5, 4),
+                 (4, 2, 4), (1, 2, 4), (2, 1, 3),
+                 (1, 1, 3), (5, 4), (5, 1, 3), (3, 1, 3),
+                 (4, 1, 3)]
+        expected = (30112680, 1545134244133543132542131241130322L)
+        self.assertEqual(expected, traversal.signature(self._G1, edges))
 
 
 
