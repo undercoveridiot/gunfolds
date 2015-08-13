@@ -538,14 +538,14 @@ def ok2addanedge1(s, e, g, g2, rate=1):
     """
     # directed edges
     for u in g:
-        if s in g[u] and not (e in g2[u] and (0, 1) in g2[u][e]):
+        if s in g[u] and not (e in g2[u] and g2[u][e] in (1,3)):
             return False
     for u in g[e]:  # s -> Ch(e)
-        if not (u in g2[s] and (0, 1) in g2[s][u]):
+        if not (u in g2[s] and g2[s][u] in (1,3)):
             return False
     # bidirected edges
     for u in g[s]:  # e <-> Ch(s)
-        if u != e and not (u in g2[e] and (2, 0) in g2[e][u]):
+        if u != e and not (u in g2[e] and g2[e][u] in (2,3)):
             return False
     return True
 

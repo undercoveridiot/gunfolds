@@ -212,8 +212,22 @@ class TestTraversalFunctions(unittest.TestCase):
         self.assertEqual(expected, g1)
 
     def test__supergraphs_in_eq(self):
-        expected = {30112680}
+        expected = set([])
         self.assertEqual(expected, traversal.supergraphs_in_eq(self._G1, self._G2))
+
+        g1 = {1: {1: 1, 2: 1, 3: 1},
+              2: {3: 1, 4: 1},
+              3: {1: 1, 2: 1, 4: 1},
+              4: {1: 1, 2: 1, 3: 1, 5: 1},
+              5: {2: 1}}
+        g2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
+              2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
+              3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
+              4: {1: 3, 2: 3, 3: 3, 4: 1},
+              5: {1: 2, 2: 2, 3: 3, 4: 1}}
+        expected = {29588392}
+        self.assertEqual(expected, traversal.supergraphs_in_eq(g1, g2))
+
 
     def test__checkvedge(self):
         expected = sorted([(2, 2), (4, 1), (1, 2), 
@@ -253,8 +267,10 @@ class TestTraversalFunctions(unittest.TestCase):
         self.assertEqual(expected, sorted(traversal.checkedge((5, 4), self._G2)))
 
     def test__ok2addanedge(self):
-        expected = None
-        self.assertEqual(expected, traversal.ok2addanedge(1, 5, self._G1, self._G2, rate=1))
+        self.assertFalse(traversal.ok2addanedge(1, 5, self._G1, self._G2, rate=1))
+
+    def test__ok2addanedge1(self):
+        self.assertFalse(traversal.ok2addanedge1(1, 5, self._G1, self._G2, rate=1))
 
 
 
