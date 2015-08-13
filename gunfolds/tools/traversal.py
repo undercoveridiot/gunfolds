@@ -989,23 +989,22 @@ def v2g22g1(g2, capsize=None, verbose=True):
 
     # find all directed g1's not conflicting with g2
 
-    startTime = int(round(time.time() * 1000))
+    startTime = time.time()
     gg = checkable(g2)
 
     idx = np.argsort([len(gg[x]) for x in gg.keys()])
     keys = [gg.keys()[i] for i in idx]
 
     cds, order, idx = conformanceDS(g2, gg, keys)
-    endTime = int(round(time.time() * 1000))
     if verbose:
-        print "precomputed in {:10} seconds".format(round((endTime - startTime) / 1000, 3))
+        print "precomputed in {:10.3f} seconds".format(time.time() - startTime)
     if 0 in [len(x) for x in order]:
         return set()
     g = cloneempty(g2)
 
     s = set()
     try:
-        nodesearch(g, g2, [keys[i] for i in idx], ['0'], s, cds, order, set())
+        nodesearch(g, g2, [keys[i] for i in idx], [0], s, cds, order, set())
     except ValueError, e:
         print e
         s.add(0)
@@ -1055,7 +1054,7 @@ def prune_sort_CDS(cds, pool):
 
     ds = {}
     ds[0] = {}
-    ds[0]['0'] = pool[idx[0]]
+    ds[0][0] = pool[idx[0]]
 
     for i in range(1, len(idx)):
         ds[i] = {}
