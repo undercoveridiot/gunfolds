@@ -994,50 +994,6 @@ def v2g22g1(g2, capsize=None, verbose=True):
                 raise ValueError('Too many elements')
             return g
 
-    @memo2  # memoize the search
-    def nodesearch0(g, g2, order, inlist, s, cds):
-
-        if order:
-            key = order.pop(0)
-            tocheck = cds[len(inlist) - 1][inlist[0]]
-
-            adder, remover, masker = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]
-
-            if len(tocheck) > 1:
-                for n in tocheck:
-                    if not checks_ok(key, n, g, g2):
-                        continue
-                    mask = masker(g, key, n)
-                    if not np.prod(mask):
-                        mask = adder(g, key, n)
-                        r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
-                        if r and bfu.increment(r) == g2:
-                            s.add(g2num(r))
-                            if capsize and len(s) > capsize:
-                                raise ValueError('Too many elements')
-                        remover(g, key, n, mask)
-                    else:
-                        r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
-                        if r and bfu.increment(r) == g2:
-                            s.add(g2num(r))
-                            if capsize and len(s) > capsize:
-                                raise ValueError('Too many elements')
-            elif tocheck:
-                (n,) = tocheck
-                mask = adder(g, key, n)
-                r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
-                if r and bfu.increment(r) == g2:
-                    s.add(g2num(r))
-                    if capsize and len(s) > capsize:
-                        raise ValueError('Too many elements')
-                remover(g, key, n, mask)
-
-            order.insert(0, key)
-
-        else:
-            return g
-
     # find all directed g1's not conflicting with g2
 
     startTime = int(round(time.time() * 1000))
@@ -1057,7 +1013,6 @@ def v2g22g1(g2, capsize=None, verbose=True):
     s = set()
     try:
         nodesearch(g, g2, [keys[i] for i in idx], ['0'], s, cds, order, set())
-        # nodesearch0(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
     except ValueError, e:
         print e
         s.add(0)
