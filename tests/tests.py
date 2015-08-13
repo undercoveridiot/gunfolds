@@ -1,6 +1,7 @@
 from gunfolds.tools import bfutils
 from gunfolds.tools import conversions
 from gunfolds.tools import graphkit
+from gunfolds.tools import traversal
 from gunfolds.tools import unknownrate as ur
 from gunfolds.tools import zickle as zkl
 import numpy as np
