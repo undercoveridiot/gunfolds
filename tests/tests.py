@@ -186,6 +186,21 @@ class TestUnknownRateFunctions(unittest.TestCase):
         self.assertEqual(s, set_of_u_2)
 
 
+
+class TestTraversalFunctions(unittest.TestCase):
+
+    def test__v2g22g1(self):
+        g2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
+              2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
+              3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
+              4: {1: 3, 2: 3, 3: 3, 4: 1},
+              5: {1: 3, 2: 2, 3: 3, 4: 1}}
+        expected = zkl.load("{}/v2g22g1_output.zkl".format(self._ABS_PATH))
+        g1 = traversal.v2g22g1(g2)
+        self.assertEqual(expected, g1)
+
+
+
 if __name__ == '__main__':
     try:
         from teamcity import is_running_under_teamcity

@@ -709,6 +709,134 @@ def next_or_none(it):
     return n
 
 
+def backtrackup2u(H, umax=2):
+    s = set()
+    for i in xrange(1, umax + 1):
+        s = s | backtrack_more(H, rate=i)
+    return s
+
+
+def vg22g1(g2, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if bfu.is_sclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    f = [(add2edges, del2edges),
+         (addavedge, delavedge),
+         (addacedge, delacedge),
+         (addaAedge, delaAedge),
+         (addapath, delapath)]
+    c = [ok2add2edges,
+         ok2addavedge,
+         ok2addacedge,
+         ok2addaAedge,
+         ok2addapath]
+
+    @memo2  # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            # key, checklist = edges.popitem()
+            key = random.choice(edges.keys())
+            checklist = edges.pop(key)
+            adder, remover = f[edge_function_idx(key)]
+            checks_ok = c[edge_function_idx(key)]
+            for n in checklist:
+                mask = adder(g, key, n)
+                if gk.isedgesubset(bfu.increment(g), g2):
+                    r = nodesearch(g, g2, edges, s)
+                    if r and bfu.increment(r) == g2:
+                        s.add(g2num(r))
+                        if capsize and len(s) > capsize:
+                            raise ValueError('Too many elements')
+                remover(g, key, n, mask)
+            edges[key] = checklist
+        else:
+            return g
+
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    chlist = checkable(g2)
+    g = cloneempty(g2)
+
+    s = set()
+    try:
+        nodesearch(g, g2, chlist, s)
+    except ValueError:
+        s.add(0)
+    return s
+
+    
+def backtrack_more(g2, rate=1, capsize=None):
+    '''
+    computes all g1 that are in the equivalence class for g2
+    '''
+    if bfu.is_sclique(g2):
+        print 'Superclique - any SCC with GCD = 1 fits'
+        return set([-1])
+
+    single_cache = {}
+    if rate == 1:
+        ln = [n for n in g2]
+    else:
+        ln = []
+        for x in itertools.combinations_with_replacement(g2.keys(), rate):
+            ln.extend(itertools.permutations(x, rate))
+        ln = set(ln)
+
+    @memo  # memoize the search
+    def nodesearch(g, g2, edges, s):
+        if edges:
+            if bfu.undersample(g, rate) == g2:
+                s.add(g2num(g))
+                if capsize and len(s) > capsize:
+                    raise ValueError('Too many elements')
+                return g
+            e = edges[0]
+            for n in ln:
+
+                if (n, e) in single_cache:
+                    continue
+                if not ok2addaVpath(e, n, g, g2, rate=rate):
+                    continue
+
+                mask = addaVpath(g, e, n)
+                r = nodesearch(g, g2, edges[1:], s)
+                delaVpath(g, e, n, mask)
+
+        elif bfu.undersample(g, rate) == g2:
+            s.add(g2num(g))
+            if capsize and len(s) > capsize:
+                raise ValueError('Too many elements in eqclass')
+            return g
+
+    # find all directed g1's not conflicting with g2
+    n = len(g2)
+    edges = gk.edgelist(g2)
+    random.shuffle(edges)
+    g = cloneempty(g2)
+
+    for e in edges:
+        for n in ln:
+
+            mask = addaVpath(g, e, n)
+            if not gk.isedgesubset(bfu.undersample(g, rate), g2):
+                single_cache[(n, e)] = False
+            delaVpath(g, e, n, mask)
+
+    s = set()
+    try:
+        nodesearch(g, g2, edges, s)
+    except ValueError:
+        s.add(0)
+    return s
+
+
+
+
+
 
 
 """ from dbn2latex.py """
