@@ -400,11 +400,6 @@ def checkable(g2):
             d[v] = checkedge(v, g2)
 
     # check if some of the otherwise permissible nodes still fail
-    f = [(add2edges, del2edges),
-         (addavedge, delavedge),
-         (addacedge, delacedge),
-         (addaAedge, delaAedge),
-         (addapath, delapath)]
     c = [ok2add2edges,
          ok2addavedge,
          ok2addacedge,
@@ -412,7 +407,6 @@ def checkable(g2):
          ok2addapath]
 
     for e in d:
-        adder, remover = f[edge_function_idx(e)]
         checks_ok = c[edge_function_idx(e)]
         for n in d[e]:
             if not checks_ok(e, n, g, g2):
