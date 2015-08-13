@@ -190,6 +190,17 @@ class TestUnknownRateFunctions(unittest.TestCase):
 
 class TestTraversalFunctions(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # Read in pickle file with results
+        cls._G2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
+                   2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
+                   3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
+                   4: {1: 3, 2: 3, 3: 3, 4: 1},
+                   5: {1: 3, 2: 2, 3: 3, 4: 1}}
+        DIR_NAME = os.path.dirname(__file__)
+        cls._ABS_PATH = os.path.abspath(os.path.join(DIR_NAME))
+
     def test__v2g22g1(self):
         g2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
               2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
@@ -206,14 +217,53 @@ class TestTraversalFunctions(unittest.TestCase):
               3: {1: 1, 2: 1, 3: 1, 4: 1},
               4: {1: 1, 2: 1, 3: 1, 5: 1},
               5: {2: 1}}
-        g2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
-              2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
-              3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
-              4: {1: 3, 2: 3, 3: 3, 4: 1},
-              5: {1: 3, 2: 2, 3: 3, 4: 1}}
 
         expected = {30112680}
-        self.assertEqual(expected, trv.supergraphs_in_eq(g1, g2))
+        self.assertEqual(expected, traversal.supergraphs_in_eq(g1, self._G2))
+
+    def test__vedgelist(self):
+        expected = sorted([(4, 1, 3), (4, 2, 4), (3, 5, 4), 
+                    (3, 1, 3), (2, 5, 4), (2, 1, 3), 
+                    (5, 1, 3), (1, 1, 3), (1, 2, 4), 
+                    (1, 2, 3, 2), (5, 4)])
+        self.assertEqual(expected, sorted(traversal.vedgelist(self._G2, pathtoo=False)))
+
+    def test__checkvedge(self):
+        expected = sorted([(2, 2), (4, 1), (1, 2), 
+                    (3, 4), (4, 4), (2, 3), 
+                    (2, 5), (3, 3), (5, 3), 
+                    (4, 2), (1, 1), (1, 5), 
+                    (1, 4), (5, 2), (4, 3), 
+                    (2, 1), (1, 3), (3, 1), 
+                    (3, 2), (2, 4), (3, 5), 
+                    (5, 1)])
+        self.assertEqual(expected, sorted(traversal.checkvedge((5, 1, 3), self._G2)))
+
+        expected = sorted([(2, 2), (5, 5), (4, 1), 
+                    (1, 2), (3, 4), (4, 4), 
+                    (2, 3), (2, 5), (1, 5), 
+                    (5, 3), (4, 2), (1, 1), 
+                    (3, 3), (1, 4), (5, 2), 
+                    (4, 3), (2, 1), (1, 3), 
+                    (3, 1), (3, 2), (2, 4), 
+                    (3, 5), (5, 1)])
+        self.assertEqual(expected, sorted(traversal.checkvedge((4, 1, 3), self._G2)))
+
+    def test__checkAedge(self):
+        expected = sorted([(1, 3), (3, 1), (1, 2), 
+                    (2, 1), (1, 5), (5, 1), 
+                    (1, 4), (4, 1), (3, 2), 
+                    (2, 3), (3, 5), (5, 3), 
+                    (3, 4), (4, 3), (2, 5), 
+                    (5, 2), (2, 4), (4, 2), 
+                    (5, 4), (4, 5), (1, 1), 
+                    (3, 3), (2, 2), (5, 5), 
+                    (4, 4)])
+        self.assertEqual(expected, sorted(traversal.checkAedge((1, 2, 3, 2), self._G2)))
+
+    def test__checkedge(self):
+        expected = [1, 2, 3, 4, 5]
+        self.assertEqual(expected, sorted(traversal.checkedge((5, 4), self._G2)))
 
 
 
