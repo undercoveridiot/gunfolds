@@ -41,7 +41,7 @@ def bidirected_inc(G, D):
                 G[w].setdefault(l, set()).add((2, 0))
         # new bidirected edges
         l = [e for e in D[w] if (0, 1) in D[w][e]]
-        for pair in permutations(l, 2):
+        for pair in itertools.permutations(l, 2):
             G[pair[0]].setdefault(pair[1], set()).add((2, 0))
     return G
 
