@@ -2,16 +2,8 @@ from gunfolds.tools.conversions import g2num, ug2num, num2CG
 import gunfolds.tools.zickle as zkl
 import gunfolds.tools.graphkit as gk
 import itertools
-from numpy.random import randint
 import numpy as np
 import scipy
-
-
-
-##++++ CONVERTED ++++##
-
-
-
 
 #### Undersampling functions
 

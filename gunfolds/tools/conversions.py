@@ -6,13 +6,6 @@ import numpy as np
 import scipy
 
 
-
-##++++ CONVERTED ++++##
-
-
-
-
-
 def g2num(g):
     """ Convert a graph into a binary format """
     n = len(g)

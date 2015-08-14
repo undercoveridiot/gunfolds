@@ -3,13 +3,6 @@ from itertools import combinations, permutations, izip, izip_longest
 import scipy
 
 
-
-
-##++++ CONVERTED ++++##
-
-
-
-
 def walk(G, s, S=set()):
     P, Q = dict(), set()
     P[s] = None

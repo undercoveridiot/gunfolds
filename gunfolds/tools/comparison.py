@@ -10,13 +10,6 @@ import scipy
 np.random.RandomState()
 
 
-
-
-##++++ CONVERTED ++++##
-
-
-
-
 def has_self_loops(G):
     for u in G:
         if G[u].has_key(u):

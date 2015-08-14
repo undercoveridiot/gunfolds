@@ -11,11 +11,6 @@ import statsmodels.api as sm
 
 
 
-
-##++++ CONVERTED ++++##
-
-
-
 def independent(y, X, pval=0.05):
     X  = sm.add_constant(X)
     est  = sm.OLS(y, X).fit()

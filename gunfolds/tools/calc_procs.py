@@ -2,13 +2,6 @@ from multiprocessing import cpu_count
 import socket
 
 
-
-
-##++++ CONVERTED ++++##
-
-
-
-
 def get_process_count(starts):
     """ Using the number of starts per graph and machine info, calculate
         the number of processes to spawn """

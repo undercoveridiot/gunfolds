@@ -9,12 +9,6 @@ import random as std_random
 
 
 
-
-##++++ CONVERTED ++++##
-
-
-
-
 def edgelist(g):  # directed
     '''
     return a list of tuples for edges of g

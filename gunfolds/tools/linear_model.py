@@ -11,13 +11,6 @@ from sympy.matrices import SparseMatrix
 
 
 
-##++++ CONVERTED ++++##
-
-
-
-
-
-
 def symchol(M): # symbolic Cholesky
     B = SparseMatrix(M)
     t = B.row_structure_symbolic_cholesky()

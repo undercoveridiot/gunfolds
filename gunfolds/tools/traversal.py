@@ -1,16 +1,16 @@
 from __future__ import division
+import copy
+from functools import wraps
 from gunfolds.tools import bfutils as bfu
 from gunfolds.tools.conversions import g2num, graph2nx
 from gunfolds.tools import graphkit as gk
-
-from networkx import strongly_connected_components
-from functools import wraps
-import scipy
-import numpy as np
 import itertools
-import copy
-import time
+from networkx import strongly_connected_components
+import numpy as np
 import random
+import scipy
+import scipy.misc
+import time
 
 
 def chunks(l, n):
@@ -869,18 +869,6 @@ def signature(g, edges):
     return (gsig(g), esig(edges, len(g)))
 
 
-def memo2(func):
-    cache = {}                        # Stored subproblem solutions
-
-    @wraps(func)                      # Make wrap look like func
-    def wrap(*args):                  # The memoized wrapper
-        s = signature(args[0], args[2])  # Signature: g and edges
-        if s not in cache:            # Not already computed?
-            cache[s] = func(*args)    # Compute & cache the solution
-        return set()  # cache[s]               # Return the cached solution
-    return wrap
-
-
 def supergraphs_in_eq(g, g2, rate=1):
     '''Find  all supergraphs of g  that are also in  the same equivalence
     class with respect to g2 and the rate.
@@ -917,6 +905,18 @@ def edge_function_idx(edge):
     return min(4, len(edge)) - 2 + min(max(3, len(edge)) - 3, 1) * int(edge[0])
 
 
+def memo_no_return(func):
+    cache = {}                        # Stored subproblem solutions
+
+    @wraps(func)                      # Make wrap look like func
+    def wrap(*args):                  # The memoized wrapper
+        s = signature(args[0], args[2])  # Signature: g and edges
+        if s not in cache:            # Not already computed?
+            cache[s] = func(*args)    # Compute & cache the solution
+        return
+    return wrap
+
+
 def v2g22g1(g2, capsize=None, verbose=True):
     '''
     computes all g1 that are in the equivalence class for g2
@@ -944,7 +944,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
             s.add(u)
         return s
 
-    @memo2  # memoize the search
+    @memo_no_return  # memoize the search
     def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
         if order:
             if bfu.increment(g) == g2:

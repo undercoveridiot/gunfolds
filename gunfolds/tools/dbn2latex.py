@@ -12,13 +12,6 @@ from scipy import array, cos, sin, deg2rad, rad2deg
 import StringIO
 
 
-
-
-##++++ CONVERTED ++++##
-
-
-
-
 def graph2dict(g):
     D = {}
     for v in range(0, len(g.vs)):
