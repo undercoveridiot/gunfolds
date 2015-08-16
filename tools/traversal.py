@@ -518,7 +518,9 @@ def ok2addanedge1(s, e, g, g2,rate=1):
     e - end
     """
     # directed edges
-    for u in g:
+    # self-loop
+    if s == e and not e in g2[s]: return False
+    for u in g: # Pa(s) -> e
         if s in g[u] and not (e in g2[u] and (0,1) in g2[u][e]):
             return False
     for u in g[e]: # s -> Ch(e)
@@ -768,7 +770,7 @@ def delacedge(g,v,b,mask):
 
 def rotate(l): return l[1:] + l[:1] # rotate a list
 def density(g): return len(gk.edgelist(g))/np.double(len(g)**2)
-def udensity(g): return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2.)/np.double(len(g)**2 + len(g)*(len(g)-1)/2.)    
+def udensity(g): return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2.)/np.double(len(g)**2 + len(g)*(len(g)-1)/2.)
 
 def esig(l,n):
     '''
