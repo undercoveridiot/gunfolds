@@ -187,7 +187,32 @@ class TestBFUtilsFunctions(unittest.TestCase):
         g2 = bfutils.undersample(self._G, u)
         self.assertEqual(g_u_4, g2)
 
+class TestTraversalFunctions(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # Read in pickle file with results
+        cls._G1 = {1: {1: 1, 2: 1, 3: 1},
+                   2: {1: 1, 3: 1, 4: 1},
+                   3: {1: 1, 2: 1, 3: 1, 4: 1},
+                   4: {1: 1, 2: 1, 3: 1, 5: 1},
+                   5: {2: 1}}
+        cls._G2 = {1: {1: 1, 2: 3, 3: 3, 4: 3, 5: 2},
+                   2: {1: 3, 2: 1, 3: 3, 4: 3, 5: 3},
+                   3: {1: 3, 2: 3, 3: 1, 4: 3, 5: 3},
+                   4: {1: 3, 2: 3, 3: 3, 4: 1},
+                   5: {1: 3, 2: 2, 3: 3, 4: 1}}
+        DIR_NAME = os.path.dirname(__file__)
+        cls._ABS_PATH = os.path.abspath(os.path.join(DIR_NAME))
+
+    def setUp(self):
+        # Copy these before each test incase a test modifies them
+        self.G1 = deepcopy(self._G1)
+        self.G2 = deepcopy(self._G2)
+
+    def test__v2g22g1(self):
+        expected = zkl.load("{}/v2g22g1_output.zkl".format(self._ABS_PATH))
+        self.assertEqual(expected, traversal.v2g22g1(self.G2))
 
 
 class TestConversionFunctions(unittest.TestCase):
