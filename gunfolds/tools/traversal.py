@@ -883,12 +883,10 @@ def supergraphs_in_eq(g, g2, rate=1):
         if edges:
             masks = []
             for e in edges:
-                mask = addanedge(g, e)
-                if bfu.increment(g) == g2:
+                if ok2addanedge(e[0],e[1],g,g2,rate=rate):
                     masks.append(True)
                 else:
                     masks.append(False)
-                delanedge(g, e, mask)
             nedges = [edges[i] for i in range(len(edges)) if masks[i]]
             n = len(nedges)
             if n:
