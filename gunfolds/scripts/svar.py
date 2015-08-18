@@ -1,3 +1,4 @@
+from __future__ import division
 import copy
 import functools
 from gunfolds.tools.calc_procs import get_process_count
@@ -158,7 +159,7 @@ def wrapper(fold, n=10, dens=0.1):
     idx = np.argmin(cum_oce)
     print "{:2}: {:8} : {:4}  {:10} seconds".\
           format(fold, round(dens, 3), cum_oce[idx],
-                 round((endTime - startTime) / 1000., 3))
+                 round((endTime - startTime) / 1000, 3))
     # np.set_printoptions(formatter={'float': lambda x: format(x, '6.3f')+", "})
     # pprint.pprint(r['transition'].round(2))
     # np.set_printoptions()
