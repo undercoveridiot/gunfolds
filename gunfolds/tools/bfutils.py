@@ -5,7 +5,7 @@ import itertools
 from numpy.random import randint
 import numpy as np
 import scipy
-
+from itertools import permutations
 
 
 #### Undersampling functions
