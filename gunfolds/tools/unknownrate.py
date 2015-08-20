@@ -1,15 +1,17 @@
 """ BFS implementation of subgraph and supergraph Gu to G1 algorithm """
 import gmpy as gmp
+from gunfolds.lib import liteqclass_worker
 import gunfolds.tools.bfutils as bfu
+from gunfolds.tools.calc_procs import get_process_count
 from gunfolds.tools.conversions import g2num, ug2num, num2CG
 import gunfolds.tools.graphkit as gk
 import gunfolds.tools.simpleloops as sls
 from gunfolds.tools import load_data
 from itertools import combinations
+from multiprocessing import Queue
 import numpy as np
 import operator
 from progressbar import ProgressBar, Bar
-
 
 
 def prune_conflicts(H, g, elist):
@@ -32,7 +34,7 @@ def prune_conflicts(H, g, elist):
 
 
 def e2num(e, n):
-    return (1<<(n*n + n - e[0]*n - e[1]))
+    return (1 << (n * n + n - e[0] * n - e[1]))
 
 
 def le2num(elist, n):
@@ -74,59 +76,15 @@ class nobar:
         return None
 
 
-def start_progress_bar(iter, n, verbose = True):
+def start_progress_bar(iter, n, verbose=True):
     if verbose:
         pbar = ProgressBar(widgets=['%3s' % str(iter) +
-                                '%10s' % str(n) + ' ',
-                                Bar('-'), ' '],
-                        maxval=n).start()
+                                    '%10s' % str(n) + ' ',
+                                    Bar('-'), ' '],
+                           maxval=n).start()
     else:
         pbar = nobar()
     return pbar
-
-
-def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
-                 capsize=100, currsize=0):
-    n = len(H)
-    n2 = n * n + n
-    dsr = {}
-    s = set()
-    ss = set()
-
-    pbar = start_progress_bar(iter, len(ds), verbose= verbose)
-
-    c = 0
-
-    for gnum in ds:
-        c += 1
-        pbar.update(c)
-        gset = set()
-        eset = set()
-        for sloop in ds[gnum]:
-            if sloop & gnum == sloop:
-                continue
-            num = sloop | gnum
-            if sloop in ccf and skip_conflictors(num, ccf[sloop]):
-                continue
-            if not num in s:
-                g = num2CG(num, n)
-                if not bfu.call_u_conflicts(g, H):
-                    s.add(num)
-                    gset.add((num, sloop))
-                    eset.add(sloop)
-                    if bfu.call_u_equals(g, H):
-                        ss.add(num)
-                        if capsize <= len(ss) + currsize:
-                            return dsr, ss
-
-        for gn, e in gset:
-            if e in cp:
-                dsr[gn] = eset - cp[e] - set([e])
-            else:
-                dsr[gn] = eset - set([e])
-
-    pbar.finish()
-    return dsr, ss
 
 
 def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
@@ -136,7 +94,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
     s = set()
     ss = set()
 
-    pbar = start_progress_bar(iter, len(ds), verbose= verbose)
+    pbar = start_progress_bar(iter, len(ds), verbose=verbose)
 
     c = 0
 
@@ -151,7 +109,7 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
             if not e[1] in g[e[0]]:
                 gk.addanedge(g, e)
                 num = g2num(g)
-                ekey = (1 << (n2 - e[0]*n - e[1]))
+                ekey = (1 << (n2 - e[0] * n - e[1]))
                 if ekey in ccf and skip_conflictors(num, ccf[ekey]):
                     gk.delanedge(g, e)
                     continue
@@ -240,7 +198,7 @@ def conflictors(H):
     num = reduce(operator.or_, s)
     for i in xrange(gmp.bit_length(num)):
         if num & 1 << i:
-            ds[1 << i] = [x for x in s if x&(1<<i)]
+            ds[1 << i] = [x for x in s if x & (1 << i)]
     return ds
 
 
@@ -262,7 +220,7 @@ def lconflictors(H, sloops=None):
     num = reduce(operator.or_, s)
     for i in xrange(gmp.bit_length(num)):
         if num & 1 << i:
-            cset = [x for x in s if x & (1<<i)]
+            cset = [x for x in s if x & (1 << i)]
             for sloop in sloops:
                 if sloop & 1 << i:
                     ds.setdefault(sloop, []).extend(cset)
@@ -327,11 +285,11 @@ def iteqclass(H, verbose=True, capsize=100):
     ds = {g2num(g): edges}
 
     if verbose:
-        print '%3s' % 'i'+'%10s'%' graphs'
+        print '%3s' % 'i' + '%10s' % ' graphs'
     for i in range(len(H) ** 2):
         ds, ss = add2set_(ds, H, cp, ccf, iter=i,
-                            verbose=verbose,
-                            capsize=capsize)
+                          verbose=verbose,
+                          capsize=capsize)
         s = s | ss
         if capsize <= len(ss):
             break
@@ -363,17 +321,28 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     ds = {0: sloops}
 
     if verbose:
-        print '%3s' % 'i'+'%10s'%' graphs'
-    i = 0
+        print '%3s' % 'i' + '%10s' % ' graphs'
+
+    # Construct a worker pool
+    work_queue = JoinableQueue()
+    data_queue = Queue()
+    pool = [liteqclass_worker.LitEqClassWorker(H, cp, ccf, capsize, work_queue, data_queue)
+            for count in get_process_count(1)]
+    for worker in pool:
+        worker.run()
+
     while ds:
-        ds, ss = add2set_loop(ds, H, cp, ccf, iter=i,
-                              verbose=verbose,
-                              capsize=capsize,
+        for gnum, sloops in ds:
+            work_queue.put(liteqclass_worker.Message(0, gnum, sloops, None))
+        work_queue.join() # blocks here until work is complete
+
+        # TODO: Read data back from data Q
+        ds, ss = add2set_loop(ds, H, cp, ccf, capsize=capsize,
                               currsize=len(s))
         s = s | ss
-        i += 1
         if capsize <= len(s):
             break
+
 
     return s
 
@@ -389,7 +358,7 @@ def skip_conflict(g1, g2, ds):
 
 
 def loop2graph(l, n):
-    g = {i: {} for i in range(1, n+1)}
+    g = {i: {} for i in range(1, n + 1)}
     for i in range(len(l) - 1):
         g[l[i]][l[i + 1]] = 1
     g[l[-1]][l[0]] = 1
@@ -438,7 +407,7 @@ def reverse(H, verbose=True, capsize=1000):
     ds = {g2num(g): sloops}
 
     if verbose:
-        print '%3s' % 'i'+'%10s'%' graphs'
+        print '%3s' % 'i' + '%10s' % ' graphs'
     i = 0
     while ds:
         ds, ss = del_loop(ds, H, iter=i,
@@ -617,8 +586,8 @@ def del_loop(ds, H, iter=0, verbose=True, capsize=1000):
 
 
 def main():
-    g = gk.ringmore(6, 1);
-    H = bfu.undersample(g, 1);
+    g = gk.ringmore(6, 1)
+    H = bfu.undersample(g, 1)
     ss = liteqclass(H)
     print ss
 
