@@ -12,6 +12,24 @@ from multiprocessing import Queue
 import numpy as np
 import operator
 from progressbar import ProgressBar, Bar
+import signal
+
+
+pool = []
+
+
+def shutdown(signalNum=0, frame=0):
+    """ Kill all spawned worker processes so they do not become orphaned """
+    global pool
+    for worker in pool:
+        worker.terminate()
+
+# Catch shutdown signals to shutdown gracefully
+signal.signal(signal.SIGHUP, shutdown)
+signal.signal(signal.SIGINT, shutdown)
+signal.signal(signal.SIGPIPE, shutdown)
+signal.signal(signal.SIGALRM, shutdown)
+signal.signal(signal.SIGTERM, shutdown)
 
 
 def prune_conflicts(H, g, elist):
@@ -304,12 +322,14 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
     '''
-    if bfu.is_sclique(H):
-        print 'not running on superclique'
-        return set([-1])
-    g = {n: {} for n in H}
-    s = set()
+    # Store workers globally so they can be killed if needed
+    global pool
 
+    if bfu.is_sclique(H):
+        print("not running on superclique")
+        return set([-1])
+
+    solutions = set()
     cp = lconfpairs(H)
 
     if asl:
@@ -318,33 +338,35 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
         sloops = prune_loops(allsloops(len(H)), H)
 
     ccf = lconflictors(H, sloops=sloops)
-    ds = {0: sloops}
-
-    if verbose:
-        print '%3s' % 'i' + '%10s' % ' graphs'
 
     # Construct a worker pool
     work_queue = JoinableQueue()
     data_queue = Queue()
-    pool = [liteqclass_worker.LitEqClassWorker(H, cp, ccf, capsize, work_queue, data_queue)
+    pool = [liteqclass_worker.LitEqClassWorker(H, cp, ccf, work_queue, data_queue)
             for count in get_process_count(1)]
     for worker in pool:
         worker.run()
 
-    while ds:
-        for gnum, sloops in ds:
-            work_queue.put(liteqclass_worker.Message(0, gnum, sloops, None))
-        work_queue.join() # blocks here until work is complete
+    while True:
+        work_queue.put(liteqclass_worker.InputMessage(0, sloops))
+        try:
+            msg = data_queue.get() # blocks here until message in q
+        except Exception, e:
+            print("Error reading off of queue: {}".format(e))
+            sys.exit(3)
 
-        # TODO: Read data back from data Q
-        ds, ss = add2set_loop(ds, H, cp, ccf, capsize=capsize,
-                              currsize=len(s))
-        s = s | ss
-        if capsize <= len(s):
+        solutions = solutions | msg.solutions
+        if capsize <= len(solutions):
+            # Kill all workers, we are done
+            work_queue.close()
+            data_queue.close()
+            shutdown()
             break
 
+        # TODO feed ds back into workers and somehow check when no workers are producing anything
 
-    return s
+
+    return solutions
 
 
 def skip_conflict(g1, g2, ds):

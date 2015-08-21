@@ -2,69 +2,63 @@ from collections import namedtuple
 import gunfolds.tools.bfutils as bfu
 from gunfolds.tools.conversions import num2CG
 import gunfolds.tools.unknownrate
+import signal
 import sys
 
-Message = namedtuple('Message', ['gnum', 'sloops'])
+InputMessage = namedtuple('Message', ['gnum', 'sloops'])
+OutputMessage = namedtuple('Message', ['dsr', 'solutions'])
 
 class LitEqClassWorker(object):
 
-    def __init__(self, H, cp, ccf, capsize, in_queue, out_queue):
+    def __init__(self, H, cp, ccf, in_queue, out_queue):
         self.H = H
         self.n = len(H)
         self.cp = cp
         self.ccf = ccf
-        self.capsize = capsize
         self.in_queue = in_queue
         self.out_queue = out_queue
-        self.dsr = {}
-        self.s = set()
-        self.ss = set()
-        self.gset = set()
-        self.eset = set()
-        self.currsize = 0
+
+        # Catch shutdown signals to shutdown gracefully
+        signal.signal(signal.SIGINT, seen_graphshutdown)
+        signal.signal(signal.SIGTERM, seen_graphshutdown)
 
     def run(self):
-
+        """ Run forever while data is sent over the queue """
+        seen_graphs = set()
         while True:
+            dsr = {}
+            solutions = set()
+            gset = set()
+            eset = set()
             try:
                 msg = self.in_queue.get() # blocks here until data in q
             except Exception, e:
                 sys.exit('Error reading off of in_queue: {}'.format(e))
-
+            else:
                 for sloop in msg.sloops:
                     if sloop & msg.gnum == sloop:
                         continue
                     num = sloop | msg.gnum
                     if sloop in self.ccf and gunfolds.tools.unknownrate.skip_conflictors(num, self.ccf[sloop]):
                         continue
-                    if not num in self.s:
+                    if not num in seen_graphs:
                         g = num2CG(num, self.n)
                         if not bfu.call_u_conflicts(g, self.H):
-                            self.s.add(num)
-                            self.gset.add((num, sloop))
-                            self.eset.add(sloop)
+                            seen_graphs.add(num)
+                            gset.add((num, sloop))
+                            eset.add(sloop)
                             if bfu.call_u_equals(g, self.H):
-                                self.ss.add(num)
-                                if self.capsize <= len(self.ss) + currsize:
-                                    self.out_queue.put((self.dsr, self.ss))
-                                    self.in_queue.task_done()
+                                solutions.add(num)
 
-                for gn, e in self.gset:
+                for gn, e in gset:
                     if e in self.cp:
-                        self.dsr[gn] = self.eset - self.cp[e] - {e}
+                        dsr[gn] = eset - self.cp[e] - {e}
                     else:
-                        self.dsr[gn] = self.eset - {e}
+                        dsr[gn] = eset - {e}
 
-                self.out_queue.put((self.dsr, self.ss))
+                self.out_queue.put(OutputMessage(dsr, solutions))
                 self.in_queue.task_done()
 
 
-
-    def reset(self, cursize):
-        # Reset for next round
-        self.dsr = {}
-        self.s = set()
-        self.ss = set()
-        self.gset = set()
-        self.eset = set()
-        self.cursize = cursize
+    def shutdown(self):
+        sys.exit(0)
