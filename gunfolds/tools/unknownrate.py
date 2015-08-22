@@ -340,31 +340,45 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     ccf = lconflictors(H, sloops=sloops)
 
     # Construct a worker pool
-    work_queue = JoinableQueue()
+    work_queue = Queue()
     data_queue = Queue()
     pool = [liteqclass_worker.LitEqClassWorker(H, cp, ccf, work_queue, data_queue)
-            for count in get_process_count(1)]
+            for count in xrange(get_process_count(1))]
     for worker in pool:
-        worker.run()
+        worker.start()
 
+    on_queue = 1
+    work_queue.put((0, sloops))
     while True:
-        work_queue.put(liteqclass_worker.InputMessage(0, sloops))
         try:
             msg = data_queue.get() # blocks here until message in q
         except Exception, e:
             print("Error reading off of queue: {}".format(e))
             sys.exit(3)
+        else:
+            on_queue -= 1
+        dsr, partial_solutions = msg
 
-        solutions = solutions | msg.solutions
+        solutions = solutions | partial_solutions
         if capsize <= len(solutions):
             # Kill all workers, we are done
+            shutdown()
             work_queue.close()
             data_queue.close()
-            shutdown()
             break
 
-        # TODO feed ds back into workers and somehow check when no workers are producing anything
-
+        # feed dsr back into workers
+        if dsr:
+            for gnum, sloops in dsr.iteritems():
+                on_queue += 1
+                work_queue.put((gnum, sloops))
+        
+        if on_queue == 0:
+            # Kill all workers, we are done
+            shutdown()
+            work_queue.close()
+            data_queue.close()
+            break
 
     return solutions
 

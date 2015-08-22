@@ -1,16 +1,14 @@
-from collections import namedtuple
 import gunfolds.tools.bfutils as bfu
 from gunfolds.tools.conversions import num2CG
 import gunfolds.tools.unknownrate
+from multiprocessing import Process
 import signal
 import sys
 
-InputMessage = namedtuple('Message', ['gnum', 'sloops'])
-OutputMessage = namedtuple('Message', ['dsr', 'solutions'])
+class LitEqClassWorker(Process):
 
-class LitEqClassWorker(object):
-
-    def __init__(self, H, cp, ccf, in_queue, out_queue):
+    def __init__(self, H, cp, ccf, in_queue, out_queue, *args, **kwargs):
+        super(LitEqClassWorker, self).__init__(*args, **kwargs)
         self.H = H
         self.n = len(H)
         self.cp = cp
@@ -19,12 +17,12 @@ class LitEqClassWorker(object):
         self.out_queue = out_queue
 
         # Catch shutdown signals to shutdown gracefully
-        signal.signal(signal.SIGINT, seen_graphshutdown)
-        signal.signal(signal.SIGTERM, seen_graphshutdown)
+        signal.signal(signal.SIGINT, self.shutdown)
+        signal.signal(signal.SIGTERM, self.shutdown)
 
     def run(self):
         """ Run forever while data is sent over the queue """
-        seen_graphs = set()
+        seen_graphs = set() # Cache pre process
         while True:
             dsr = {}
             solutions = set()
@@ -35,10 +33,11 @@ class LitEqClassWorker(object):
             except Exception, e:
                 sys.exit('Error reading off of in_queue: {}'.format(e))
             else:
-                for sloop in msg.sloops:
-                    if sloop & msg.gnum == sloop:
+                gnum, sloops = msg
+                for sloop in sloops:
+                    if sloop & gnum == sloop:
                         continue
-                    num = sloop | msg.gnum
+                    num = sloop | gnum
                     if sloop in self.ccf and gunfolds.tools.unknownrate.skip_conflictors(num, self.ccf[sloop]):
                         continue
                     if not num in seen_graphs:
@@ -56,9 +55,8 @@ class LitEqClassWorker(object):
                     else:
                         dsr[gn] = eset - {e}
 
-                self.out_queue.put(OutputMessage(dsr, solutions))
-                self.in_queue.task_done()
+                self.out_queue.put((dsr, solutions))
 
 
-    def shutdown(self):
+    def shutdown(self, signalNum=0, frame=0):
         sys.exit(0)
