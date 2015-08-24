@@ -55,7 +55,11 @@ class LitEqClassWorker(Process):
                     else:
                         dsr[gn] = eset - {e}
 
-                self.out_queue.put((dsr, solutions))
+                try:
+                    self.out_queue.put((dsr, solutions))
+                except IOError:
+                    # pipe closed
+                    self.shutdown()
 
 
     def shutdown(self, signalNum=0, frame=0):

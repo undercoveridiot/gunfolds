@@ -13,6 +13,7 @@ import numpy as np
 import operator
 from progressbar import ProgressBar, Bar
 import signal
+import subprocess
 
 
 pool = []
@@ -21,8 +22,12 @@ pool = []
 def shutdown(signalNum=0, frame=0):
     """ Kill all spawned worker processes so they do not become orphaned """
     global pool
+
     for worker in pool:
-        worker.terminate()
+        try:
+            worker.terminate()
+        except:
+            pass
 
 # Catch shutdown signals to shutdown gracefully
 signal.signal(signal.SIGHUP, shutdown)
@@ -362,9 +367,9 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
         solutions = solutions | partial_solutions
         if capsize <= len(solutions):
             # Kill all workers, we are done
-            shutdown()
             work_queue.close()
             data_queue.close()
+            shutdown()
             break
 
         # feed dsr back into workers
@@ -375,9 +380,9 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
         
         if on_queue == 0:
             # Kill all workers, we are done
-            shutdown()
             work_queue.close()
             data_queue.close()
+            shutdown()
             break
 
     return solutions
