@@ -322,10 +322,13 @@ def iteqclass(H, verbose=True, capsize=100):
     return s
 
 
-def liteqclass(H, verbose=True, capsize=100, asl=None):
+def liteqclass(H, verbose=True, capsize=100, asl=None, nprocs=0):
     '''
     Find all graphs in the same equivalence class with respect to
     graph H and any undesampling rate.
+
+    capsize = cutoff to end early
+    nprocs = number of workers to spawn.  <1 will use all available.
     '''
     # Store workers globally so they can be killed if needed
     global pool
@@ -347,8 +350,12 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     # Construct a worker pool
     work_queue = Queue()
     data_queue = Queue()
+
+    if nprocs < 1:
+        nprocs = get_process_count(1)
+
     pool = [liteqclass_worker.LitEqClassWorker(H, cp, ccf, work_queue, data_queue)
-            for count in xrange(get_process_count(1))]
+            for count in xrange(nprocs)]
     for worker in pool:
         worker.start()
 
@@ -372,6 +379,8 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
             shutdown()
             break
 
+        if verbose:
+            print("# Graphs: {}".format(len(dsr)))
         # feed dsr back into workers
         if dsr:
             for gnum, sloops in dsr.iteritems():

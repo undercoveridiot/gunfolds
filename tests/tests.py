@@ -201,6 +201,20 @@ class TestUnknownRateFunctions(unittest.TestCase):
         set_of_u_2 = zkl.load("{}/liteqclass_output_n_5_u_2.zkl".format(self._ABS_PATH))
         s = ur.liteqclass(g2, verbose=False, capsize=1000)
         self.assertEqual(s, set_of_u_2)
+        """
+        g = {1: {2: 1},
+             2: {3: 1},
+             3: {4: 1, 8: 1},
+             4: {5: 1},
+             5: {4: 1, 6: 1, 8: 1},
+             6: {7: 1},
+             7: {8: 1},
+             8: {7: 1, 9: 1},
+             9: {10: 1},
+             10: {1: 1}}
+        g2 = bfutils.undersample(g,1)
+        s = ur.liteqclass(g2, verbose=False, capsize=1000)
+        """
 
     def test__gen_loops(self):
         n = 3
