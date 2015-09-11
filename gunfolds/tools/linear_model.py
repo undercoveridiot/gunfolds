@@ -494,4 +494,47 @@ def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.
             }
 
 # option #2
+def noiseData(data, noise=0.1):
+    h, w = data.shape
+    return data + np.random.randn(h,w)*noise
+
+def randomSVARs(n, repeats=100, rate=2, density=0.1, th=0.09,
+                burnin=100, ssize=2000, noise=0.1, strap_noise = 0.1):
+    """
+    does what requested - help is on the way
+
+    Arguments:
+    - `n`: number of nodes in the desired graph
+    - `repeats`: how many times to add noise and re-estiamte
+    - `rate`: undersampling rate (1 - no undersampling)
+    - `density`: density of the graph to be generted
+    - `th`: threshold for discarding edges in A and B
+    - `burnin`: number of samples to discard since the beginning of VAR sampling
+    - `ssize`: how many samples to keep at the causal sampling rate
+    - `noise`: noise standard deviation for the VAR model
+    - `strap_noise`: amount of noise for bootstrapping
+    """
+    g, Agt, data = genData(n, rate=rate, density=density,
+                           burnin=burnin, ssize=ssize, noise=noise)
+
+    As = []
+    Bs = []
+    A, B = estimateSVAR(data, th=th)
+    As.append(A)
+    Bs.append(B)
+
+    for i in range(repeats-1):
+        A, B = estimateSVAR(noiseData(data, noise=strap_noise), th=th)
+        As.append(A)
+        Bs.append(B)
+
+    A = 1 - np.mean(As, axis=0)
+    B = 1 - np.mean(Bs, axis=0)
+    
+    return {'graph': g,
+            'transition': Agt,
+            'directed': A,
+            'bidirected': B
+            }
+
 # option #3
