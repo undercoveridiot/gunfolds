@@ -1,5 +1,5 @@
 from gunfolds.tools import ecj
-from gunfolds.tools import bfutils
+from gunfolds.tools import bfutils as bfu
 from gunfolds.tools.conversions import graph2adj, adjs2graph
 from gunfolds.tools import graphkit as gk
 import numpy as np
@@ -278,11 +278,11 @@ def getAgraph(n, mp=2, st=0.5, verbose=True):
                 print "*** trying a different graph"
     return {'graph':      G,
             'transition': A,
-            'converges':  len(bfutils.call_undersamples(G))}
+            'converges':  len(bfu.call_undersamples(G))}
 
 def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
     keeptrying = True
-    plusedges = bfutils.dens2edgenum(density, n)
+    plusedges = bfu.dens2edgenum(density, n)
     while keeptrying:
         G = gk.ringmore(n, plusedges)
         try:
@@ -298,7 +298,7 @@ def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
                 print "*** trying a different graph"
     return {'graph':      G,
             'transition': A,
-            'converges':  len(bfutils.call_undersamples(G))}
+            'converges':  len(bfu.call_undersamples(G))}
 
 
 
@@ -383,6 +383,7 @@ def AB2intAB(A,B, th=0.09):
     A[amap(lambda x: abs(x) < 1, A)] = 0
     B[amap(lambda x: abs(x) > th, B)] = 1
     B[amap(lambda x: np.abs(x) < 1, B)] = 0
+    np.fill_diagonal(B,0)
     return A, B
 
 def data2graph(data,x0=None):
@@ -403,3 +404,94 @@ def data2VARgraph(data, pval=0.05):
                 g[i+1][j+1] = 1
 
     return g
+
+# this is for the SAT solver project
+def stableVAR(n,density=0.1,dist='beta'):
+    """
+    This function keeps trying to create a random graph and a random
+    corresponding transition matrix until it succeeds.
+
+    Arguments:
+    - `n`: number of nodes in the graph
+    - `density`: ratio of total nodes to n^2 possible nodes
+    - `dist`: distribution from which to sample the weights. Available
+      options are flat, flatsigned, beta, normal, uniform
+    """
+    scipy.random.seed()
+    sst = 0.9
+    r = None
+    while not r:
+        r = getAring(n, density, sst, False, dist=dist)
+        if sst < 0.03:
+            sst -= 0.001
+        else:
+            sst -= 0.01
+        if sst < 0:
+            sst = 0.02
+    return r['graph'], r['transition']
+
+def genData(n, rate=2, density=0.1, burnin=100, ssize=2000, noise=0.1):
+    """
+    Given a number of nodes this function randomly generates a ring
+    SCC and the corresponding stable transition matrix. It tries until
+    succeeds and for some graph densities and parameters of the
+    distribution of transition matrix values it may take
+    forever. Please play with the dist parameter to stableVAR. Then
+    using this transition matrix it generates `ssize` samples of data
+    and undersamples them by `rate` discarding the `burnin` number of
+    samples at the beginning.
+
+    Arguments:
+    - `n`: number of nodes in the desired graph
+    - `rate`: undersampling rate (1 - no undersampling)
+    - `density`: density of the graph to be generted
+    - `burnin`: number of samples to discard since the beginning of VAR sampling
+    - `ssize`: how many samples to keep at the causal sampling rate
+    - `noise`: noise standard deviation for the VAR model
+    """
+    g, Agt = stableVAR(n, density=density)
+    data = drawsamplesLG(Agt, samples=burnin + ssize * 2, nstd=noise)
+    data = data[:, burnin:]
+    return g, Agt, data[:,::rate]
+
+def estimateSVAR(data, th=0.09):
+    A, B = data2AB(data)
+    A, B = AB2intAB(A, B, th=th)
+    return A, B
+
+# option #1
+def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.1):
+    """
+    Given a number of nodes this function randomly generates a ring
+    SCC and the corresponding stable transition matrix. It tries until
+    succeeds and for some graph densities and parameters of the
+    distribution of transition matrix values it may take
+    forever. Please play with the dist parameter to stableVAR. Then
+    using this transition matrix it generates `ssize` samples of data
+    and undersamples them by `rate` discarding the `burnin` number of
+    samples at the beginning. For these data the funcion solves the
+    SVAR estimation maximizing log likelihood and returns the A and B
+    matrices.
+
+    Arguments:
+    - `n`: number of nodes in the desired graph
+    - `rate`: undersampling rate (1 - no undersampling)
+    - `density`: density of the graph to be generted
+    - `th`: threshold for discarding edges in A and B
+    - `burnin`: number of samples to discard since the beginning of VAR sampling
+    - `ssize`: how many samples to keep at the causal sampling rate
+    - `noise`: noise standard deviation for the VAR model
+    """
+    g, Agt, data = genData(n, rate=rate, density=density,
+                           burnin=burnin, ssize=ssize, noise=noise)
+    A, B = estimateSVAR(data, th=th)
+
+    return {'graph': g,
+            'transition': Agt,
+            'estimate': adjs2graph(A, B),
+            'directed': A,
+            'bidirected': B
+            }
+
+# option #2
+# option #3
