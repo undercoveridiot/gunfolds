@@ -14,7 +14,9 @@ import gmpy as gmp
 import gmpy as gmp
 from scipy.misc import comb
 import zickle as zkl
+import simpleloops as sls
 import math
+import load_loops
 from matplotlib.cbook import flatten
 from progressbar import ProgressBar, Percentage, \
     Bar, RotatingMarker, ETA, FileTransferSpeed
@@ -24,7 +26,7 @@ sys.path.append(os.path.expanduser(TOOLSPATH))
 
 
 circp = zkl.load('circular_p.zkl')
-alloops = zkl.load('allloops.zkl')
+alloops = load_loops.alloops
 
 import pprint
 import bfutils as bfu
@@ -43,7 +45,7 @@ def memo(func):
             cache[s] = func(*args)    # Compute & cache the solution
         return cache[s]               # Return the cached solution
     return wrap
-    
+
 def prune_conflicts(H, g, elist):
     """checks if adding an edge from the list to graph g causes a
     conflict with respect to H and if it does removes the edge
@@ -80,11 +82,11 @@ def eqclass(H):
             for i in range(n):
                 gk.addanedge(g,nedges[i])
                 if bfu.call_u_equals(g, H): s.add(bfu.g2num(g))
-                s.add(addedges(g,H,nedges[:i]+nedges[i+1:]))
+                addedges(g,H,nedges[:i]+nedges[i+1:])
                 gk.delanedge(g,nedges[i])
-
     edges = gk.edgelist(gk.complement(g))
     addedges(g,H,edges)
+
     return s-set([None])
 
 # these two functions come fromt his answer:
@@ -150,6 +152,7 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
         gset = set()
         eset = set()
         for sloop in ds[gnum]:
+            if sloop & gnum == sloop: continue
             num = sloop | gnum
             if sloop in ccf and skip_conflictors(num,ccf[sloop]):continue
             if not num in s:
@@ -198,13 +201,13 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
                     gk.delanedge(g,e)
                     continue
                 if not num in s:
+                    s.add(num)
                     if not bfu.call_u_conflicts(g, H):
                         #cf, gl2 = bfu.call_u_conflicts2(g, H)
                         #if not cf:
                         glist.append((num,ekey))
                         elist.append(e)
                         eset.add(ekey)
-                        s.add(num)
                         if bfu.call_u_equals(g, H):
                             ss.add(num)
                             #if bfu.call_u_equals2(g, gl2, H): ss.add(num)
@@ -274,6 +277,22 @@ def conflictors(H):
         if num & 1<<i:
             ds[1<<i] = [x for x in s if x&(1<<i)]
     return ds
+
+def may_be_true_selfloop(n,H):
+    for v in H[n]:
+        if v == n: continue
+        if (0,1) in H[n][v] and not ((2,0) in H[n][v]): return False
+    return True
+
+def issingleloop(num):
+    bl = gmp.bit_length(num)
+    idx = [1 for i in xrange(bl) if num & (1<<i)]
+    return len(idx) == 1
+
+def nonbarren(H):
+    for v in H:
+        if H[v]: return v
+    return False
 
 def prune_loops(loops, H):
     l = []
@@ -424,6 +443,36 @@ def edgemask(gl,H, cds):
             if skip_conflict(gl[i], gl[j], cds): continue
 
             gnum = gl[i] | gl[j]
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                if bfu.call_u_equals(g, H): s.add(gnum)
+                mask[i,j] = gnum
+                mask[j,i] = gnum
+    return mask, s
+
+def ledgemask(gl,H, cds):
+    """given a list of encoded graphs and observed undersampled graph
+    H returns a matrix with -1 on diagonal, 0 at the conflicting graph
+    combination and encoded graph at non-conflicted
+    positions. Furthermore, returns a set of graphs that are in the
+    equivalence class of H
+
+    Arguments:
+    - `gl`: list of integer encoded graphs
+    - `H`: the observed undersampled graph
+    """
+    n = len(H)
+    nl= len(gl)
+    s = set()
+    mask = np.zeros((nl,nl),'int')
+    np.fill_diagonal(mask,-1)
+
+    for i in xrange(nl):
+        for j in xrange(i+1,nl):
+
+            if gl[i] & gl[j]: continue
+            gnum = gl[i] | gl[j]
+            if skip_conflictors(gnum, cds): continue
             g = bfu.num2CG(gnum,n)
             if not bfu.call_u_conflicts(g, H):
                 if bfu.call_u_equals(g, H): s.add(gnum)
@@ -718,6 +767,55 @@ def dceqclass(H):
         i += 1
     return s
 
+def ldceqclass(H,asl=None):
+    """Find all graphs in the same equivalence class with respect to H
+
+    Arguments:
+    - `H`: an undersampled graph
+    """
+    if cmp.isSclique(H):
+        print 'not running on superclique'
+        return set()
+    n = len(H)
+    s = set()
+    cds = lconfpairs(H)
+    if asl:
+        sloops = asl
+    else:
+        sloops = prune_loops(allsloops(len(H)),H)
+
+    glist =  sloops
+    i = 1
+    while glist != []:
+        print i, len(glist)
+        glist, ss = lquadmerge(glist, H, cds)
+        s = s|ss
+        i += 1
+    return s
+
+def lquadmerge(gl, H, cds):
+    n = len(H)
+    l = set()
+    s = set()
+    mask, ss = ledgemask(gl, H, cds)
+    s = s | ss
+    ds = edgeds(mask)
+
+    #pp = pprint.PrettyPrinter(indent=1)
+    #pp.pprint(ds)
+
+    for idx in ds:
+        for gn in ds[idx]:
+            if mask[idx]&gn: continue
+            if skip_conflictors(mask[idx], gn, cds): continue
+            gnum = mask[idx] | gn
+            if gnum in l or gnum in ss: continue
+            g = bfu.num2CG(gnum,n)
+            if not bfu.call_u_conflicts(g, H):
+                l.add(gnum)
+                if bfu.call_u_equals(g, H): s.add(gnum)
+
+    return list(l), s
 
 def quadmerge_(glist, H, ds):
     n = len(H)
@@ -981,6 +1079,134 @@ def reverse(H, verbose=True, capsize=1000):
         if capsize <= len(s): break
 
     return s
+
+# ----------------------
+
+def build_loop_step(ds, loop, n, iter=1):
+    n2 = n*n +n
+    dsr = {}
+    s = set()
+    ss = set()
+
+    pbar = start_progress_bar(iter, len(ds))
+
+    c = 0
+
+    for gnum in ds:
+        c += 1
+        pbar.update(c)
+        gset = set()
+        eset = set()
+        for sloop in ds[gnum]:
+            num = sloop | gnum
+            if not num in s:
+                g = bfu.num2CG(num, n)
+                s.add(num)
+                if bfu.forms_loop(g, loop):
+                    ss.add(num)
+                else:
+                    gset.add((num,sloop))
+                    eset.add(sloop)
+
+        for gn,e in gset:
+            dsr[gn] = eset - set([e])
+
+    pbar.finish()
+    return dsr, ss
+
+def forward_loop_match(loop, n):
+    """start with an empty graph and keep adding simple loops until
+    the loop is generated at some undersampling rate
+
+    Arguments:
+    - `loop`: binary encoding of the loop
+    - `n`: number of nodes in the graph
+    """
+    s = set()
+    sloops = allsloops(n)
+    ds = {0: sloops}
+
+    i=0
+    while ds:
+        ds, ss = build_loop_step(ds, loop, n, iter=i)
+        s = s | ss
+        i += 1
+
+    return s
+
+def delAloop(g, loop):
+    n = len(g)
+    l = []
+    l = [bfu.g2num(ur.loop2graph(s,n)) for s in sls.simple_loops(g,0)]
+    l = [num for num in l if not num == loop ]
+    print loop, ': ',  l
+    return bfu.num2CG(reduce(operator.or_, l),n)
+
+def reverse_loop_match(g,loop):
+    """start with a graph and keep removing loops while the loop is still matched
+
+    Arguments:
+    - `g`: graph that generates the loop
+    - `loop`: the reference loop
+    """
+    s = set()
+    n = len(g)
+
+    def prune(g):
+        numh = bfu.g2num(g)
+        cannotprune = True
+        for l in sls.simple_loops(gk.digonly(g),0):
+            gg = delAloop(g,bfu.g2num(loop2graph(l,n)))
+            if bfu.forms_loop(gg, loop):
+                cannotprune = False
+                prune(gg)
+        if cannotprune:
+            print 'one'
+            s.add(g)
+
+    prune(g)
+    return s
+
+def reverse_edge_match(g,loop):
+    """start with a graph and keep removing loops while the loop is still matched
+
+    Arguments:
+    - `g`: graph that generates the loop
+    - `loop`: the reference loop
+    """
+    s = set()
+    n = len(g)
+
+    def prune(g):
+        numh = bfu.g2num(g)
+        cannotprune = True
+        for l in gk.edgelist(gk.digonly(g)):
+            gk.delanedge(g,l)
+            if bfu.forms_loop(g, loop):
+                cannotprune = False
+                prune(g)
+            gk.addanedge(g,l)
+        if cannotprune: s.add(bfu.g2num(g))
+
+    prune(g)
+    return s
+
+def matchAloop(loop, n):
+    """returns a set of minimal graphs that generate this loop
+
+    Arguments:
+    - `loop`: binary encoding of the loop
+    - `n`: number of nodes in the graph
+    """
+    s = set()
+    l = forward_loop_match(loop,n)
+    print len(l)
+    for g in l:
+        s = s | reverse_edge_match(bfu.num2CG(g,n),loop)
+
+    return s
+
+# ----------------------
 
 def del_loop(ds, H, iter=0, verbose=True, capsize=1000):
     n = len(H)

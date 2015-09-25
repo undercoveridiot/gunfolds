@@ -62,7 +62,9 @@ g = {'1': {'2':set([(0,1)])},
      '3': {'4':set([(0,1)])},
      '4': {'1':set([(0,1)])},     
 }
-#d2l.matrix_fold(g,2,1,R=5, w_gap=1, h_gap=2, mname='TT1')
+
+
+#d2l.matrix_unfold(l[0],2,1,R=5, w_gap=1, h_gap=2, mname='TT1')
 
 listplot('list.zkl', width=5)
 

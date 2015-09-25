@@ -94,12 +94,13 @@ def independent_(x,y, alpha = 0.05):
             x_ = x**i
             y_ = y**j
             r = np.corrcoef(x_,y_)[0,1]
-            r = max(min(r,1),-1) # Tetrad had this
+            #r = max(min(r,1),-1) # Tetrad had this
             p = np_fisherZ(x_,y_,r)
-            if not np.isnan(p): ps.append(p)
+            #if not np.isnan(p):
+            ps.append(p)
 
     if not ps: return True
-    return fdrQ(alpha, ps) > alpha
+    return fdrCutoff(alpha, ps) > alpha
 
 
 def addallb(g):
