@@ -8,8 +8,8 @@ import zickle as zkl
 import time, socket
 import scipy
 
-KEY='ral_async'
-UMAX = 4
+KEY='rasl_il_u2'
+UMAX = 2
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100
@@ -17,10 +17,13 @@ if socket.gethostname().split('.')[0] == 'leibnitz':
     PNUM=60
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'mars':
-    PNUM=12
+    PNUM=20
     PNUM=max((1,PNUM/INPNUM))
 elif socket.gethostname().split('.')[0] == 'hooke':
     PNUM=21
+    PNUM=max((1,PNUM/INPNUM))
+elif socket.gethostname().split('.')[0] == 'saturn':
+    PNUM=12
     PNUM=max((1,PNUM/INPNUM))
 else:
     # Setting the number  of parallel running processes  to the number
@@ -39,9 +42,10 @@ def ra_wrapper(fold, n=10, k=10):
             gs= bfutils.call_undersamples(g)
             for u in range(1,min([len(gs),UMAX])):
                 g2 = bfutils.undersample(g,u)
-                print fold,': ',traversal.density(g),':',
+                print fold,': ',traversal.density(g),':', traversal.density(g2),':',
                 startTime = int(round(time.time() * 1000))
-                s = ur.liteqclass(g2, verbose=False, capsize=CAPSIZE)
+                #s = ur.liteqclass(g2, verbose=False, capsize=CAPSIZE)
+                s = ur.eqclass(g2)
                 endTime = int(round(time.time() * 1000))
                 print len(s), u
                 l[u] = {'eq':s,'ms':endTime-startTime}
@@ -102,8 +106,8 @@ def fan_wrapper(fold,n=10,k=10):
                 scipy.random.seed()
                 try:
                     startTime = int(round(time.time() * 1000))
-                    s = traversal.v2g22g1(g2, capsize=CAPSIZE)
-                    #s = traversal.backtrack_more2(g2, rate=2, capsize=CAPSIZE)
+                    #s = traversal.v2g22g1(g2, capsize=CAPSIZE)
+                    s = traversal.backtrack_more2(g2, rate=2, capsize=CAPSIZE)
                     endTime = int(round(time.time() * 1000))
                     print "{:2}: {:8} : {:4}  {:10} seconds".\
                         format(fold, round(gdens,3), len(s),
@@ -127,12 +131,12 @@ def fan_wrapper(fold,n=10,k=10):
     for p in pl: p.join()
     return r
 
-densities = {5: [0.3],
-             6: [0.2, .25, .3],
-             7: [0.2],
+densities = {5: [0.25, 0.3, 0.35],
+             6: [.3],
+             7: [0.2, 0.25, 0.3],
              8: [0.2],
              9: [0.2],	             
-             10:[0.2],# 0.15, 0.2, 0.25, 0.3],
+             10:[0.15],# 0.15, 0.2, 0.25, 0.3],
              15:[0.2],
              20:[0.1],# 0.15, 0.2, 0.25, 0.3],
              25:[0.1],
@@ -142,18 +146,19 @@ densities = {5: [0.3],
              50:[0.05, 0.1],
              60:[0.05, 0.1]}
 
-for nodes in [9,10,15]:
+for nodes in [10]:
     z = {}
     pool=Pool(processes=PNUM)
     for dens in densities[nodes]:
-        print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')
+        print "{:2}: {:8} : {:10} : {:10}  {:10}".format('id', 'densityi(G)', 'density(H)', 'eq class', 'time')
         e = bfutils.dens2edgenum(dens, n=nodes)
+
         eqclasses = []
         for x in pool.imap(functools.partial(ra_wrapper, n=nodes, k=e),
                            range(REPEATS)):
             eqclasses.append(x)
             z[dens] = eqclasses
-            zkl.save(z[dens],
+            zkl.save(eqclasses,
                      socket.gethostname().split('.')[0]+\
                      '_nodes_'+str(nodes)+'_density_'+\
                      str(dens)+'_'+KEY+'_.zkl')

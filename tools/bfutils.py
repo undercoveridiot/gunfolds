@@ -358,7 +358,7 @@ def iall(i,nodes):
 def cc_all(i,nodes,steps):
     #print i
     g = num2CG(i, nodes)
-    return cc_undersamples(g, steps=steps)
+    return i, cc_undersamples(g, steps=steps)
 
 
 def make_rect(l):

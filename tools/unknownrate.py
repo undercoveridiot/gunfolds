@@ -162,12 +162,12 @@ def add2set_loop(ds, H, cp, ccf, iter=1, verbose=True,
                         ss.add(num)
                         if capsize <= len(ss)+currsize: return dsr, ss
 
-        for gn,e in gset:
-           if e in cp:
-               dsr[gn] = eset - cp[e] - set([e])
-           else:
-               dsr[gn] = eset - set([e])
-
+        #for gn,e in gset:
+        #   if e in cp:
+        #       dsr[gn] = eset - cp[e] - set([e])
+        #   else:
+        #       dsr[gn] = eset - set([e])
+        for gn in gset: dsr[gn[0]] = eset - set([gn[1]])
     pbar.finish()
     return dsr, ss
 
@@ -186,8 +186,6 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
         g = bfu.num2CG(gnum, n)
         c += 1
         pbar.update(c)
-        if pbar._need_update():
-            pbar.widgets[1].marker='-'
         glist = []
         elist = []
         eset = set()
@@ -208,7 +206,6 @@ def add2set_(ds, H, cp, ccf, iter=1, verbose=True, capsize=100):
                         eset.add(ekey)
                         s.add(num)
                         if bfu.call_u_equals(g, H):
-                            pbar.widgets[1].marker='.'
                             ss.add(num)
                             #if bfu.call_u_equals2(g, gl2, H): ss.add(num)
                         if capsize <= len(ss): break
@@ -386,7 +383,7 @@ def liteqclass(H, verbose=True, capsize=100, asl=None):
     else:
         sloops = prune_loops(allsloops(len(H)),H)
 
-    cp  = lconfpairs(H, sloops=sloops)
+    cp  = []#lconfpairs(H, sloops=sloops)
     ccf = lconflictors(H, sloops=sloops)
     ds = {0: sloops}
 
