@@ -1,10 +1,11 @@
 """ This module contains graph format conversion functions """
+from __future__ import print_function
 import gmpy as gmp
 import igraph
 import networkx as nx
 import numpy as np
 import scipy
-
+import sys
 
 def g2num(g):
     """ Convert a graph into a binary format """
@@ -169,6 +170,17 @@ def vec2g(v, n):
     A, B = vec2adj(v, n)
     return adjs2graph(A, B)
 
+
+def g2clingo(g, file=sys.stdout):
+    n = len(g)
+    print('node(1..'+str(n)+').', file=file)
+    for v in g:
+        for w in g[v]:
+            if g[v][w] == 1: print('edgeu('+str(v)+','+str(w)+').', file=file)
+            if g[v][w] == 2: print('confu('+str(v)+','+str(w)+').', file=file)
+            if g[v][w] == 3:
+                print('edgeu('+str(v)+','+str(w)+').', file=file)
+                print('confu('+str(v)+','+str(w)+').', file=file)
 
 def g2ig(g):
     """
