@@ -385,9 +385,9 @@ def AB2intAB(A,B, th=0.09):
     B[amap(lambda x: np.abs(x) < 1, B)] = 0
     return A, B
 
-def data2graph(data,x0=None):
+def data2graph(data,x0=None, th=0.09):
     A, B = data2AB(data, x0=x0)
-    Ab, Bb = AB2intAB(A, B)
+    Ab, Bb = AB2intAB(A, B, th=th)
     return adjs2graph(Ab, Bb)
 
 def data2VARgraph(data, pval=0.05):
