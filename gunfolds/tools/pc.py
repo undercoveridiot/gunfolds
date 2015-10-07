@@ -129,8 +129,8 @@ def dpc(data, pval=0.05):
 
     def cindependent(y, x, counter, parents=[], pval=pval):
         for S in [j for j in combinations(parents, counter)]:
-            # if cind_(y, x, condset=list(S), pval=pval):
-            if tetrad_cind_(x, y, condset=list(S), alpha=pval):
+            if cind_(y, x, condset=list(S), pval=pval):
+            #if tetrad_cind_(x, y, condset=list(S), alpha=pval):
                 return True
         return False
 
