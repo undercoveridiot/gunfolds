@@ -18,7 +18,7 @@ UMAX = 4
 INPNUM = 1  # number of randomized starts per graph
 CAPSIZE = 1000  # stop traversing after growing equivalence class tothis size
 REPEATS = 100
-PNUM = get_process_count(INPNUM)
+PNUM = 40#get_process_count(INPNUM)
 
 @timeout_decorator.timeout(TIMEOUT)#, use_signals=False)
 def ra_caller(g2, fold):
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     densities = {5: [0.2],
                  6: [0.2, .25, .3],
                  7: [0.2, .25, .3],
-                 8: [0.15, 0.2, 0.25, 0.3],
+                 8: [0.25, 0.3],
                  9: [.2],
                  10: [.15, 0.2, 0.25, 0.3],
                  15: [0.2],
@@ -73,7 +73,7 @@ if __name__ == '__main__':
                  50: [0.05, 0.1],
                  60: [0.05, 0.1]}
 
-    for nodes in [8]:
+    for nodes in [10]:
         z = {}
         pool=Pool(processes=PNUM)
         for dens in densities[nodes]:
