@@ -1,5 +1,5 @@
 from gunfolds.tools import ecj
-from gunfolds.tools import bfutils
+from gunfolds.tools import bfutils as bfu
 from gunfolds.tools.conversions import graph2adj, adjs2graph
 from gunfolds.tools import graphkit as gk
 import numpy as np
@@ -8,7 +8,7 @@ import scipy
 from scipy import linalg, optimize
 from statsmodels.tsa.api import VAR
 from sympy.matrices import SparseMatrix
-
+import ipdb
 
 
 def symchol(M): # symbolic Cholesky
@@ -278,11 +278,11 @@ def getAgraph(n, mp=2, st=0.5, verbose=True):
                 print "*** trying a different graph"
     return {'graph':      G,
             'transition': A,
-            'converges':  len(bfutils.call_undersamples(G))}
+            'converges':  len(bfu.call_undersamples(G))}
 
 def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
     keeptrying = True
-    plusedges = bfutils.dens2edgenum(density, n)
+    plusedges = bfu.dens2edgenum(density, n)
     while keeptrying:
         G = gk.ringmore(n, plusedges)
         try:
@@ -298,7 +298,7 @@ def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
                 print "*** trying a different graph"
     return {'graph':      G,
             'transition': A,
-            'converges':  len(bfutils.call_undersamples(G))}
+            'converges':  len(bfu.call_undersamples(G))}
 
 
 
@@ -383,11 +383,12 @@ def AB2intAB(A,B, th=0.09):
     A[amap(lambda x: abs(x) < 1, A)] = 0
     B[amap(lambda x: abs(x) > th, B)] = 1
     B[amap(lambda x: np.abs(x) < 1, B)] = 0
+    np.fill_diagonal(B,0)
     return A, B
 
-def data2graph(data,x0=None, th=0.09):
+def data2graph(data,x0=None):
     A, B = data2AB(data, x0=x0)
-    Ab, Bb = AB2intAB(A, B, th=th)
+    Ab, Bb = AB2intAB(A, B)
     return adjs2graph(Ab, Bb)
 
 def data2VARgraph(data, pval=0.05):
@@ -403,3 +404,175 @@ def data2VARgraph(data, pval=0.05):
                 g[i+1][j+1] = 1
 
     return g
+
+# this is for the SAT solver project
+def stableVAR(n,density=0.1,dist='beta'):
+    """
+    This function keeps trying to create a random graph and a random
+    corresponding transition matrix until it succeeds.
+
+    Arguments:
+    - `n`: number of nodes in the graph
+    - `density`: ratio of total nodes to n^2 possible nodes
+    - `dist`: distribution from which to sample the weights. Available
+      options are flat, flatsigned, beta, normal, uniform
+    """
+    scipy.random.seed()
+    sst = 0.9
+    r = None
+    while not r:
+        r = getAring(n, density, sst, False, dist=dist)
+        if sst < 0.03:
+            sst -= 0.001
+        else:
+            sst -= 0.01
+        if sst < 0:
+            sst = 0.02
+    return r['graph'], r['transition']
+
+def genData(n, rate=2, density=0.1, burnin=100, ssize=2000, noise=0.1, dist='beta'):
+    """
+    Given a number of nodes this function randomly generates a ring
+    SCC and the corresponding stable transition matrix. It tries until
+    succeeds and for some graph densities and parameters of the
+    distribution of transition matrix values it may take
+    forever. Please play with the dist parameter to stableVAR. Then
+    using this transition matrix it generates `ssize` samples of data
+    and undersamples them by `rate` discarding the `burnin` number of
+    samples at the beginning.
+
+    Arguments:
+    - `n`: number of nodes in the desired graph
+    - `rate`: undersampling rate (1 - no undersampling)
+    - `density`: density of the graph to be generted
+    - `burnin`: number of samples to discard since the beginning of VAR sampling
+    - `ssize`: how many samples to keep at the causal sampling rate
+    - `noise`: noise standard deviation for the VAR model
+    """
+    g, Agt = stableVAR(n, density=density, dist=dist)
+    data = drawsamplesLG(Agt, samples=burnin + ssize * 2, nstd=noise)
+    data = data[:, burnin:]
+    return g, Agt, data[:,::rate]
+
+def estimateSVAR(data, th=0.09):
+    A, B = data2AB(data)
+    A, B = AB2intAB(A, B, th=th)
+    return A, B
+
+# option #1
+def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.1, dist='beta'):
+    """
+    Given a number of nodes this function randomly generates a ring
+    SCC and the corresponding stable transition matrix. It tries until
+    succeeds and for some graph densities and parameters of the
+    distribution of transition matrix values it may take
+    forever. Please play with the dist parameter to stableVAR. Then
+    using this transition matrix it generates `ssize` samples of data
+    and undersamples them by `rate` discarding the `burnin` number of
+    samples at the beginning. For these data the funcion solves the
+    SVAR estimation maximizing log likelihood and returns the A and B
+    matrices.
+
+    Arguments:
+    - `n`: number of nodes in the desired graph
+    - `rate`: undersampling rate (1 - no undersampling)
+    - `density`: density of the graph to be generted
+    - `th`: threshold for discarding edges in A and B
+    - `burnin`: number of samples to discard since the beginning of VAR sampling
+    - `ssize`: how many samples to keep at the causal sampling rate
+    - `noise`: noise standard deviation for the VAR model
+    """
+    g, Agt, data = genData(n, rate=rate, density=density,
+                           burnin=burnin, ssize=ssize, noise=noise, dist=dist)
+    A, B = estimateSVAR(data, th=th)
+
+    return {'graph': g,
+            'rate': rate,
+            'graph@rate': bfu.undersample(g,rate-1),
+            'transition': Agt,
+            'estimate': adjs2graph(A, B),
+            'directed': A,
+            'bidirected': B
+            }
+
+# option #2
+def noiseData(data, noise=0.1):
+    h, w = data.shape
+    return data + np.random.randn(h,w)*noise
+
+def decide_absences(As):
+    """Given a list of binary matrices returns a binary mask for absence and presence of edges 
+    
+    Arguments:
+    - `As`: a list of binary matrices
+    """
+    M = np.zeros(As[0].shape).astype('int')
+    M[np.where(np.sum(As, axis=0) > len(As)/2.0)] = 1
+    return M
+
+def presence_probs(As):
+    """Given a list of binary matrices returns a frequency of edge presence
+    
+    Arguments:
+    - `As`: a list of binary matrices
+    """
+    n = len(As)
+    M = np.sum([np.zeros(As[0].shape), np.ones(As[0].shape)]+As, axis=0)
+    return M/(n+2.0)
+
+def weight_and_mask(As):
+    """Given a list o fbinary matrices returns a weight matrix for presences and absences and a mask to identify which are which
+    
+    Arguments:
+    - `As`: list of binary matrices
+    """
+    M = decide_absences(As)
+    W = presence_probs(As)
+    A = np.ones(M.shape) - W # ansence probs
+    A[np.where(M == 1)] = W[np.where(M == 1)]
+    return (1000 * (np.log(A) - np.log(1-A))).astype('int'), M
+            
+def randomSVARs(n, repeats=100, rate=2, density=0.1, th=0.09,
+                burnin=100, ssize=2000, noise=0.1, strap_noise = 0.1):
+    """
+    does what requested - help is on the way
+
+    Arguments:
+    - `n`: number of nodes in the desired graph
+    - `repeats`: how many times to add noise and re-estiamte
+    - `rate`: undersampling rate (1 - no undersampling)
+    - `density`: density of the graph to be generted
+    - `th`: threshold for discarding edges in A and B    
+    - `burnin`: number of samples to discard since the beginning of
+      VAR sampling
+    - `ssize`: how many samples to keep at the causal sampling rate
+    - `noise`: noise standard deviation for the VAR model
+    - `strap_noise`: amount of noise for bootstrapping
+    """
+    g, Agt, data = genData(n, rate=rate, density=density,
+                           burnin=burnin, ssize=ssize, noise=noise)
+
+    As = []
+    Bs = []
+    A, B = estimateSVAR(data, th=th)
+    As.append(A)
+    Bs.append(B)
+
+    for i in range(repeats-1):
+        A, B = estimateSVAR(noiseData(data, noise=strap_noise), th=th)
+        As.append(A)
+        Bs.append(B)
+
+    A = weight_and_mask(As)
+    B = weight_and_mask(Bs)    
+
+
+    return {'graph': g,
+            'rate': rate,
+            'graph@rate': bfu.undersample(g,rate-1),
+            'transition': Agt,
+            'directed': A,
+            'bidirected': B
+            }
+
+# option #3
