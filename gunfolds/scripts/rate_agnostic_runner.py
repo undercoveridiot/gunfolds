@@ -18,9 +18,10 @@ UMAX = 4
 INPNUM = 1  # number of randomized starts per graph
 CAPSIZE = 1000  # stop traversing after growing equivalence class tothis size
 REPEATS = 100
-PNUM = 40#get_process_count(INPNUM)
+PNUM = 50#get_process_count(INPNUM)
 
-@timeout_decorator.timeout(TIMEOUT)#, use_signals=False)
+#@timeout_decorator.timeout(TIMEOUT)#, use_signals=False)
+@timeout_decorator.timeout(TIMEOUT, use_signals=False)
 def ra_caller(g2, fold):
     startTime = int(round(time.time() * 1000))
     s = ur.liteqclass(g2, verbose=False, capsize=CAPSIZE)
