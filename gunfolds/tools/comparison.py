@@ -1,7 +1,7 @@
 from gunfolds.tools.conversions import num2CG, graph2nx, nx2graph
 from gunfolds.tools.bfutils import undersample
 from gunfolds.tools import ecj
-import gmpy as gmp
+#import gmpy as gmp
 import networkx as nx
 import numpy as np
 import operator
