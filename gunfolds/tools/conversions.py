@@ -1,6 +1,6 @@
 """ This module contains graph format conversion functions """
 from __future__ import print_function
-import gmpy as gmp
+#import gmpy as gmp
 import igraph
 import networkx as nx
 import numpy as np
@@ -11,7 +11,7 @@ def g2num(g):
     """ Convert a graph into a binary format """
     n = len(g)
     n2 = n ** 2 + n
-    num = 0
+    num = 0L
     for v in range(1, n + 1):
         for w in g[v]:
             num |= (1 << (n2 - v * n - w))
@@ -70,7 +70,7 @@ def num2CG(num, n):
     G = {i + 1: {} for i in xrange(n)}
     if num == 0:
         return G
-    bl = gmp.bit_length(num)
+    bl = len(bin(num))-2 #gmp.bit_length(num)
     idx = [n2 - i - 1 for i in xrange(bl) if num & (1 << i)]
     idx = np.unravel_index(idx, (n, n))
     x = idx[0] + 1
