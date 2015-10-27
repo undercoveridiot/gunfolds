@@ -11,7 +11,7 @@ def g2num(g):
     """ Convert a graph into a binary format """
     n = len(g)
     n2 = n ** 2 + n
-    num = 0L
+    num = 0
     for v in range(1, n + 1):
         for w in g[v]:
             num |= (1 << (n2 - v * n - w))
