@@ -278,11 +278,11 @@ def getAgraph(n, mp=2, st=0.5, verbose=True):
             'transition': A,
             'converges':  len(bfutils.call_undersamples(G))}
 
-def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
+def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned', permute=False):
     keeptrying = True
     plusedges = bfutils.dens2edgenum(density,n)
     while keeptrying:
-        G = gk.ringmore(n, plusedges)
+        G = gk.ringmore(n, plusedges, permute=permute)
         try:
             A = transitionMatrix4(G, minstrength=st, distribution=dist)
             try:
@@ -400,9 +400,9 @@ def intAB2graph(A,B):
                     g[str(i+1)][str(j+1)] = set([(2,0)])
     return g
 
-def data2graph(data,x0=None):
+def data2graph(data,x0=None, th=0.09):
     A,B = data2AB(data,x0=x0)
-    Ab,Bb = AB2intAB(A,B)
+    Ab,Bb = AB2intAB(A,B,th=th)
     return intAB2graph(Ab,Bb)
 
 def data2VARgraph(data, pval=0.05):

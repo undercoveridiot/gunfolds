@@ -12,6 +12,7 @@ import zickle as zkl
 import graphkit as gk
 from comparison import num2CG,nx2graph, isSclique
 import itertools
+#import rpy2
 
 def pure_directed_inc(G,D):
     G_un = {}
