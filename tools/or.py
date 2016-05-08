@@ -7,8 +7,8 @@ import numpy as np
 from numpy import ravel_multi_index as rmi
 from ortools.constraint_solver import pywrapcp
 
-U = 2
-N = 10
+U = 3
+N = 4
 k = 1
 
 solver = pywrapcp.Solver("MSL")
@@ -43,7 +43,7 @@ for i in range(N):
 # directed path constraint
 def apath(i,j,u, e=edges, s=solver):
     n = len(e)
-    if u == 1: return [e[i][k]*e[k][j] for k in range(n)]
+    if u <= 1: return [e[i][k]*e[k][j] for k in range(n)]
     l = []
     for k in range(n):
         for z in range(n):
@@ -52,7 +52,13 @@ def apath(i,j,u, e=edges, s=solver):
 
 def dcons(i, j, u, e=edges, s=solver):
     return s.Sum(apath(i,j,u,e=e,s=s))
-#def bcons(i, j, u, e=edges, s=solver):
+def bcons(i, j, u, e=edges, s=solver):
+    n = len(e)
+    l = [e[k][i]*e[k][j] for k in range(n)]
+    for ui in range(1,u):
+        for k in range(n):
+            l.extend([x*y for x in apath(k,i,ui,e=e,s=s) for y in apath(k,j,ui,e=e,s=s)])
+    return s.Sum(l)
     
 # declare constraints
 for i in range(N):
@@ -68,7 +74,7 @@ for i in range(N):
 for i in range(N):
     for j in range(i,N):
         if j == i: continue        
-        be = solver.Sum([edges[k][i]*edges[k][j] for k in range(N)])
+        be = bcons(i,j,U-1) #solver.Sum([edges[k][i]*edges[k][j] for k in range(N)])
         if bedgeu[(i,j)] == 1:
             solver.Add( 0 < be )
         else:
