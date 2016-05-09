@@ -1,13 +1,14 @@
+import sys
+sys.path.append('./tools/')
 import seaborn as sb
 import zickle as zkl
 import graphkit as gk
 import bfutils as bfu
-import sys
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-sys.path.append('./tools/')
+
 #
 
 uplimit = 0.25
