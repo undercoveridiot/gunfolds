@@ -7,8 +7,9 @@ import functools
 import zickle as zkl
 import time, socket
 import scipy
+import clingo as cg
 
-UMAX = 6
+UMAX = 1
 INPNUM = 1 # number of randomized starts per graph
 CAPSIZE= 1000 # stop traversing after growing equivalence class tothis size
 REPEATS = 100

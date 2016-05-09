@@ -213,11 +213,13 @@ def scale_free(n, alpha=0.7, beta=0.25,
     addAring(g)
     return g
 
-def ring(n):
+def ring(n, permute=False):
     g = {}
-    for i in range(1,n):
-        g[str(i)] = {str(i+1): set([(0,1)])}
-    g[str(n)] = {'1': set([(0,1)])}
+    names = [str(x+1) for x in range(n)]
+    if permute: names = np.random.permutation(names) 
+    for i in range(n-1):
+        g[names[i]] = {names[i+1]: set([(0,1)])}
+    g[names[n-1]] = {names[0]: set([(0,1)])}
     return g
 
 def addAring(g):
@@ -246,8 +248,8 @@ def ringarcs(g,n):
     for edge in upairs(len(g),n):
         g[str(edge[0]+1)][str(edge[1]+1)] = set([(0,1)])
     return g
-def ringmore(n,m):
-    return ringarcs(ring(n),m)
+def ringmore(n,m, permute=False):
+    return ringarcs(ring(n,permute=permute),m)
 
 def digonly(H):
     """returns a subgraph of H contatining all directed edges of H
@@ -259,7 +261,7 @@ def digonly(H):
     for v in g:
         g[v] = {w:set([(0,1)]) for w in H[v] if not H[v][w] == set([(2,0)])}
     return g
-    
+
 # Justin's ternary representation: 1 = directed edge; 2 = bidirected; 3 = both
 def justin2graph(g):
     r = {}

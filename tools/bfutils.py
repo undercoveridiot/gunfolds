@@ -12,6 +12,7 @@ import zickle as zkl
 import graphkit as gk
 from comparison import num2CG, nx2graph, isSclique
 import itertools
+#import rpy2
 
 
 def pure_directed_inc(G, D):
@@ -417,7 +418,7 @@ def iall(i, nodes):
 def cc_all(i, nodes, steps):
     # print i
     g = num2CG(i, nodes)
-    return cc_undersamples(g, steps=steps)
+    return i, cc_undersamples(g, steps=steps)
 
 
 def make_rect(l):
