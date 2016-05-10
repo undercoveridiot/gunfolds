@@ -39,7 +39,7 @@ for i in range(N):
     edges.append(e)
 
 # directed path constraint
-def apath(i,j,u, e=edges, s=solver):
+def apath(i,j,u, e=edges):
     n = len(e)
     if u <= 1: return [e[i][k]*e[k][j] for k in range(n)]
     l = []
@@ -49,13 +49,13 @@ def apath(i,j,u, e=edges, s=solver):
     return l                
 
 def dcons(i, j, u, e=edges, s=solver):
-    return s.Sum(apath(i,j,u,e=e,s=s))
+    return s.Sum(apath(i,j,u,e=e))
 def bcons(i, j, u, e=edges, s=solver):
     n = len(e)
     l = [e[k][i]*e[k][j] for k in range(n)]
     for ui in range(1,u):
         for k in range(n):
-            l.extend([x*y for x in apath(k,i,ui,e=e,s=s) for y in apath(k,j,ui,e=e,s=s)])
+            l.extend([x*y for x in apath(k,i,ui,e=e) for y in apath(k,j,ui,e=e)])
     return s.Sum(l)
     
 # declare constraints
