@@ -1,10 +1,8 @@
-import sys,os
-import sys, os
+import sys
+
 sys.path.append('./tools/')
 import traversal, bfutils
-import graphkit as gk
 import numpy as np
-from numpy import ravel_multi_index as rmi
 from ortools.constraint_solver import pywrapcp
 
 U = 3
@@ -70,7 +68,7 @@ for i in range(N):
         else:
             solver.Add( 0 == de)
 
-        # bidirected edge constraints
+# bidirected edge constraints
 for i in range(N):
     for j in range(i,N):
         if j == i: continue        
