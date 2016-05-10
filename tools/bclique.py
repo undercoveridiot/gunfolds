@@ -7,8 +7,9 @@ import numpy as np
 from ortools.constraint_solver import pywrapcp
 
 
-N = 4
-k = bfu.dens2edgenum(0.2, N)
+dens = 0.4
+N = 5
+k = bfu.dens2edgenum(dens, N)
 
 solver = pywrapcp.Solver("b-clique")
 
