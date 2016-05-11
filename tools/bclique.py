@@ -114,11 +114,13 @@ def bcliques(g, verbose=False):
     # check for b-cliques for which all edges are covered in other b-cliques
     cc = []
     for i in range(len(cliques)):
+        bcl = cliques.pop()
         pts = set()
         for j in range(len(cliques)):
-            if i == j:
-                continue
             pts = pts.union(cliques[j])
-        if not cliques[i].issubset(pts):
-            cc.append(cliques[i])
+        for j in range(len(cc)):
+            pts = pts.union(cc[j])
+
+        if not bcl.issubset(pts):
+            cc.append(bcl)
     return cc
