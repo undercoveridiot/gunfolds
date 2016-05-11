@@ -1,92 +1,124 @@
 import sys
 
 sys.path.append('./tools/')
-import traversal as trv
-import bfutils as bfu
+import graphkit as gk
 import numpy as np
 from ortools.constraint_solver import pywrapcp
 
 
-dens = 0.4
-N = 5
-k = bfu.dens2edgenum(dens, N)
+def printedges(g):
+    l = gk.edgelist(g)
+    for e in l:
+        print int(e[0]) - 1, '->', int(e[1]) - 1
 
-solver = pywrapcp.Solver("b-clique")
-
-# generate a random graph
-g = bfu.ringmore(N,k)
 
 def edge_exists(i, j, g):
-    return str(j+1) in g[str(i+1)]
-
-# declare variables
-edges = []
-for i in range(N):
-    e = []
-    for j in range(N):
-        #if edge_exists(i, j, g):
-        e.append(solver.IntVar(0,1,"%i -> %i" % (i,j)))
-    edges.append(e)
-
-parents  = []
-children = []
-for i in range(N):
-    parents.append(solver.IntVar(0,1,"%i" % (i)))
-    children.append(solver.IntVar(0,1,"%i" % (i)))
+    return str(j + 1) in g[str(i + 1)]
 
 
-def allkids(i, c = children, e = edges, s = solver):
-    n = len(c)
-    el = [e[i][k] for k in range(n)]
-    dl = [e[i][k] * c[k] for k in range(n)]
-    return s.Sum(el) == s.Sum(c) == s.Sum(dl)
+def numkids(i, edges, solver):
+    N = len(edges)
+    return solver.Sum([edges[i][k] for k in range(N)])
 
 
-def allpars(j, p = parents, e = edges, s = solver):
-    n = len(p)
-    el = [e[k][j] for k in range(n)]
-    dl = [e[k][j] * p[k] for k in range(n)]
-    return s.Sum(el) == s.Sum(p) == s.Sum(dl)
+def numparents(i, edges, solver):
+    N = len(edges)
+    return solver.Sum([edges[k][i] for k in range(N)])
 
 
-# declare constraints
-for i in range(N):
-    for j in range(N):
-        # edge existance constraints
-        if not edge_exists(i, j, g):
-            solver.Add( 0 == edges[i][j] )
-        else:
-            solver.Add(parents[i] == edges[i][j])
-            solver.Add(children[j] == edges[i][j])
+def clique_constrain(solver, parents, children, edges, g):
+    N = len(parents)
 
-            solver.Add(allkids(i) == edges[i][j])
-            solver.Add(edges[i][j] == allpars(j))
-#stop
+    # declare constraints
+    solver.Add(solver.Sum(parents) > 0)
+    solver.Add(solver.Sum(children) > 0)
 
-# run the solver
-solution = solver.Assignment()
-solution.Add([edges[i][j] for i in range(N) for j in range(N)])
-solution.Add(parents)
-solution.Add(children)
-collector = solver.AllSolutionCollector(solution)
-solver.Solve(solver.Phase([edges[i][j] for i in range(N) for j in range(N)] + children + parents,
-                          solver.CHOOSE_FIRST_UNBOUND,
-                          solver.ASSIGN_MIN_VALUE),
-                          [collector])
-num_solutions = collector.SolutionCount()
+    for i in range(N):
+        # makes sure that there exists at least one outgoing edge from node i if it is marked in parents for this b-clique
+        solver.Add((parents[i] == 1) == (solver.Sum([edges[i][k] for k in range(N)]) >= 1))
+        # this makes sure that there exists at least one incoming edge to node i if it is marked as a child
+        solver.Add((children[i] == 1) == (solver.Sum([edges[k][i] for k in range(N)]) >= 1))
 
-# output solutions
-print "num_solutions:", num_solutions
-print "failures:", solver.Failures()
-print "branches:", solver.Branches()
-print "WallTime:", solver.WallTime()
+        solver.Add((children[i] == 1) == (solver.Sum(parents) <= numparents(i, edges, solver)))
+        solver.Add((parents[i] == 1) == (solver.Sum(children) <= numkids(i, edges, solver)))
 
-if num_solutions > 0 and num_solutions < 5:
+        for j in range(N):
+            # edge existence constraints
+            if not edge_exists(i, j, g):
+                solver.Add(edges[i][j] == 0)
+            else:
+                solver.Add((edges[i][j] == 1) == (parents[i]*children[j] == 1))
+
+def bcliques(g, verbose=False):
+    solver = pywrapcp.Solver("b-clique")
+
+    # declare variables
+    edges = []
+    N = len(g)
+    for i in range(N):
+        e = []
+        for j in range(N):
+            e.append(solver.IntVar(0, 1, "%i -> %i" % (i, j)))
+        edges.append(e)
+
+    parents = [solver.IntVar(0, 1, "%i" % (i)) for i in range(N)]
+    children = [solver.IntVar(0, 1, "%i" % (i)) for i in range(N)]
+
+    # declare constraints
+    clique_constrain(solver, parents, children, edges, g)
+
+    # run the solver
+    solution = solver.Assignment()
+    solution.Add([edges[i][j] for i in range(N) for j in range(N)])
+    solution.Add(parents)
+    solution.Add(children)
+
+    collector = solver.AllSolutionCollector(solution)
+    solver.Solve(solver.Phase([edges[i][j] for i in range(N) for j in range(N)] + children + parents,
+                              solver.CHOOSE_FIRST_UNBOUND,
+                              solver.ASSIGN_MAX_VALUE),
+                 [collector])
+    num_solutions = collector.SolutionCount()
+
+    # output solutions
+    if verbose:
+        print "num_solutions:", num_solutions
+        print "failures:", solver.Failures()
+        print "branches:", solver.Branches()
+        print "WallTime:", solver.WallTime()
+
+    cliques = []
+    pts = set()
     for s in range(num_solutions):
+        c = set()
         qval = [collector.Value(s, edges[i][j]) for i in range(N) for j in range(N)]
+        pval = [collector.Value(s, parents[i]) for i in range(N)]
+        cval = [collector.Value(s, children[i]) for i in range(N)]
+        if verbose:
+            print " ----------------- ", s
+        if verbose:
+            print np.asarray([pval, cval])
         for i in range(len(qval)):
             if qval[i]:
-                e = np.unravel_index(i,[N,N])
-                print e[0],"->",e[1]
-        print
-        print
+                e = np.unravel_index(i, [N, N])
+                c.add((e[0], e[1]))
+                if verbose:
+                    print e[0], "->", e[1]
+        if not (True in map(lambda x: c.issubset(x), cliques)):
+            if not c.issubset(pts):
+                pts = pts.union(c)
+                cliques.append(c)
+        if verbose:
+            print "---"
+
+    # check for b-cliques for which all edges are covered in other b-cliques
+    cc = []
+    for i in range(len(cliques)):
+        pts = set()
+        for j in range(len(cliques)):
+            if i == j:
+                continue
+            pts = pts.union(cliques[j])
+        if not cliques[i].issubset(pts):
+            cc.append(cliques[i])
+    return cc
