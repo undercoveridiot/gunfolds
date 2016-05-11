@@ -35,7 +35,6 @@ for i in range(N):
     children.append(solver.IntVar(0,1,"%i" % (i)))
 
 
-
 def allkids(i, c = children, e = edges, s = solver):
     n = len(c)
     el = [e[i][k] for k in range(n)]
@@ -59,8 +58,9 @@ for i in range(N):
         else:
             solver.Add(parents[i] == edges[i][j])
             solver.Add(children[j] == edges[i][j])
-            solver.Add(edges[i][j]  allkids(i))
-            solver.Add((edges[i][j] == 1) == allpars(j))
+
+            solver.Add(allkids(i) == edges[i][j])
+            solver.Add(edges[i][j] == allpars(j))
 #stop
 
 # run the solver
