@@ -5,28 +5,6 @@ import graphkit as gk
 import numpy as np
 from ortools.constraint_solver import pywrapcp
 
-# dens = 0.2
-# N = 6
-# k = bfu.dens2edgenum(dens, N)
-#
-# # generate a random graph
-# g = bfu.ringmore(N, k)
-#
-# g = {'1': {'2': {(0, 1)}},
-#      '2': {'3': {(0, 1)}, '4': {(0, 1)}},
-#      '3': {'1': {(0, 1)}, '4': {(0, 1)}},
-#      '4': {'5': {(0, 1)}},
-#      '5': {'1': {(0, 1)}}}
-#
-# g = {'1': {'4': {(0, 1)}, '5': {(0, 1)}, '6': {(0, 1)}},
-#      '2': {'4': {(0, 1)}, '5': {(0, 1)}},
-#      '3': {'4': {(0, 1)}, '6': {(0, 1)}},
-#      '4': {},
-#      '5': {},
-#      '6': {}}
-#
-# g = bfu.ringmore(N, k)
-
 
 def printedges(g):
     l = gk.edgelist(g)
@@ -70,7 +48,6 @@ def clique_constrain(solver, parents, children, edges, g):
                 solver.Add(edges[i][j] == 0)
             else:
                 solver.Add((edges[i][j] == 1) == (parents[i]*children[j] == 1))
-
 
 def bcliques(g, verbose=False):
     solver = pywrapcp.Solver("b-clique")
