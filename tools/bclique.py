@@ -13,7 +13,10 @@ def g2lg(g):
     """
     edge_type = {(0, 1): 1, (2, 0): 2}
     edge_weight = {(0, 1): 1, (2, 0): 0}
-    lg = {int(e): {int(c): {edge_type[w]:{edge_weight[w]} for w in g[e][c]} for c in g[e]} for e in g}
+    lg = {int(e): {int(c): {edge_type[w]:{edge_weight[w]}
+                            for w in g[e][c]}
+                   for c in g[e]}
+          for e in g}
     return lg
 
 
