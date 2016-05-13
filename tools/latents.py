@@ -20,6 +20,9 @@ def g2lg(g):
                             for w in g[e][c]}
                    for c in g[e]}
           for e in g}
+    for e in lg:
+        if e in lg[e]:
+            lg[e][e] = {1: LoopSet(set([1]))}
     return lg
 
 
@@ -122,7 +125,7 @@ def hide_node(g, H):
     for p in pa:
         for c in ch:
             if c in gg[p]:
-                ab = gg[p][c]
+                ab = gg[p][c][1]
             else:
                 ab = set()
             gg[p][c] = {1: merge_weightsets(ab, pa[p], ch[c], sl)}
