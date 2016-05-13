@@ -6,20 +6,6 @@ import numpy as np
 from ortools.constraint_solver import pywrapcp
 
 
-def g2lg(g):
-    """
-    Convert a data structure encoding the MSL-type graph into a structure encoding latents graph
-    :return: a graph with integer indices and sets as weights
-    """
-    edge_type = {(0, 1): 1, (2, 0): 2}
-    edge_weight = {(0, 1): 1, (2, 0): 0}
-    lg = {int(e): {int(c): {edge_type[w]:{edge_weight[w]}
-                            for w in g[e][c]}
-                   for c in g[e]}
-          for e in g}
-    return lg
-
-
 def printedges(g):
     l = gk.edgelist(g)
     for e in l:
