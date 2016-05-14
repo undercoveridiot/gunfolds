@@ -9,11 +9,11 @@ from ortools.constraint_solver import pywrapcp
 def printedges(g):
     l = gk.edgelist(g)
     for e in l:
-        print int(e[0]) - 1, '->', int(e[1]) - 1
+        print e[0] - 1, '->', e[1] - 1
 
 
 def edge_exists(i, j, g):
-    return str(j + 1) in g[str(i + 1)]
+    return j + 1 in g[i + 1]
 
 
 def numkids(i, edges, solver):
@@ -47,7 +47,8 @@ def clique_constrain(solver, parents, children, edges, g):
             if not edge_exists(i, j, g):
                 solver.Add(edges[i][j] == 0)
             else:
-                solver.Add((edges[i][j] == 1) == (parents[i]*children[j] == 1))
+                solver.Add((edges[i][j] == 1) == (parents[i] * children[j] == 1))
+
 
 def bcliques(g, verbose=False):
     solver = pywrapcp.Solver("b-clique")
@@ -114,11 +115,13 @@ def bcliques(g, verbose=False):
     # check for b-cliques for which all edges are covered in other b-cliques
     cc = []
     for i in range(len(cliques)):
+        bcl = cliques.pop()
         pts = set()
         for j in range(len(cliques)):
-            if i == j:
-                continue
             pts = pts.union(cliques[j])
-        if not cliques[i].issubset(pts):
-            cc.append(cliques[i])
+        for j in range(len(cc)):
+            pts = pts.union(cc[j])
+
+        if not bcl.issubset(pts):
+            cc.append(bcl)
     return cc
