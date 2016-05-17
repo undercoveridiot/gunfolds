@@ -28,6 +28,13 @@ def g2lg(g):
     return lg
 
 
+def fix_selfloops(g):
+    for v in g:
+        if v in g[v]:
+            g[v][v] = {1: {LoopSet({1})}}
+    return g
+
+
 def osumnum(s, num):
     return set(num + x for x in s)
 
@@ -43,7 +50,7 @@ class LoopSet:
     def __init__(self, lset, pre=None):
         self.loopset = lset
         if pre is None:
-            self.preset = {[0]}
+            self.preset = {0}
         else:
             assert (type(pre) == set)
             self.preset = pre
@@ -81,7 +88,7 @@ def gtranspose(G):  # Transpose (rev. edges of) G
     return GT
 
 
-def parents(g, N): # an inefficient way to do it
+def parents(g, N):  # an inefficient way to do it
     t = gtranspose(g)  # Transpose the graph
     return {n: g[n][N][1]
             for n in t[N] if n != N}  # Return all children
@@ -97,6 +104,19 @@ def remove_node(g, N):
     for V in g:
         if N in g[V]:
             del g[V][N]
+
+
+def iterate_ws(ws):
+    starts = []
+    for e in ws:
+        if type(e) is int:
+            starts.append(e)
+            continue
+        if type(e) is set:
+            starts.extend(list(e))
+            continue
+        starts.extend(list(e.preset))
+    return starts
 
 
 def merge_weightsets(ab, ah, hb, hh):
@@ -134,6 +154,7 @@ def hide_node(g, H):
                 ab = gg[p][c][1]  # self loop
             else:
                 ab = set()
+            # ipdb.set_trace()
             w = merge_weightsets(ab, pa[p], ch[c], sl)  # new weight set
             if c == p:  # a new loop is forming
                 w = {LoopSet(w)}
@@ -224,6 +245,30 @@ def testcase(n):
           11: {9: {1: {1}}},
           10: {}}
 
-    cases = [g1, g2, g3, g4, g5]
+    g6 = {1: {2: {1: {1}}},
+          2: {3: {1: {1}}, 4: {1: {1}}},
+          4: {5: {1: {1}}},
+          5: {6: {1: {1}}, 7: {1: {1}}},
+          6: {2: {1: {1}}, 6: {1: {1}}},
+          7: {8: {1: {1}}},
+          8: {5: {1: {1}}},
+          3: {9: {1: {1}}},
+          9: {10: {1: {1}}, 11: {1: {1}}},
+          11: {9: {1: {1}}},
+          10: {}}
 
-    return cases[n]
+    g7 = {1: {2: {1: {1}}},
+          2: {3: {1: {1}}, 4: {1: {1}}},
+          4: {5: {1: {1}}},
+          5: {6: {1: {1}}, 7: {1: {1}}},
+          6: {2: {1: {1}}, 6: {1: {1}}},
+          7: {8: {1: {1}}, 7: {1: {1}}},
+          8: {5: {1: {1}}},
+          3: {9: {1: {1}}},
+          9: {10: {1: {1}}, 11: {1: {1}}},
+          11: {9: {1: {1}}},
+          10: {}}
+
+    cases = [g1, g2, g3, g4, g5, g6, g7]
+
+    return fix_selfloops(cases[n])
