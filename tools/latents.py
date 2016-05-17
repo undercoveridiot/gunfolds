@@ -81,7 +81,7 @@ def gtranspose(G):  # Transpose (rev. edges of) G
     return GT
 
 
-def parents(g, N):
+def parents(g, N): # an inefficient way to do it
     t = gtranspose(g)  # Transpose the graph
     return {n: g[n][N][1]
             for n in t[N] if n != N}  # Return all children
