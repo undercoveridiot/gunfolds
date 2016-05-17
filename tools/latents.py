@@ -22,7 +22,7 @@ def g2lg(g):
           for e in g}
     for e in lg:
         if e in lg[e]:
-            lg[e][e] = {1: LoopSet(set([1]))}
+            lg[e][e] = {1: set([LoopSet(set([1]))])}
     return lg
 
 
@@ -58,11 +58,16 @@ class LoopSet:
         return self.__add__(other)
 
     def __str__(self):
-        s = ''
+        s = '|'
+        comma = False
         if not self.preset == set([0]):
             s += '{' + ', '.join(map(str, self.preset)) + '} '
+            comma = True
         if not self.loopset == set([0]):
+            if comma:
+                s += ', '
             s += '<{ ' + ', '.join(map(str, self.loopset)) + ' }>'
+        s += '|'
         return s
 
 
@@ -124,14 +129,25 @@ def hide_node(g, H):
 
     for p in pa:
         for c in ch:
+            #ipdb.set_trace()
+            #if (p == c) and (c != H): continue
             if c in gg[p]:
-                ab = gg[p][c][1]
+                ab = gg[p][c][1] # self loop
             else:
                 ab = set()
-            gg[p][c] = {1: merge_weightsets(ab, pa[p], ch[c], sl)}
+            w = merge_weightsets(ab, pa[p], ch[c], sl) # new weight set
+            if c == p: # a new loop is forming
+                w = LoopSet(w)
+            gg[p][c] = {1: w}
 
     return gg
 
+def hide_nodes(g, nodelist):
+    nodeset = set(nodelist) # make sure not to delete a node twice
+    gg = deepcopy(g)
+    for n in nodeset:
+        gg = hide_node(gg,n)
+    return gg
 
 def test_osumnum():
     assert osumnum(set(range(5)), 1) == set(range(1, 5 + 1))
