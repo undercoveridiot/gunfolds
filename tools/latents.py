@@ -39,7 +39,6 @@ def osumset(s1, s2):
 
 class LoopSet:
     def __init__(self, lset, pre=None):
-        assert (type(lset) == set)
         self.loopset = lset
         if pre is None:
             self.preset = set([0])
@@ -95,6 +94,7 @@ def remove_node(g, N):
 
 def merge_weightsets(ab, ah, hb, hh):
     ws = osumset(ah, hb)
+    ipdb.set_trace()
     if hh:
         ws = ws + hh
     if not type(ws) is set:
