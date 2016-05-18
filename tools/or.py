@@ -5,9 +5,9 @@ import traversal, bfutils
 import numpy as np
 from ortools.constraint_solver import pywrapcp
 
-U = 3
-N = 4
-k = 1
+U = 3 # undersampling rate: 1 means no undersampling
+N = 4 # number of nodes
+k = 1 # number of extra edges
 
 solver = pywrapcp.Solver("MSL")
 
@@ -38,7 +38,7 @@ for i in range(N):
         e.append(solver.IntVar(0,1,"%i -> %i" % (i,j)))
     edges.append(e)
 
-# directed path constraint
+# path constraint
 def apath(i,j,u, e=edges):
     n = len(e)
     if u <= 1: return [e[i][k]*e[k][j] for k in range(n)]
@@ -48,8 +48,10 @@ def apath(i,j,u, e=edges):
             l.extend(map(lambda x: e[i][k]*x*e[z][j], apath(k,z,u-1)))
     return l                
 
+# directed path constraint
 def dcons(i, j, u, e=edges, s=solver):
     return s.Sum(apath(i,j,u,e=e))
+# bidirected edge constraint (a balanced trek constraint)
 def bcons(i, j, u, e=edges, s=solver):
     n = len(e)
     l = [e[k][i]*e[k][j] for k in range(n)]
