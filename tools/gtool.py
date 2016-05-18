@@ -20,7 +20,9 @@ def plotg(g):
     gt.all.graph_draw(gg, pos,
                vertex_text=gg.vertex_properties['label'],
                vertex_font_size=32,
-               edge_pen_width=5,
+               edge_pen_width=1,
+               edge_marker_size=15,
+               vertex_pen_width=1,
                vertex_fill_color=[0.62109375,  0.875     ,  0.23828125, 1])
 
 # from graph_tool.all import sfdp_layout, graph_draw
