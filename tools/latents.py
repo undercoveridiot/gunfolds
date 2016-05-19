@@ -8,6 +8,7 @@ import graphkit as gk
 import numpy as np
 import ecj
 from copy import deepcopy
+from pathtree import PathTree, osumset
 import ipdb
 
 
@@ -24,59 +25,15 @@ def g2lg(g):
           for e in g}
     for e in lg:
         if e in lg[e]:
-            lg[e][e] = {1: {LoopSet({1})}}
+            lg[e][e] = {1: {PathTree({1})}}
     return lg
 
 
 def fix_selfloops(g):
     for v in g:
         if v in g[v]:
-            g[v][v] = {1: {LoopSet({1})}}
+            g[v][v] = {1: {PathTree({1})}}
     return g
-
-
-def osumnum(s, num):
-    return set(num + x for x in s)
-
-
-def osumset(s1, s2):
-    s = set()
-    for e in s1:
-        s.update(osumnum(s2, e))
-    return s
-
-
-class LoopSet:
-    def __init__(self, lset, pre=None):
-        self.loopset = lset
-        if pre is None:
-            self.preset = {0}
-        else:
-            assert (type(pre) == set)
-            self.preset = pre
-
-    def __add__(self, other):
-        if type(other) is int:
-            return LoopSet(self.loopset, pre=osumnum(self.preset, other))
-        if type(other) is set:
-            return LoopSet(self.loopset, pre=osumset(self.preset, other))
-        return LoopSet(self.loopset.union(other.loopset), pre=osumset(self.preset, other.preset))
-
-    def __radd__(self, other):
-        return self.__add__(other)
-
-    def __str__(self):
-        s = '('
-        comma = False
-        if not self.preset == {0}:
-            s += '{' + ', '.join(map(str, self.preset)) + '} '
-            comma = True
-        if not self.loopset == {0}:
-            if comma:
-                s += ', '
-            s += '<{ ' + ', '.join(map(str, self.loopset)) + ' }>'
-        s += ')'
-        return s
 
 
 def gtranspose(G):  # Transpose (rev. edges of) G
@@ -116,6 +73,22 @@ def iterate_ws(ws):
             starts.extend(list(e))
             continue
         starts.extend(list(e.preset))
+        starts.append([list(e.preset)[0], iterate_ws(e.loopset)])
+    return starts
+
+
+def iterate_pt(pt):  # iterate over a path tree
+    starts = []
+    starts.extend(list(pt.preset))
+    for e in pt.loopset:
+        if type(e) is int:
+            starts.append(e)
+            continue
+        if type(e) is set:
+            starts.extend(list(e))
+            continue
+        starts.extend(list(e.preset))
+        starts.append([list(e.preset)[0], iterate_ws(e.loopset)])
     return starts
 
 
@@ -157,7 +130,7 @@ def hide_node(g, H):
             # ipdb.set_trace()
             w = merge_weightsets(ab, pa[p], ch[c], sl)  # new weight set
             if c == p:  # a new loop is forming
-                w = {LoopSet(w)}
+                w = {PathTree(w)}
             gg[p][c] = {1: w}
 
     return gg
