@@ -127,7 +127,6 @@ def hide_node(g, H):
                 ab = gg[p][c][1]  # self loop
             else:
                 ab = set()
-            # ipdb.set_trace()
             w = merge_weightsets(ab, pa[p], ch[c], sl)  # new weight set
             if c == p:  # a new loop is forming
                 w = {PathTree(w)}
