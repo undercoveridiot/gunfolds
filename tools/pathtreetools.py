@@ -1,8 +1,7 @@
 import sys
 
 sys.path.append('./tools/')
-import graphkit as gk
-import numpy as np
+from pathtree import PathTree
 from ortools.constraint_solver import pywrapcp
 
 
@@ -128,7 +127,40 @@ def pt_getelements(pt, num):
     i = 0
     s = set()
     while len(s) < num:
-        if isptelement(pt,i):
+        if isptelement(pt, i, maxloop=10*num):
             s.add(i)
         i += 1
     return list(s)
+
+
+def s2spt(s): # convert edge set to pt
+    ss = set()
+    for e in s:
+        if type(e) is int:
+            ss.add(PathTree({0}, pre={e}))
+            continue
+        ss.add(e)
+    return ss
+
+
+def spt_elements(spt, num):
+    """
+    Generate numbers from a set of PathTrees
+    :param spt: set of PathTrees
+    :param num: number of elements (from the first) to generate
+    :return: list of num numbers
+    """
+    i = 0
+    s = set()
+    while len(s) < num:
+        if issptelement(spt, i):
+            s.add(i)
+        i += 1
+    return list(s)
+
+
+def issptelement(spt, element):
+    a = False
+    for pt in s2spt(spt):
+        a = a or isptelement(pt, element)
+    return a
