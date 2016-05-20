@@ -6,6 +6,7 @@ import traversal as trv
 import bfutils as bfu
 import graphkit as gk
 import numpy as np
+from random import shuffle
 import ecj
 from copy import deepcopy
 from pathtree import PathTree, osumset
@@ -153,6 +154,17 @@ def hide_nodes(g, nodelist, dosort=True):
         gg = hide_node(gg, n)
         nodeset.add(n)
     return gg
+
+def hide_random(g, ratio):
+    """
+    Hire random modes in the `ratio` proportion from graph g
+    :param g: input graph
+    :param ratio: what percentage of nodes to hide
+    :return: the graph with hidden variables
+    """
+    nodes = g.keys()
+    shuffle(nodes)
+    return hide_nodes(g, nodes[:int(len(g)*ratio)])
 
 
 def print_ws(ws):
