@@ -155,6 +155,7 @@ def hide_nodes(g, nodelist, dosort=True):
         nodeset.add(n)
     return gg
 
+
 def hide_random(g, ratio):
     """
     Hire random modes in the `ratio` proportion from graph g
@@ -164,7 +165,7 @@ def hide_random(g, ratio):
     """
     nodes = g.keys()
     shuffle(nodes)
-    return hide_nodes(g, nodes[:int(len(g)*ratio)])
+    return hide_nodes(g, nodes[:int(len(g) * ratio)])
 
 
 def print_ws(ws):
