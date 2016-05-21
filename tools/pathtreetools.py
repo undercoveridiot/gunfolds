@@ -67,6 +67,7 @@ def ptelements(pt, seqlen=100, verbose=False, maxloop=100):
     els = set()
     while solver.NextSolution():
         w = [x.Value() for x in weights]
+        num_solutions += 1
         els.add(ptelement(pt, w))
         if len(els) == seqlen:
             break
