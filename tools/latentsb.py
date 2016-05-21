@@ -5,6 +5,23 @@ sys.path.append('./tools/')
 import bclique as bq
 import latents as lt
 import pathtreetools as ptt
+from pathtree import PathTree
+
+
+def can_add_loop(pt, num, elements):
+    r = False
+    if ptt.isptelement(PathTree(), num)
+        r = True
+
+def learn_path_tree(pt):
+    elements = ptt.pt_getelements(pt, 1)
+    newpt = PathTree(set(), pre={elements[0]})
+
+    def rpath(elements, npt):
+        if not ptt.isptelement(npt, element[0]):
+
+
+    return newpt
 
 def bpts(bc):
     """
@@ -15,4 +32,6 @@ def bpts(bc):
 
 def getagenerator(g):
     bclqs = bq.bcliques(g)
-
+    for clq in bclqs:
+        bpts(clq)
+    return bclqs
