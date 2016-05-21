@@ -4,6 +4,29 @@ sys.path.append('./tools/')
 import graphkit as gk
 import numpy as np
 from ortools.constraint_solver import pywrapcp
+import ipdb
+
+
+def grelabel(g):
+    """
+    Relabel graph nodes to numerical contiguous labels 1 through len(g)
+    :param g: input graph
+    :return: relabeled graph and name mapping
+    """
+    gg = {}
+    nodemap = {x[0]: x[1] + 1 for x in zip(g.keys(), range(len(g)))}
+    for v in g:
+        gg[nodemap[v]] = {}
+        for w in g[v]:
+            gg[nodemap[v]][nodemap[w]] = g[v][w]
+    return gg, {v: k for k, v in nodemap.items()}
+
+
+def crelabel(c, map):
+    newcliq = set()
+    for e in c:
+        newcliq.add((map[e[0] + 1], map[e[1] + 1]))
+    return newcliq
 
 
 def printedges(g):
@@ -52,7 +75,7 @@ def clique_constrain(solver, parents, children, edges, g):
 
 def bcliques(g, verbose=False):
     solver = pywrapcp.Solver("b-clique")
-
+    g, mp = grelabel(g)
     # declare variables
     edges = []
     N = len(g)
@@ -124,4 +147,4 @@ def bcliques(g, verbose=False):
 
         if not bcl.issubset(pts):
             cc.append(bcl)
-    return cc
+    return map(lambda x: crelabel(x, mp), cc)
