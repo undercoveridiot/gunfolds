@@ -38,6 +38,6 @@ class PathTree:
         if not self.loopset == {0}:
             if comma:
                 s += ', '
-            s += '< ' + ', '.join(map(str, self.loopset)) + ' >'
+            s += '<' + ', '.join(map(str, self.loopset)) + '>'
         s += ')'
         return s
