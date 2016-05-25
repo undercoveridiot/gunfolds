@@ -15,20 +15,16 @@ def osumset(s1, s2):
 
 
 class PathTree:
-    def __init__(self, lset, pre=None):
+    def __init__(self, lset, pre=0):
         self.loopset = lset
-        if pre is None:
-            self.preset = {0}
-        else:
-            assert (type(pre) == set)
-            self.preset = pre
+        self.preset = pre
 
     def __add__(self, other):
         if type(other) is int:
-            return PathTree(self.loopset, pre=osumnum(self.preset, other))
+            return PathTree(self.loopset, pre=self.preset + other)
         if type(other) is set:
-            return PathTree(self.loopset, pre=osumset(self.preset, other))
-        return PathTree(self.loopset.union(other.loopset), pre=osumset(self.preset, other.preset))
+            return PathTree(self.loopset, pre=osumnum(other, self.preset))
+        return PathTree(self.loopset.union(other.loopset), pre=self.preset + other.preset)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -36,12 +32,12 @@ class PathTree:
     def __str__(self):
         s = '('
         comma = False
-        if not self.preset == {0}:
-            s += '{' + ', '.join(map(str, self.preset)) + '} '
+        if not self.preset == 0:
+            s += str(self.preset) + ' '
             comma = True
         if not self.loopset == {0}:
             if comma:
                 s += ', '
-            s += '<{ ' + ', '.join(map(str, self.loopset)) + ' }>'
+            s += '< ' + ', '.join(map(str, self.loopset)) + ' >'
         s += ')'
         return s
