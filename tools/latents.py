@@ -73,14 +73,13 @@ def iterate_ws(ws):
         if type(e) is set:
             starts.extend(list(e))
             continue
-        starts.extend(list(e.preset))
-        starts.append([list(e.preset)[0], iterate_ws(e.loopset)])
+        starts.append(e.preset)
+        starts.append([e.preset, iterate_ws(e.loopset)])
     return starts
 
 
 def iterate_pt(pt):  # iterate over a path tree
-    starts = []
-    starts.extend(list(pt.preset))
+    starts = [pt.preset]
     for e in pt.loopset:
         if type(e) is int:
             starts.append(e)
@@ -88,8 +87,8 @@ def iterate_pt(pt):  # iterate over a path tree
         if type(e) is set:
             starts.extend(list(e))
             continue
-        starts.extend(list(e.preset))
-        starts.append([list(e.preset)[0], iterate_ws(e.loopset)])
+        starts.append(e.preset)
+        starts.append([e.preset, iterate_ws(e.loopset)])
     return starts
 
 
