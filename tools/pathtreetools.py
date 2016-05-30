@@ -4,6 +4,7 @@ sys.path.append('./tools/')
 from pathtree import PathTree
 from ortools.constraint_solver import pywrapcp
 from matplotlib.cbook import flatten
+from functools import wraps
 import numpy as np
 import ipdb
 
@@ -323,16 +324,24 @@ def etesteq(pt1, pt2, k=100):
     return np.sum(a1-a2) == 0
 
 
-def seq2pt(seq, verbose=False):
+def keeptreegrow(pt, e, seq, cutoff=10):
+    t = None
+    while t is None:
+        t = growtree(pt, e, seq, cutoff=cutoff)
+        cutoff += 10
+    return t
+
+
+def seq2pt(seq, verbose=False, cutoff=100):
     if not seq: return None
     pt = PathTree({}, pre=seq[0])
     for e in seq[1:]:
         if verbose: print e
-        pt = growtree(pt, e, seq)
+        pt = keeptreegrow(pt, e, seq, cutoff=cutoff)
     return pt
 
 
-def growtree(pt, element, ref_elements, verbose=False, maxloop=100):
+def growtree(pt, element, ref_elements, verbose=False, maxloop=100, cutoff=100):
     """
     Add a loop with the minimal length to a path tree to enable it to generate a given element and still be a subset of a given list
     :param pt: a path tree object from pathtree.py
@@ -368,12 +377,13 @@ def growtree(pt, element, ref_elements, verbose=False, maxloop=100):
     ws = weights_pt(pt, weights)
 
     # declare constraints
+    solver.Add(solver.MemberCt(ptelement_extraloop(pt, ws, eloops), ref_elements))
     solver.Add(element == ptelement_extraloop(pt, ws, eloops))  # make sure the element can be generated
     solver.Add(solver.Count(loops, 0, len(loops) - 1))  # only one loop is on
     solver.Add(solver.Count(lweights, 0, len(lweights) - 1))  # only one loop is weighted
     for i in range(len(lweights)):
         solver.Add((lweights[i] == 0) <= (loops[i] == 0))  # if a loop has weight zero then it can't be active
-        # solver.Add(lweights[i] >= loops[i])
+        #solver.Add(lweights[i] >= loops[i])
     loops_and_weights(solver, eloops, ws)  # if a subtree is off (weight zero) no need to add loops
 
     # run the solver
@@ -387,6 +397,7 @@ def growtree(pt, element, ref_elements, verbose=False, maxloop=100):
     numsol = 0
     pts = []
     while solver.NextSolution():
+        #print numsol,
         new_pt = ptaugmented(pt, eloops_simplify(eloops))
         if verbose:
             print "trying PathTree: ", new_pt
@@ -395,6 +406,8 @@ def growtree(pt, element, ref_elements, verbose=False, maxloop=100):
             if verbose:
                 print "OK PathTree: ", pts[-1]
         numsol += 1
+        if numsol >= cutoff:
+            break
     solver.EndSearch()
 
     # output solutions
@@ -403,6 +416,7 @@ def growtree(pt, element, ref_elements, verbose=False, maxloop=100):
         print "failures:", solver.Failures()
         print "branches:", solver.Branches()
         print "WallTime:", solver.WallTime()
+        print "for ", element, "solutions found ", numsol
 
     return smallest_pt(pts)
 
