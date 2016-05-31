@@ -9,6 +9,10 @@ import numpy as np
 import ipdb
 
 
+class SolutionNotFoundInTime(Exception):
+    pass
+
+
 def ptloopnum(pt):
     """
     Given a PathTree object returns the number of loop in it
@@ -324,11 +328,13 @@ def etesteq(pt1, pt2, k=100):
     return np.sum(a1-a2) == 0
 
 
-def keeptreegrow(pt, e, seq, cutoff=10):
+def keeptreegrow(pt, e, seq, cutoff=10, cap=1000):
     t = None
     while t is None:
         t = growtree(pt, e, seq, cutoff=cutoff)
         cutoff += 10
+        if cutoff > cap:
+            raise SolutionNotFoundInTime("Cannot keep the tree growing")
     return t
 
 
