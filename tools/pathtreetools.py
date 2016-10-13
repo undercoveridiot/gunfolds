@@ -6,6 +6,7 @@ from ortools.constraint_solver import pywrapcp
 from matplotlib.cbook import flatten
 from functools import wraps
 import numpy as np
+from sortedcontainers import SortedDict
 import ipdb
 
 
@@ -330,6 +331,7 @@ def keeptreegrow(pt, e, seq, cutoff=10):
         t = growtree(pt, e, seq, cutoff=cutoff)
         cutoff += 10
     return t
+
 
 
 def seq2pt(seq, verbose=False, cutoff=100):

@@ -415,5 +415,16 @@ def data2VARgraph(data, pval=0.05):
     for i in range(n):
         for j in range(n):
             if np.abs(A[j,i]) > pval: g[str(i+1)][str(j+1)] = set([(0,1)])
-
     return g
+
+def data2VARgraph_model(data, pval=0.05):
+    model = VAR(data.T)
+    r = model.fit(1)
+    A = r.coefs[0,:,:]
+    n = A.shape[0]
+    g = {str(i):{} for i in range(1,n+1)}
+
+    for i in range(n):
+        for j in range(n):
+            if np.abs(A[j,i]) > pval: g[str(i+1)][str(j+1)] = set([(0,1)])
+    return g, r
