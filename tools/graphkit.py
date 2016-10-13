@@ -11,7 +11,7 @@ import random as std_random
 import numpy as np
 import scipy
 import networkx as nx
-import igraph
+import jgraph as igr
 from numpy.random import randint
 from comparison import nx2graph
 
@@ -173,7 +173,7 @@ def g2ig(g):
     """
     t = scipy.where(CG2adj(g)==1)
     l = zip(t[0],t[1])
-    ig = igraph.Graph(l,directed=True)
+    ig = igr.Graph(l,directed=True)
     ig.vs["name"] = scipy.sort([u for u in g])
     ig.vs["label"] = ig.vs["name"]
     return ig

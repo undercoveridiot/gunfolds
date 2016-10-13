@@ -6,8 +6,13 @@ from ortools.constraint_solver import pywrapcp
 from matplotlib.cbook import flatten
 from functools import wraps
 import numpy as np
+import bisect
 from sortedcontainers import SortedDict
 import ipdb
+
+
+class SolutionNotFoundInTime(Exception):
+    pass
 
 
 def ptloopnum(pt):
@@ -325,21 +330,80 @@ def etesteq(pt1, pt2, k=100):
     return np.sum(a1-a2) == 0
 
 
-def keeptreegrow(pt, e, seq, cutoff=10):
+def keeptreegrow(pt, e, seq, cutoff=10, cap=1000):
     t = None
     while t is None:
         t = growtree(pt, e, seq, cutoff=cutoff)
         cutoff += 10
+        if cutoff > cap:
+            raise SolutionNotFoundInTime("Cannot keep the tree growing")
     return t
 
 
+def add_element(d, pt):
+    """
+    Add a PathTree to dictionary d such that it is either appended to the list or added anew
+    Args:
+        d: a dictionary
+        pt: a PathTree
+
+    Returns:
+
+    """
+    key = ptnodenum(pt)
+    if key in d:
+        d[key].append(pt)
+    else:
+        d[key] = pt
+
+def del_element(d, pt, key=None):
+    """
+    Delete a PathTree from dictionary d such that it is either removed from the list or the list that only contains one element is removed
+    Args:
+        d: a dictionary
+        pt: a PathTree
+
+    Returns:
+
+    """
+    if key is None:
+        key = ptnodenum(pt)
+    if len(d[key]) == 1:
+        del d[key]
+    else:
+        d[key].remove(pt)
+
+
+def swap_elements(d, pt1, pt2, key=None):
+    del_element(d, pt1, key=key)
+    add_element(d, pt2)
+
 
 def seq2pt(seq, verbose=False, cutoff=100):
-    if not seq: return None
+    if not seq:
+        return None
+
     pt = PathTree({}, pre=seq[0])
+    pts = SortedDict()  # PathTrees
+    pts[ptnodenum(pt)] = [pt]
+
     for e in seq[1:]:
-        if verbose: print e
-        pt = keeptreegrow(pt, e, seq, cutoff=cutoff)
+        e_is_in = False
+        for key in pts:
+            for pt in pts[key]:
+                if verbose:
+                    print e
+                try:
+                    newpt = keeptreegrow(pt, e, seq, cutoff=cutoff)
+                    swap_elements(pts, pt, newpt, key=key)
+                    e_is_in = True
+                    break
+                except SolutionNotFoundInTime:
+                    continue
+        if not e_is_in:
+            newpt = PathTree({}, pre=e)
+            add_element(d, newpt)
+
     return pt
 
 
