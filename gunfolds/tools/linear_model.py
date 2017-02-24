@@ -8,7 +8,7 @@ import scipy
 from scipy import linalg, optimize
 from statsmodels.tsa.api import VAR
 from sympy.matrices import SparseMatrix
-
+import ipdb
 
 
 def symchol(M): # symbolic Cholesky
@@ -430,7 +430,7 @@ def stableVAR(n,density=0.1,dist='beta'):
             sst = 0.02
     return r['graph'], r['transition']
 
-def genData(n, rate=2, density=0.1, burnin=100, ssize=2000, noise=0.1):
+def genData(n, rate=2, density=0.1, burnin=100, ssize=2000, noise=0.1, dist='beta'):
     """
     Given a number of nodes this function randomly generates a ring
     SCC and the corresponding stable transition matrix. It tries until
@@ -449,7 +449,7 @@ def genData(n, rate=2, density=0.1, burnin=100, ssize=2000, noise=0.1):
     - `ssize`: how many samples to keep at the causal sampling rate
     - `noise`: noise standard deviation for the VAR model
     """
-    g, Agt = stableVAR(n, density=density)
+    g, Agt = stableVAR(n, density=density, dist=dist)
     data = drawsamplesLG(Agt, samples=burnin + ssize * 2, nstd=noise)
     data = data[:, burnin:]
     return g, Agt, data[:,::rate]
@@ -460,7 +460,7 @@ def estimateSVAR(data, th=0.09):
     return A, B
 
 # option #1
-def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.1):
+def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.1, dist='beta'):
     """
     Given a number of nodes this function randomly generates a ring
     SCC and the corresponding stable transition matrix. It tries until
@@ -483,14 +483,17 @@ def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.
     - `noise`: noise standard deviation for the VAR model
     """
     g, Agt, data = genData(n, rate=rate, density=density,
-                           burnin=burnin, ssize=ssize, noise=noise)
+                           burnin=burnin, ssize=ssize, noise=noise, dist=dist)
     A, B = estimateSVAR(data, th=th)
-
+    n = len(g)
+    
     return {'graph': g,
+            'rate': rate,
+            'graph@rate': bfu.undersample(g,rate-1),
             'transition': Agt,
             'estimate': adjs2graph(A, B),
-            'directed': A,
-            'bidirected': B
+            'directed': np.ones((n,n)).astype('int'),
+            'bidirected': np.ones((n,n)).astype('int')
             }
 
 # option #2
@@ -509,7 +512,8 @@ def randomSVARs(n, repeats=100, rate=2, density=0.1, th=0.09,
     - `rate`: undersampling rate (1 - no undersampling)
     - `density`: density of the graph to be generted
     - `th`: threshold for discarding edges in A and B
-    - `burnin`: number of samples to discard since the beginning of VAR sampling
+    - `burnin`: number of samples to discard since the beginning of
+      VAR sampling
     - `ssize`: how many samples to keep at the causal sampling rate
     - `noise`: noise standard deviation for the VAR model
     - `strap_noise`: amount of noise for bootstrapping
@@ -530,8 +534,10 @@ def randomSVARs(n, repeats=100, rate=2, density=0.1, th=0.09,
 
     A = 1 - np.mean(As, axis=0)
     B = 1 - np.mean(Bs, axis=0)
-    
+
     return {'graph': g,
+            'rate': rate,
+            'graph@rate': bfu.undersample(g,rate-1),
             'transition': Agt,
             'directed': A,
             'bidirected': B
