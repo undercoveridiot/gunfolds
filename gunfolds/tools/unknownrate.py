@@ -1,5 +1,4 @@
 """ BFS implementation of subgraph and supergraph Gu to G1 algorithm """
-import gmpy as gmp
 import gunfolds.tools.bfutils as bfu
 from gunfolds.tools.conversions import g2num, ug2num, num2CG
 import gunfolds.tools.graphkit as gk
@@ -238,7 +237,7 @@ def conflictors(H):
     s = conflictor_set(H)
     ds = {}
     num = reduce(operator.or_, s)
-    for i in xrange(gmp.bit_length(num)):
+    for i in xrange(len(bin(num))-2):
         if num & 1 << i:
             ds[1 << i] = [x for x in s if x&(1<<i)]
     return ds
@@ -260,7 +259,7 @@ def lconflictors(H, sloops=None):
     s = conflictor_set(H)
     ds = {}
     num = reduce(operator.or_, s)
-    for i in xrange(gmp.bit_length(num)):
+    for i in xrange(len(bin(num))-2):
         if num & 1 << i:
             cset = [x for x in s if x & (1<<i)]
             for sloop in sloops:
