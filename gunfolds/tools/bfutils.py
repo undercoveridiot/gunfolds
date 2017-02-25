@@ -315,9 +315,16 @@ def savegraphs(l, fname):
 
 
 # talking about extra edges on top of the ring
-
+    
 
 def dens2edgenum(d, n=10):
+    """
+    Convert density into the number of extra edges needed for a ring
+    graph to achieve that density
+    Arguments:
+    - `d`: density
+    - `n`: number of nodes in the graph
+    """
     return int(d * n**2)-n
 
 
