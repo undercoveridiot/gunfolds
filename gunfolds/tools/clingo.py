@@ -25,15 +25,6 @@ def g2clingo(g, file=sys.stdout):
                 print('edgeu('+str(v)+','+str(w)+').', file=file)
                 print('confu('+str(v)+','+str(w)+').', file=file)
 
-def g2clingo_(g, file=sys.stdout):
-    """ Save a graph to a file of grounded terms for clingo """
-    n = len(g)
-    print('node(1..'+str(n)+').', file=file)
-    for v in g:
-        for w in g[v]:
-            if (0,1) in g[v][w]: print('edgeu('+v+','+w+').', file=file)
-            if (2,0) in g[v][w]: print('confu('+v+','+w+').', file=file)
-
 
 def mg2clingo(A, B, file=sys.stdout):
     """ Save a graph to a file of grounded terms for clingo """
