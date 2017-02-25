@@ -5,13 +5,65 @@ import subprocess
 from subprocess import CalledProcessError
 import sys, os
 import numpy as np
-import bfutils as bfu
+from gunfolds.tools import bfutils as bfu
 import ipdb
 
 
 CLINGOPATH=''
 CAPSIZE=1000
-THREADS='-t 20,split'
+THREADS=''
+
+def rate(u, file=sys.stdout):
+    s = """
+% Define a range of u:s
+%urange(1..2).
+% u(U) is true for only one U
+% in the range defined above
+%1 { u(U): urange(U) } 1.
+    """ + "u("+str(u)+")."
+    print(s, file=file)
+
+def uprogram(file=sys.stdout):
+    s = """
+% Input to this program:
+% edgeu = edges in GU
+% confu = bidirected edges in GU
+% u = known u, if there is one
+% node(1..n)
+% edge1 = edge in the learned graph G1
+% Guess edge1:s
+{ edge1(X,Y) } :- node(X),node(Y).
+% For now there are no confs
+% Derive all edges up to length U of G1
+edge(X,Y,1) :- edge1(X,Y).
+edge(X,Y,L) :- edge(X,Z,L-1),edge1(Z,Y),
+L <= U, u(U).
+% Edges of length U,
+% are edgeu:s of the learning result
+derived_edgeu(X,Y) :- edge(X,Y,L), u(L).
+% Find the confus that would show up for the G1
+% Only considered when X < Y here
+derived_confu(X,Y) :- edge(Z,X,L), edge(Z,Y,L),
+node(X),node(Y),node(Z),
+X < Y, L < U, u(U).
+% Check that derived edgeu:s
+% match the input edgeu:s
+:- edgeu(X,Y), not derived_edgeu(X,Y),
+node(X),node(Y).
+:- not edgeu(X,Y), derived_edgeu(X,Y),
+node(X),node(Y).
+% Check that derived confus
+% match the input confu
+:- derived_confu(X,Y), not confu(X,Y),
+node(X),node(Y), X < Y.
+:- not derived_confu(X,Y), confu(X,Y),
+node(X),node(Y), X < Y.
+% Only show edge1 and u variables
+#show.
+#show edge1/2.
+#show u/1.
+    """
+    print(s, file=file)
 
 def g2clingo(g, file=sys.stdout):
     """ Save a graph to a file of grounded terms for clingo """
@@ -25,87 +77,35 @@ def g2clingo(g, file=sys.stdout):
                 print('edgeu('+str(v)+','+str(w)+').', file=file)
                 print('confu('+str(v)+','+str(w)+').', file=file)
 
-
-def mg2clingo(A, B, file=sys.stdout):
-    """ Save a graph to a file of grounded terms for clingo """
-    n = A[0].shape[0]
-    print('node(1..'+str(n)+').', file=file)
-    for v in range(n):
-        for w in range(n):
-            if A[1][v,w]:
-                print('edgeu('+str(v+1)+','+str(w+1)+','+str(A[0][v,w])+').',
-                      file=file)
-            else:
-                print('no_edgeu('+str(v+1)+','+str(w+1)+','+str(A[0][v,w])+').',
-                      file=file)
-            if B[1][v,w]:
-                print('edgeu('+str(v+1)+','+str(w+1)+','+str(B[0][v,w])+').',
-                      file=file)
-            else:
-                print('no_edgeu('+str(v+1)+','+str(w+1)+','+str(B[0][v,w])+').',
-                      file=file)            
-
-
-def wg2clingo(g,A,B,file=sys.stdout):
-    """Save a weighted graph to a file of grouped terms for clingo
-
-    Arguments:
-    - `g`: an n-node input graph in the integer dictionary format
-    - `A`: an n by n matrix of weights for the present and ansent
-      directed edges
-    - `B`: a symmetric n by n matrix of weights for the present and
-      ansent bidirected edges
-    - `file`: file identifier to where print out the output
-    """
-    nodes = g.keys()
-    n = len(g)
-    print('node(1..'+str(n)+').', file=file)
-    for v in nodes:
-        for w in nodes:
-            if w in g[v]:
-                if g[v][w] == 1:
-                    print('edgeu('+str(v)+','+str(w)+','+str(A[w-1,v-1])+').',
-                          file=file)
-                    print('no_confu('+str(v)+','+str(w)+','\
-                          +str(B[w-1,v-1])+').',
-                          file=file)
-                if g[v][w] == 2:
-                    print('confu('+str(v)+','+str(w)+','+str(B[w-1,v-1])+').',
-                          file=file)
-                    print('no_edgeu('+str(v)+','+str(w)+','\
-                          +str(A[w-1,v-1])+').',
-                          file=file)
-                if g[v][w] == 3:
-                    print('edgeu('+str(v)+','+str(w)+','+str(A[w-1,v-1])+').',
-                          file=file)
-                    print('confu('+str(v)+','+str(w)+','+str(B[w-1,v-1])+').',
-                          file=file)
-            else:
-                print('no_edgeu('+str(v)+','+str(w)+','+str(A[w-1,v-1])+').',
-                      file=file)
-                print('no_confu('+str(v)+','+str(w)+','+str(B[w-1,v-1])+').',
-                      file=file)
-
-def clingo(g,
-           AB = None,
-           timeout=0,
-           threads=THREADS,
-           capsize=CAPSIZE,
-           graphfile='gu.pl',
-           ufile='drawu.pl',
-           program='supersample.pl',
-           cpath=CLINGOPATH,
-           nameid=''):
+def eqclass(g,
+            urate=2,
+            AB = None,
+            timeout=0,
+            threads=THREADS,
+            capsize=CAPSIZE,
+            graphfile='gu.pl',
+            ufile='drawu.pl',
+            program='supersample.pl',
+            cpath=CLINGOPATH,
+            ppath='./',
+            nameid=''):
 
     cmdline = cpath+'clingo '+threads+' --time-limit='+str(timeout)\
-      +' -n '+str(capsize)+' '+cpath+graphfile+' '+cpath+ufile+' '\
-      +cpath+program
+      +' -n '+str(capsize)+' '+ppath+graphfile+' '+ppath+ufile+' '\
+      +ppath+program
 
-    with open(cpath+graphfile,'w') as f:
+    with open(ppath+graphfile,'w') as f:
         if AB is None:
             g2clingo(g,file=f)
         else:
             wg2clingo(g, AB[0], AB[1], file=f)
+
+    with open(ppath+ufile,'w') as f:
+            rate(urate,file=f)
+
+    with open(ppath+program,'w') as f:
+            uprogram(file=f)
+
     try:
         p = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
@@ -114,7 +114,9 @@ def clingo(g,
     p_status = p.wait()
     (output, err) = p.communicate()
 
-    os.remove(cpath+graphfile)
+    os.remove(ppath+graphfile)
+    os.remove(ppath+program)
+    os.remove(ppath+ufile)
     if AB is None:
         answers = clingo2g(output)
     else:
@@ -122,41 +124,12 @@ def clingo(g,
     return answers
 
 
-def mclingo(A, B,
-           timeout=0,
-           threads=THREADS,
-           capsize=CAPSIZE,
-           graphfile='gu.pl',
-           ufile='drawu.pl',
-           program='supersample.pl',
-           cpath=CLINGOPATH,
-           nameid=''):
-    """
-    A and B are (weight, mask) tuples
-    """
-    cmdline = cpath+'clingo '+threads+' --time-limit='+str(timeout)\
-      +' -n '+str(capsize)+' '+cpath+graphfile+' '+cpath+ufile+' '\
-      +cpath+program
-
-    with open(cpath+graphfile,'w') as f:
-        mg2clingo(A, B, file=f)
-    try:
-        p = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError:
-        pass
-    p_status = p.wait()
-    (output, err) = p.communicate()
-
-    os.remove(cpath+graphfile)
-    answers = wclingo2g(output)
-    return answers
-
 
 def a2edgetuple(answer):
     edges = [x for x in answer if 'edge1' in x]
     u = [x for x in answer if x[0]=='u'][0]
     return edges,u
+
 
 def clingo2g(output):
     s = set()
@@ -166,37 +139,36 @@ def clingo2g(output):
     l = [(bfu.g2num(edgepairs2g(x[0])),int(x[1][2:-1])) for x in l]
     return l
 
-# weighted clingo
-def wclingo2g(output):
-    s = set()
-    answers = filterAnswers(output.split('\n'))
-    answer = a2edgetuple(answers[-1])
-    l = (wc2edgepairs(answer[0]), answer[1])
-    l = (bfu.g2num(wedgepairs2g(l[0])),int(l[1][2:-1]))
-    return l
 
 def c2edgepairs(clist):
     return [x[6:-1].split(',') for x in clist]
+
+
 def wc2edgepairs(clist):
     return [map(int,x[6:-1].split(',')) for x in clist]
+
 
 def nodenum(edgepairs):
     nodes = 0
     for e in edgepairs:
         nodes = np.max([nodes, np.max(map(int,e))])
     return nodes
+
 def edgepairs2g(edgepairs):
     n = nodenum(edgepairs)
-    g = {str(x+1):{} for x in range(n)}
+    g = {x+1:{} for x in range(n)}
     for e in edgepairs:
-        g[e[0]][e[1]] = set([(0,1)])
+        g[int(e[0])][int(e[1])] = 1
     return g
+
+
 def wedgepairs2g(edgepairs):
     n = nodenum(edgepairs)
     g = {x+1:{} for x in range(n)}
     for e in edgepairs:
         g[e[0]][e[1]] = 1
     return g
+
 
 def filterAnswers(slist):
     alist = []
