@@ -79,7 +79,6 @@ def g2clingo(g, file=sys.stdout):
 
 def eqclass(g,
             urate=2,
-            AB = None,
             timeout=0,
             threads=THREADS,
             capsize=CAPSIZE,
@@ -95,16 +94,13 @@ def eqclass(g,
       +ppath+program
 
     with open(ppath+graphfile,'w') as f:
-        if AB is None:
-            g2clingo(g,file=f)
-        else:
-            wg2clingo(g, AB[0], AB[1], file=f)
+        g2clingo(g,file=f)
 
     with open(ppath+ufile,'w') as f:
-            rate(urate,file=f)
+        rate(urate,file=f)
 
     with open(ppath+program,'w') as f:
-            uprogram(file=f)
+        uprogram(file=f)
 
     try:
         p = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE,
@@ -117,10 +113,8 @@ def eqclass(g,
     os.remove(ppath+graphfile)
     os.remove(ppath+program)
     os.remove(ppath+ufile)
-    if AB is None:
-        answers = clingo2g(output)
-    else:
-        answers = wclingo2g(output)
+    answers = clingo2g(output)
+
     return answers
 
 
