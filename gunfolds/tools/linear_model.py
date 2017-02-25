@@ -460,7 +460,8 @@ def estimateSVAR(data, th=0.09):
     return A, B
 
 # option #1
-def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.1, dist='beta'):
+def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100,
+               ssize=2000, noise=0.1, dist='beta'):
     """
     Given a number of nodes this function randomly generates a ring
     SCC and the corresponding stable transition matrix. It tries until
@@ -485,21 +486,58 @@ def randomSVAR(n, rate=2, density=0.1, th=0.09, burnin=100, ssize=2000, noise=0.
     g, Agt, data = genData(n, rate=rate, density=density,
                            burnin=burnin, ssize=ssize, noise=noise, dist=dist)
     A, B = estimateSVAR(data, th=th)
-    n = len(g)
-    
     return {'graph': g,
             'rate': rate,
             'graph@rate': bfu.undersample(g,rate-1),
             'transition': Agt,
             'estimate': adjs2graph(A, B),
-            'directed': np.ones((n,n)).astype('int'),
-            'bidirected': np.ones((n,n)).astype('int')
+            'directed': A,
+            'bidirected': B
             }
 
 # option #2
 def noiseData(data, noise=0.1):
     h, w = data.shape
     return data + np.random.randn(h,w)*noise
+
+def decide_absences(As):
+    """
+    Given a list of binary matrices returns a binary mask for absence
+    and presence of edges
+
+    Arguments:
+    - `As`: a list of binary matrices
+    """
+    M = np.zeros(As[0].shape).astype('int')
+    M[np.where(np.sum(As, axis=0) > len(As)/2.0)] = 1
+    return M
+
+def presence_probs(As):
+    """
+    Given a list of binary matrices returns a frequency of edge
+    presence
+
+    Arguments:
+    - `As`: a list of binary matrices
+    """
+    n = len(As)
+    M = np.sum([np.zeros(As[0].shape), np.ones(As[0].shape)]+As, axis=0)
+    return M/(n+2.0)
+
+def weight_and_mask(As):
+    """
+    Given a list o fbinary matrices returns a weight matrix for
+    presences and absences and a mask to identify which are which
+
+    Arguments:
+    - `As`: list of binary matrices
+    """
+    M = decide_absences(As)
+    W = presence_probs(As)
+    A = np.ones(M.shape) - W # ansence probs
+    A[np.where(M == 1)] = W[np.where(M == 1)]
+    return (1000 * (np.log(A) - np.log(1-A))).astype('int'), M
+
 
 def randomSVARs(n, repeats=100, rate=2, density=0.1, th=0.09,
                 burnin=100, ssize=2000, noise=0.1, strap_noise = 0.1):
@@ -532,8 +570,8 @@ def randomSVARs(n, repeats=100, rate=2, density=0.1, th=0.09,
         As.append(A)
         Bs.append(B)
 
-    A = 1 - np.mean(As, axis=0)
-    B = 1 - np.mean(Bs, axis=0)
+    A = weight_and_mask(As)
+    B = weight_and_mask(Bs)
 
     return {'graph': g,
             'rate': rate,

@@ -18,7 +18,10 @@ def g2num(g):
 
 
 def ug2num(g):
-    """ Convert non-empty edges into a tuple of (directed, bidriected) in binary format """
+    """
+    Convert non-empty edges into a tuple of (directed, bidriected) in
+    binary format
+    """
     n = len(g)
     n2 = n ** 2 + n
     num = 0
@@ -168,6 +171,19 @@ def vec2adj(v, n):
 def vec2g(v, n):
     A, B = vec2adj(v, n)
     return adjs2graph(A, B)
+
+
+def g2clingo(g, file=sys.stdout):
+    n = len(g)
+    print('node(1..'+str(n)+').', file=file)
+    for v in g:
+        for w in g[v]:
+            if g[v][w] == 1: print('edgeu('+str(v)+','+str(w)+').', file=file)
+            if g[v][w] == 2: print('confu('+str(v)+','+str(w)+').', file=file)
+            if g[v][w] == 3:
+                print('edgeu('+str(v)+','+str(w)+').', file=file)
+                print('confu('+str(v)+','+str(w)+').', file=file)
+
 
 def g2ig(g):
     """

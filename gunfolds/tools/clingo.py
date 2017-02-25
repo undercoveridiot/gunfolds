@@ -8,9 +8,10 @@ import numpy as np
 import bfutils as bfu
 import ipdb
 
-CLINGOPATH=''#'/na/homes/splis/soft/tools/python-gringo/clingo-4.5.1-source/build/release/'
+
+CLINGOPATH=''
 CAPSIZE=1000
-THREADS=''#'-t 20,split'
+THREADS='-t 20,split'
 
 def g2clingo(g, file=sys.stdout):
     """ Save a graph to a file of grounded terms for clingo """
@@ -32,6 +33,27 @@ def g2clingo_(g, file=sys.stdout):
         for w in g[v]:
             if (0,1) in g[v][w]: print('edgeu('+v+','+w+').', file=file)
             if (2,0) in g[v][w]: print('confu('+v+','+w+').', file=file)
+
+
+def mg2clingo(A, B, file=sys.stdout):
+    """ Save a graph to a file of grounded terms for clingo """
+    n = A[0].shape[0]
+    print('node(1..'+str(n)+').', file=file)
+    for v in range(n):
+        for w in range(n):
+            if A[1][v,w]:
+                print('edgeu('+str(v+1)+','+str(w+1)+','+str(A[0][v,w])+').',
+                      file=file)
+            else:
+                print('no_edgeu('+str(v+1)+','+str(w+1)+','+str(A[0][v,w])+').',
+                      file=file)
+            if B[1][v,w]:
+                print('edgeu('+str(v+1)+','+str(w+1)+','+str(B[0][v,w])+').',
+                      file=file)
+            else:
+                print('no_edgeu('+str(v+1)+','+str(w+1)+','+str(B[0][v,w])+').',
+                      file=file)            
+
 
 def wg2clingo(g,A,B,file=sys.stdout):
     """Save a weighted graph to a file of grouped terms for clingo
@@ -107,6 +129,38 @@ def clingo(g,
     else:
         answers = wclingo2g(output)
     return answers
+
+
+def mclingo(A, B,
+           timeout=0,
+           threads=THREADS,
+           capsize=CAPSIZE,
+           graphfile='gu.pl',
+           ufile='drawu.pl',
+           program='supersample.pl',
+           cpath=CLINGOPATH,
+           nameid=''):
+    """
+    A and B are (weight, mask) tuples
+    """
+    cmdline = cpath+'clingo '+threads+' --time-limit='+str(timeout)\
+      +' -n '+str(capsize)+' '+cpath+graphfile+' '+cpath+ufile+' '\
+      +cpath+program
+
+    with open(cpath+graphfile,'w') as f:
+        mg2clingo(A, B, file=f)
+    try:
+        p = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        pass
+    p_status = p.wait()
+    (output, err) = p.communicate()
+
+    os.remove(cpath+graphfile)
+    answers = wclingo2g(output)
+    return answers
+
 
 def a2edgetuple(answer):
     edges = [x for x in answer if 'edge1' in x]
