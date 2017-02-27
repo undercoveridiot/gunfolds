@@ -844,8 +844,7 @@ def density(g):
 
 
 def udensity(g):
-    return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2)/
-    np.double(len(g)**2 + len(g)*(len(g)-1)/2)
+    return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2) / np.double(len(g)**2 + len(g)*(len(g)-1)/2)
 
 
 def esig(l, n):
