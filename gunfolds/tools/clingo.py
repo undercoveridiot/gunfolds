@@ -90,16 +90,16 @@ def eqclass(g,
             nameid=''):
 
     cmdline = cpath+'clingo '+threads+' --time-limit='+str(timeout)\
-      +' -n '+str(capsize)+' '+ppath+graphfile+' '+ppath+ufile+' '\
-      +ppath+program
+      +' -n '+str(capsize)+' '+ppath+graphfile+nameid+' '+ppath+ufile\
+      +nameid+' '+ppath+program+nameid
 
-    with open(ppath+graphfile,'w') as f:
+    with open(ppath+graphfile+nameid,'w') as f:
         g2clingo(g,file=f)
 
-    with open(ppath+ufile,'w') as f:
+    with open(ppath+ufile+nameid,'w') as f:
         rate(urate,file=f)
 
-    with open(ppath+program,'w') as f:
+    with open(ppath+program+nameid,'w') as f:
         uprogram(file=f)
 
     try:
@@ -110,9 +110,9 @@ def eqclass(g,
     p_status = p.wait()
     (output, err) = p.communicate()
 
-    os.remove(ppath+graphfile)
-    os.remove(ppath+program)
-    os.remove(ppath+ufile)
+    os.remove(ppath+graphfile+nameid)
+    os.remove(ppath+program+nameid)
+    os.remove(ppath+ufile+nameid)
     answers = clingo2g(output)
 
     return answers
