@@ -271,10 +271,24 @@ def isedgesubset(g2star, g2):
             if h in g2[n]:
                 # Everything is a subset of 3 (both edge types)
                 if g2[n][h] != 3:
-                    # Either they both should have a directed edge, or 
+                    # Either they both should have a directed edge, or
                     # both should have a bidirected edge
                     if g2star[n][h] != g2[n][h]:
                         return False
             else:
                 return False
     return True
+
+
+def old2new(g):
+    """
+    Convert the old, string-based, graph data structure to one based
+    on numerical encoding
+    """
+    c = {((0, 1),): 1, ((2, 0),): 2, ((0, 1), (2, 0)): 3}
+    gg = {}
+    for w in g:
+        gg[int(w)] = {}
+        for v in g[w]:
+            gg[int(w)][int(v)] = c[tuple(g[w][v])]
+    return gg
