@@ -156,14 +156,14 @@ def adjs2graph(directed, bidirected):
 def g2vec(g):
     A = graph2adj(g)
     B = graph2badj(g)
-    return np.r_[A.flatten(), B[np.triu_indices(B.shape[0])]]
+    return np.r_[A.flatten(), B[np.triu_indices(B.shape[0], k=1)]]
 
 
 def vec2adj(v, n):
     A = np.zeros((n, n))
     B = np.zeros((n, n))
     A[:] = v[:n ** 2].reshape(n, n)
-    B[np.triu_indices(n)] = v[n ** 2:]
+    B[np.triu_indices(n, k=1)] = v[n ** 2:]
     B = B + B.T
     return A, B
 
