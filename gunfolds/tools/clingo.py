@@ -109,10 +109,9 @@ def eqclass(g,
                              close_fds=True)
     except subprocess.CalledProcessError:
         pass
-    p.stdout.close()
     p_status = p.wait()
     (output, err) = p.communicate()
-
+    p.stdout.close()
     os.remove(ppath+graphfile+nameid)
     os.remove(ppath+program+nameid)
     os.remove(ppath+ufile+nameid)
