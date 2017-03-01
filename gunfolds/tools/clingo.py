@@ -103,10 +103,13 @@ def eqclass(g,
         uprogram(file=f)
 
     try:
-        p = subprocess.Popen(cmdline.split(), stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+        p = subprocess.Popen(cmdline.split(),
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT,
+                             close_fds=True)
     except subprocess.CalledProcessError:
         pass
+    p.stdout.close()
     p_status = p.wait()
     (output, err) = p.communicate()
 
