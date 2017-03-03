@@ -1,3 +1,4 @@
+from __future__ import division
 from gunfolds.tools import zickle as zkl
 from matplotlib import pyplot as plt
 import numpy as np
@@ -8,7 +9,7 @@ densities = [.15, 0.2, 0.25, 0.3, 0.35]
 
 def gettimes(d):
     t = [x['ms'] for x in d]
-    time = map(lambda x: x / 1000. / 60., t)
+    time = map(lambda x: x / 1000 / 60, t)
     return time
 
 l = ['leibnitz_nodes_15_density_0.1_newp_.zkl',

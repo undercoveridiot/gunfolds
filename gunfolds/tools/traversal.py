@@ -1,21 +1,22 @@
+from __future__ import division
+import copy
+from functools import wraps
 from gunfolds.tools import bfutils as bfu
 from gunfolds.tools.conversions import g2num, graph2nx
 from gunfolds.tools import graphkit as gk
-
-from networkx import strongly_connected_components
-from functools import wraps
-import scipy
-import numpy as np
 import itertools
-import copy
-import time
+from networkx import strongly_connected_components
+import numpy as np
 import random
+import scipy
+import scipy.misc
+import time
 
 
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
     """
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i + n]
 
 
@@ -31,20 +32,19 @@ def try_till_d_path(g, d, gt, order=None):
         if order:
             k = [x for x in length_d_paths(g, order(i), d)]
         else:
-            k = [x for x in length_d_paths(g, str(i), d)]
+            k = [x for x in length_d_paths(g, i, d)]
         i += 1
         if i > len(g):
             return []
 
     ld = []
     for i in range(min(10, len(k))):
-        ld.append(len(checkApath(['2'] + k[i], gt)))
+        ld.append(len(checkApath([2] + k[i], gt)))
     idx = np.argmin(ld)
     return k[0]
 
 
 def try_till_path(g, gt):
-    d = len(g) - 1
     gx = graph2nx(g)
     sccl = [x for x in strongly_connected_components(gx)]
     # take the largest
@@ -52,7 +52,6 @@ def try_till_path(g, gt):
     idx = np.argsort(ln)
     d = len(sccl[idx[-1]]) - 1
     sccl = [sccl[i] for i in idx[::-1]]
-    order = [item for sublist in sccl for item in sublist]
     k = []
     while not k:
         if d < 5:
@@ -135,7 +134,7 @@ def make_longpaths(g, el):
         if len(k) < 5:
             break
         if k:
-            l.append(('2',) + tuple(k))
+            l.append((2,) + tuple(k))
             purgepath(l[-1], el)
             gpurgepath(gc, l[-1])
         else:
@@ -153,7 +152,7 @@ def make_allforks_and_rest(g, el, bl, dofullforks=True):
     random.shuffle(nodes)
     for n in nodes:
 
-        c = [e for e in g[n] if (0, 1) in g[n][e]]  # all children
+        c = [e for e in g[n] if g[n][e] in (1, 3)]  # all children
         if len(c) == 1:
             if (n, c[0]) in el:
                 r.append((n, c[0]))
@@ -199,7 +198,7 @@ def threedges_pick(l):
 
 
 def longpaths_pick(l):
-    return [e for e in l if len(e) > 3 and e[0] == '2']
+    return [e for e in l if len(e) > 3 and e[0] == 2]
 
 
 def makechains(l):
@@ -213,10 +212,10 @@ def makechains(l):
 
         e = l.pop()
         if e[1] in starts and e[0] != e[1] and starts[e[1]] in l:
-            r.append(('0', e[0],) + starts[e[1]])
+            r.append((0, e[0],) + starts[e[1]])
             l.remove(starts[e[1]])
         elif e[0] in ends and e[0] != e[1] and ends[e[0]] in l:
-            r.append(('0',) + ends[e[0]] + (e[1],))
+            r.append((0,) + ends[e[0]] + (e[1],))
             l.remove(ends[e[0]])
         else:
             singles.append(e)
@@ -224,7 +223,7 @@ def makechains(l):
 
 
 def makesink(es):
-    return ('1', es[0][0],) + es[1]
+    return (1, es[0][0],) + es[1]
 
 
 def makesinks(l):
@@ -275,8 +274,8 @@ def checkedge(e, g2):
         l = [n for n in g2 if n in g2[n]]
         s = set()
         for v in g2[e[0]]:
-            s = s.union(g2[e[0]][v])
-        if not (2, 0) in s:
+            s.add(g2[e[0]][v])
+        if 2 not in s and 3 not in s:
             l.remove(e[0])
         return l
     else:
@@ -345,15 +344,15 @@ def isvedge(v):
 
 
 def isCedge(v):
-    return len(v) == 4 and v[0] == '0'  # a->b->c
+    return len(v) == 4 and v[0] == 0  # a->b->c
 
 
 def isAedge(v):
-    return len(v) == 4 and v[0] == '1'  # a->c<-b
+    return len(v) == 4 and v[0] == 1  # a->c<-b
 
 
 def isApath(v):
-    return len(v) >= 4 and v[0] == '2'  # a->b->...->z
+    return len(v) >= 4 and v[0] == 2  # a->b->...->z
 
 
 def checker(n, ee):
@@ -400,11 +399,6 @@ def checkable(g2):
             d[v] = checkedge(v, g2)
 
     # check if some of the otherwise permissible nodes still fail
-    f = [(add2edges, del2edges),
-         (addavedge, delavedge),
-         (addacedge, delacedge),
-         (addaAedge, delaAedge),
-         (addapath, delapath)]
     c = [ok2add2edges,
          ok2addavedge,
          ok2addacedge,
@@ -412,7 +406,6 @@ def checkable(g2):
          ok2addapath]
 
     for e in d:
-        adder, remover = f[edge_function_idx(e)]
         checks_ok = c[edge_function_idx(e)]
         for n in d[e]:
             if not checks_ok(e, n, g, g2):
@@ -520,7 +513,7 @@ def inorder_checks(g2, gg):
     # ee = oo[0]
     random.shuffle(ee)
     d = {}  # new datastructure
-    d[ee[0]] = {('0'): gg[ee[0]]}
+    d[ee[0]] = {0: gg[ee[0]]}
     for i in range(len(ee) - 1):
         d[ee[i + 1]] = del_empty(inorder_check2(ee[i], ee[i + 1],
                                                 gg[ee[i]], gg[ee[i + 1]], g2)[0])
@@ -537,15 +530,17 @@ def ok2addanedge1(s, e, g, g2, rate=1):
     e - end
     """
     # directed edges
-    for u in g:
-        if s in g[u] and not (e in g2[u] and (0, 1) in g2[u][e]):
+    # self-loop
+    if s == e and not e in g2[s]: return False
+    for u in g: # Pa(s) -> e
+        if s in g[u] and not (e in g2[u] and g2[u][e] in (1, 3)):
             return False
     for u in g[e]:  # s -> Ch(e)
-        if not (u in g2[s] and (0, 1) in g2[s][u]):
+        if not (u in g2[s] and g2[s][u] in (1, 3)):
             return False
     # bidirected edges
     for u in g[s]:  # e <-> Ch(s)
-        if u != e and not (u in g2[e] and (2, 0) in g2[e][u]):
+        if u != e and not (u in g2[e] and g2[e][u] in (2, 3)):
             return False
     return True
 
@@ -557,20 +552,8 @@ def ok2addanedge2(s, e, g, g2, rate=1):
     return value
 
 
-def ok2addanedge_sub(s, e, g, g2, rate=1):
-    mask = addanedge(g, (s, e))
-    value = gk.isedgesubset(bfu.undersample(g, rate), g2)
-    delanedge(g, (s, e), mask)
-    return value
-
-
 def ok2addanedge(s, e, g, g2, rate=1):
     f = [ok2addanedge1, ok2addanedge2]
-    return f[min([1, rate - 1])](s, e, g, g2, rate=rate)
-
-
-def ok2addanedge_(s, e, g, g2, rate=1):
-    f = [ok2addanedge1, ok2addanedge_sub]
     return f[min([1, rate - 1])](s, e, g, g2, rate=rate)
 
 
@@ -622,7 +605,7 @@ def addanedge(g, e):
     add edge e[0] -> e[1] to g
     '''
     mask = maskanedge(g, e)
-    g[e[0]][e[1]] = set([(0, 1)])
+    g[e[0]][e[1]] = 1
     return mask
 
 
@@ -641,7 +624,7 @@ def add2edges(g, e, p):
     and add them to g
     '''
     mask = mask2edges(g, e, p)
-    g[e[0]][p] = g[p][e[1]] = set([(0, 1)])
+    g[e[0]][p] = g[p][e[1]] = 1
     return mask
 
 
@@ -657,28 +640,28 @@ def del2edges(g, e, p, mask):
 
 def ok2addavedge(e, p, g, g2):
     if p[1] == e[0]:
-        if p[0] != p[1] and p[0] != e[2] and not (e[2] in g2[p[0]] and (2, 0) in g2[p[0]][e[2]]):
+        if p[0] != p[1] and p[0] != e[2] and not (e[2] in g2[p[0]] and g2[p[0]][e[2]] in (2, 3)):
             return False
-        if p[0] == p[1] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[0] == p[1] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
-        if p[0] == e[1] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[0] == e[1] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
 
     if p[0] == e[0]:
-        if p[0] != p[1] and p[1] != e[1] and not (e[1] in g2[p[1]] and (2, 0) in g2[p[1]][e[1]]):
+        if p[0] != p[1] and p[1] != e[1] and not (e[1] in g2[p[1]] and g2[p[1]][e[1]] in (2, 3)):
             return False
-        if p[0] == p[1] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[0] == p[1] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
-        if p[1] == e[2] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+        if p[1] == e[2] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
             return False
 
-    if p[0] == e[1] and p[1] == e[2] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+    if p[0] == e[1] and p[1] == e[2] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
         return False
-    if p[0] == e[2] and not (e[1] in g2[p[1]] and (0, 1) in g2[p[1]][e[1]]):
+    if p[0] == e[2] and not (e[1] in g2[p[1]] and g2[p[1]][e[1]] in (1, 3)):
         return False
-    if p[1] == e[1] and not (e[2] in g2[p[0]] and (0, 1) in g2[p[0]][e[2]]):
+    if p[1] == e[1] and not (e[2] in g2[p[0]] and g2[p[0]][e[2]] in (1, 3)):
         return False
-    if p[0] == p[1] == e[0] and not (e[2] in g2[e[1]] and (2, 0) in g2[e[1]][e[2]]):
+    if p[0] == p[1] == e[0] and not (e[2] in g2[e[1]] and g2[e[1]][e[2]] in (2, 3)):
         return False
 
     if not edge_increment_ok(e[0], p[0], e[1], g, g2):
@@ -691,7 +674,7 @@ def ok2addavedge(e, p, g, g2):
 
 def addavedge(g, v, b):
     mask = maskavedge(g, v, b)
-    g[v[0]][b[0]] = g[v[0]][b[1]] = g[b[0]][v[1]] = g[b[1]][v[2]] = set([(0, 1)])
+    g[v[0]][b[0]] = g[v[0]][b[1]] = g[b[0]][v[1]] = g[b[1]][v[2]] = 1
     return mask
 
 
@@ -707,9 +690,9 @@ def delavedge(g, v, b, mask):
 
 
 def ok2addaAedge(e, p, g, g2):
-    if p[1] == e[1] and not (p[0] in g2[e[2]] and (0, 1) in g2[e[2]][p[0]]):
+    if p[1] == e[1] and not (p[0] in g2[e[2]] and g2[e[2]][p[0]] in (1, 3)):
         return False
-    if p[0] == e[2] and not (p[1] in g2[e[1]] and (0, 1) in g2[e[1]][p[1]]):
+    if p[0] == e[2] and not (p[1] in g2[e[1]] and g2[e[1]][p[1]] in (1, 3)):
         return False
 
     if not edge_increment_ok(e[1], p[0], e[3], g, g2):
@@ -722,7 +705,7 @@ def ok2addaAedge(e, p, g, g2):
 
 def addaAedge(g, v, b):
     mask = maskaAedge(g, v, b)
-    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[3]] = g[b[1]][v[3]] = set([(0, 1)])
+    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[3]] = g[b[1]][v[3]] = 1
     return mask
 
 
@@ -748,7 +731,6 @@ def cleanedges(e, p, g, mask):
 
 
 def cleanVedges(g, e, p, mask):
-
     if mask:
         if not mask[0]:
             g[e[0]].pop(p[0], None)
@@ -782,29 +764,20 @@ def ok2addaVpath(e, p, g, g2, rate=2):
     return True
 
 
-def ok2addapath1(e, p, g, g2):
-    for i in range(len(p)):
-        if not edge_increment_ok(e[i + 1], p[i], e[i + 2], g, g2):
-            return False
-    return True
-
-
 def addapath(g, v, b):
 
     mask = maskapath(g, v, b)
-    s = set([(0, 1)])
     for i in range(len(b)):
-        g[v[i + 1]][b[i]] = g[b[i]][v[i + 2]] = s
+        g[v[i + 1]][b[i]] = g[b[i]][v[i + 2]] = 1
 
     return mask
 
 
 def addaVpath(g, v, b):
     mask = maskaVpath(g, v, b)
-    s = set([(0, 1)])
     l = [v[0]] + list(b) + [v[1]]
     for i in range(len(l) - 1):
-        g[l[i]][l[i + 1]] = s
+        g[l[i]][l[i + 1]] = 1
     return mask
 
 
@@ -838,7 +811,7 @@ def ok2addacedge(e, p, g, g2):
             return False
         if not p[0] in g2[p[0]]:
             return False
-        if not (e[3] in g2[e[1]] and (0, 1) in g2[e[1]][e[3]]):
+        if not (e[3] in g2[e[1]] and g2[e[1]][e[3]] in (1, 3)):
             return False
 
     if not edge_increment_ok(e[1], p[0], e[2], g, g2):
@@ -851,7 +824,7 @@ def ok2addacedge(e, p, g, g2):
 
 def addacedge(g, v, b):  # chain
     mask = maskaCedge(g, v, b)
-    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[2]] = g[b[1]][v[3]] = set([(0, 1)])
+    g[v[1]][b[0]] = g[v[2]][b[1]] = g[b[0]][v[2]] = g[b[1]][v[3]] = 1
     return mask
 
 
@@ -866,16 +839,12 @@ def delacedge(g, v, b, mask):
         g[b[1]].pop(v[3], None)
 
 
-def rotate(l):
-    return l[1:] + l[:1]  # rotate a list
-
-
 def density(g):
     return len(gk.edgelist(g)) / np.double(len(g) ** 2)
 
 
 def udensity(g):
-    return (len(gk.edgelist(g)) + len(gk.bedgelist(g)) / 2.) / np.double(len(g) ** 2 + len(g) * (len(g) - 1) / 2.)
+    return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2) / np.double(len(g)**2 + len(g)*(len(g)-1)/2)
 
 
 def esig(l, n):
@@ -883,7 +852,7 @@ def esig(l, n):
     turns edge list into a hash string
     '''
     z = len(str(n))
-    n = map(lambda x: ''.join(map(lambda y: y.zfill(z), x)), l)
+    n = map(lambda x: ''.join(map(lambda y: str(y).zfill(z), x)), l)
     n.sort()
     n = ''.join(n[::-1])
     return int('1' + n)
@@ -900,80 +869,6 @@ def signature(g, edges):
     return (gsig(g), esig(edges, len(g)))
 
 
-def memo(func):
-    cache = {}                        # Stored subproblem solutions
-
-    @wraps(func)                      # Make wrap look like func
-    def wrap(*args):                  # The memoized wrapper
-        s = signature(args[0], args[2])  # Signature: g and edges
-        if s not in cache:            # Not already computed?
-            cache[s] = func(*args)    # Compute & cache the solution
-        return cache[s]               # Return the cached solution
-    return wrap
-
-
-def memo1(func):
-    cache = {}                        # Stored subproblem solutions
-
-    @wraps(func)                      # Make wrap look like func
-    def wrap(*args):                  # The memoized wrapper
-        s = gsig(args[0])             # Signature: g
-        if s not in cache:            # Not already computed?
-            cache[s] = func(*args)    # Compute & cache the solution
-        return cache[s]               # Return the cached solution
-    return wrap
-
-
-def memo2(func):
-    cache = {}                        # Stored subproblem solutions
-
-    @wraps(func)                      # Make wrap look like func
-    def wrap(*args):                  # The memoized wrapper
-        s = signature(args[0], args[2])  # Signature: g and edges
-        if s not in cache:            # Not already computed?
-            cache[s] = func(*args)    # Compute & cache the solution
-        return set()  # cache[s]               # Return the cached solution
-    return wrap
-
-
-def eqsearch(g2, rate=1):
-    '''Find  all  g  that are also in  the equivalence
-    class with respect to g2 and the rate.
-    '''
-
-    s = set()
-    noop = set()
-
-    @memo1
-    def addnodes(g, g2, edges):
-        if edges:
-            masks = []
-            for e in edges:
-                if ok2addanedge_(e[0], e[1], g, g2, rate=rate):
-                    masks.append(True)
-                else:
-                    masks.append(False)
-            nedges = [edges[i] for i in range(len(edges)) if masks[i]]
-            n = len(nedges)
-            if n:
-                for i in range(n):
-                    mask = addanedge(g, nedges[i])
-                    if bfu.undersample(g, rate) == g2:
-                        s.add(g2num(g))
-                    addnodes(g, g2, nedges[:i] + nedges[i + 1:])
-                    delanedge(g, nedges[i], mask)
-                return s
-            else:
-                return noop
-        else:
-            return noop
-
-    g = cloneempty(g2)
-    edges = gk.edgelist(gk.complement(g))
-    addnodes(g, g2, edges)
-    return s
-
-
 def supergraphs_in_eq(g, g2, rate=1):
     '''Find  all supergraphs of g  that are also in  the same equivalence
     class with respect to g2 and the rate.
@@ -988,7 +883,7 @@ def supergraphs_in_eq(g, g2, rate=1):
         if edges:
             masks = []
             for e in edges:
-                if ok2addanedge(e[0], e[1], g, g2, rate=rate):
+                if ok2addanedge(e[0],e[1],g,g2,rate=rate):
                     masks.append(True)
                 else:
                     masks.append(False)
@@ -1006,301 +901,27 @@ def supergraphs_in_eq(g, g2, rate=1):
     return s
 
 
-def edge_backtrack2g1(g2, capsize=None):
-    '''
-    computes all g1 that are in the equivalence class for g2
-    '''
-    if bfu.isSclique(g2):
-        print 'Superclique - any SCC with GCD = 1 fits'
-        return set([-1])
-
-    single_cache = {}
-
-    @memo  # memoize the search
-    def nodesearch(g, g2, edges, s):
-        if edges:
-            e = edges.pop()
-            ln = [n for n in g2]
-            for n in ln:
-                if (n, e) in single_cache:
-                    continue
-                mask = add2edges(g, e, n)
-                if gk.isedgesubset(bfu.increment(g), g2):
-                    r = nodesearch(g, g2, edges, s)
-                    if r and bfu.increment(r) == g2:
-                        s.add(g2num(r))
-                        if capsize and len(s) > capsize:
-                            raise ValueError('Too many elements in eqclass')
-                del2edges(g, e, n, mask)
-            edges.append(e)
-        else:
-            return g
-    # find all directed g1's not conflicting with g2
-    n = len(g2)
-    edges = gk.edgelist(g2)
-    random.shuffle(edges)
-    g = cloneempty(g2)
-
-    for e in edges:
-        for n in g2:
-            mask = add2edges(g, e, n)
-            if not gk.isedgesubset(bfu.increment(g), g2):
-                single_cache[(n, e)] = False
-            del2edges(g, e, n, mask)
-
-    s = set()
-    try:
-        nodesearch(g, g2, edges, s)
-    except ValueError:
-        s.add(0)
-    return s
-
-
-def edge_backtrack2g1_directed(g2, capsize=None):
-    '''
-    computes all g1 that are in the equivalence class for g2
-    '''
-    if bfu.isSclique(g2):
-        print 'Superclique - any SCC with GCD = 1 fits'
-        return set([-1])
-
-    single_cache = {}
-
-    def edgeset(g):
-        return set(gk.edgelist(g))
-
-    @memo  # memoize the search
-    def nodesearch(g, g2, edges, s):
-        if edges:
-            e = edges.pop()
-            ln = [n for n in g2]
-            for n in ln:
-                if (n, e) in single_cache:
-                    continue
-                mask = add2edges(g, e, n)
-                if gk.isedgesubset(bfu.increment(g), g2):
-                    r = nodesearch(g, g2, edges, s)
-                    if r and edgeset(bfu.increment(r)) == edgeset(g2):
-                        s.add(g2num(r))
-                        if capsize and len(s) > capsize:
-                            raise ValueError('Too many elements in eqclass')
-                del2edges(g, e, n, mask)
-            edges.append(e)
-        else:
-            return g
-    # find all directed g1's not conflicting with g2
-    n = len(g2)
-    edges = gk.edgelist(g2)
-    random.shuffle(edges)
-    g = cloneempty(g2)
-
-    for e in edges:
-        for n in g2:
-            mask = add2edges(g, e, n)
-            if not gk.isedgesubset(bfu.increment(g), g2):
-                single_cache[(n, e)] = False
-            del2edges(g, e, n, mask)
-
-    s = set()
-    try:
-        nodesearch(g, g2, edges, s)
-    except ValueError:
-        s.add(0)
-    return s
-
-
-def g22g1(g2, capsize=None):
-    '''
-    computes all g1 that are in the equivalence class for g2
-    '''
-    if bfu.isSclique(g2):
-        print 'Superclique - any SCC with GCD = 1 fits'
-        return set([-1])
-
-    single_cache = {}
-
-    @memo  # memoize the search
-    def nodesearch(g, g2, edges, s):
-        if edges:
-            if bfu.increment(g) == g2:
-                s.add(g2num(g))
-                if capsize and len(s) > capsize:
-                    raise ValueError('Too many elements')
-                return g
-            e = edges[0]
-            for n in g2:
-
-                if (n, e) in single_cache:
-                    continue
-                if not edge_increment_ok(e[0], n, e[1], g, g2):
-                    continue
-
-                mask = add2edges(g, e, n)
-                r = nodesearch(g, g2, edges[1:], s)
-                del2edges(g, e, n, mask)
-
-        elif bfu.increment(g) == g2:
-            s.add(g2num(g))
-            if capsize and len(s) > capsize:
-                raise ValueError('Too many elements in eqclass')
-            return g
-
-    # find all directed g1's not conflicting with g2
-    n = len(g2)
-    edges = gk.edgelist(g2)
-    random.shuffle(edges)
-    g = cloneempty(g2)
-
-    for e in edges:
-        for n in g2:
-
-            mask = add2edges(g, e, n)
-            if not gk.isedgesubset(bfu.increment(g), g2):
-                single_cache[(n, e)] = False
-            del2edges(g, e, n, mask)
-
-    s = set()
-    try:
-        nodesearch(g, g2, edges, s)
-    except ValueError:
-        s.add(0)
-    return s
-
-
-def backtrack_more(g2, rate=1, capsize=None):
-    '''
-    computes all g1 that are in the equivalence class for g2
-    '''
-    if bfu.isSclique(g2):
-        print 'Superclique - any SCC with GCD = 1 fits'
-        return set([-1])
-
-    single_cache = {}
-    if rate == 1:
-        ln = [n for n in g2]
-    else:
-        ln = []
-        for x in itertools.combinations_with_replacement(g2.keys(), rate):
-            ln.extend(itertools.permutations(x, rate))
-        ln = set(ln)
-
-    @memo  # memoize the search
-    def nodesearch(g, g2, edges, s):
-        if edges:
-            if bfu.undersample(g, rate) == g2:
-                s.add(g2num(g))
-                if capsize and len(s) > capsize:
-                    raise ValueError('Too many elements')
-                return g
-            e = edges[0]
-            for n in ln:
-
-                if (n, e) in single_cache:
-                    continue
-                if not ok2addaVpath(e, n, g, g2, rate=rate):
-                    continue
-
-                mask = addaVpath(g, e, n)
-                r = nodesearch(g, g2, edges[1:], s)
-                delaVpath(g, e, n, mask)
-
-        elif bfu.undersample(g, rate) == g2:
-            s.add(g2num(g))
-            if capsize and len(s) > capsize:
-                raise ValueError('Too many elements in eqclass')
-            return g
-
-    # find all directed g1's not conflicting with g2
-    n = len(g2)
-    edges = gk.edgelist(g2)
-    random.shuffle(edges)
-    g = cloneempty(g2)
-
-    for e in edges:
-        for n in ln:
-
-            mask = addaVpath(g, e, n)
-            if not gk.isedgesubset(bfu.undersample(g, rate), g2):
-                single_cache[(n, e)] = False
-            delaVpath(g, e, n, mask)
-
-    s = set()
-    try:
-        nodesearch(g, g2, edges, s)
-    except ValueError:
-        s.add(0)
-    return s
-
-
-def backtrackup2u(H, umax=2):
-    s = set()
-    for i in xrange(1, umax + 1):
-        s = s | backtrack_more(H, rate=i)
-    return s
-
-
-def vg22g1(g2, capsize=None):
-    '''
-    computes all g1 that are in the equivalence class for g2
-    '''
-    if bfu.isSclique(g2):
-        print 'Superclique - any SCC with GCD = 1 fits'
-        return set([-1])
-
-    f = [(add2edges, del2edges),
-         (addavedge, delavedge),
-         (addacedge, delacedge),
-         (addaAedge, delaAedge),
-         (addapath, delapath)]
-    c = [ok2add2edges,
-         ok2addavedge,
-         ok2addacedge,
-         ok2addaAedge,
-         ok2addapath]
-
-    @memo2  # memoize the search
-    def nodesearch(g, g2, edges, s):
-        if edges:
-            # key, checklist = edges.popitem()
-            key = random.choice(edges.keys())
-            checklist = edges.pop(key)
-            adder, remover = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]
-            for n in checklist:
-                mask = adder(g, key, n)
-                if gk.isedgesubset(bfu.increment(g), g2):
-                    r = nodesearch(g, g2, edges, s)
-                    if r and bfu.increment(r) == g2:
-                        s.add(g2num(r))
-                        if capsize and len(s) > capsize:
-                            raise ValueError('Too many elements')
-                remover(g, key, n, mask)
-            edges[key] = checklist
-        else:
-            return g
-
-    # find all directed g1's not conflicting with g2
-    n = len(g2)
-    chlist = checkable(g2)
-    g = cloneempty(g2)
-
-    s = set()
-    try:
-        nodesearch(g, g2, chlist, s)
-    except ValueError:
-        s.add(0)
-    return s
-
-
 def edge_function_idx(edge):
     return min(4, len(edge)) - 2 + min(max(3, len(edge)) - 3, 1) * int(edge[0])
+
+
+def memo_no_return(func):
+    cache = {}                        # Stored subproblem solutions
+
+    @wraps(func)                      # Make wrap look like func
+    def wrap(*args):                  # The memoized wrapper
+        s = signature(args[0], args[2])  # Signature: g and edges
+        if s not in cache:            # Not already computed?
+            cache[s] = func(*args)    # Compute & cache the solution
+        return
+    return wrap
 
 
 def v2g22g1(g2, capsize=None, verbose=True):
     '''
     computes all g1 that are in the equivalence class for g2
     '''
-    if bfu.isSclique(g2):
+    if bfu.is_sclique(g2):
         print 'Superclique - any SCC with GCD = 1 fits'
         return set([-1])
 
@@ -1323,7 +944,7 @@ def v2g22g1(g2, capsize=None, verbose=True):
             s.add(u)
         return s
 
-    @memo2  # memoize the search
+    @memo_no_return  # memoize the search
     def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
         if order:
             if bfu.increment(g) == g2:
@@ -1366,166 +987,27 @@ def v2g22g1(g2, capsize=None, verbose=True):
                 raise ValueError('Too many elements')
             return g
 
-    @memo2  # memoize the search
-    def nodesearch0(g, g2, order, inlist, s, cds):
-
-        if order:
-            key = order.pop(0)
-            tocheck = cds[len(inlist) - 1][inlist[0]]
-
-            adder, remover, masker = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]
-
-            if len(tocheck) > 1:
-                for n in tocheck:
-                    if not checks_ok(key, n, g, g2):
-                        continue
-                    mask = masker(g, key, n)
-                    if not np.prod(mask):
-                        mask = adder(g, key, n)
-                        r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
-                        if r and bfu.increment(r) == g2:
-                            s.add(g2num(r))
-                            if capsize and len(s) > capsize:
-                                raise ValueError('Too many elements')
-                        remover(g, key, n, mask)
-                    else:
-                        r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
-                        if r and bfu.increment(r) == g2:
-                            s.add(g2num(r))
-                            if capsize and len(s) > capsize:
-                                raise ValueError('Too many elements')
-            elif tocheck:
-                (n,) = tocheck
-                mask = adder(g, key, n)
-                r = nodesearch0(g, g2, order, [n] + inlist, s, cds)
-                if r and bfu.increment(r) == g2:
-                    s.add(g2num(r))
-                    if capsize and len(s) > capsize:
-                        raise ValueError('Too many elements')
-                remover(g, key, n, mask)
-
-            order.insert(0, key)
-
-        else:
-            return g
-
     # find all directed g1's not conflicting with g2
 
-    startTime = int(round(time.time() * 1000))
+    startTime = time.time()
     gg = checkable(g2)
 
     idx = np.argsort([len(gg[x]) for x in gg.keys()])
     keys = [gg.keys()[i] for i in idx]
 
     cds, order, idx = conformanceDS(g2, gg, keys)
-    endTime = int(round(time.time() * 1000))
     if verbose:
-        print "precomputed in {:10} seconds".format(round((endTime - startTime) / 1000., 3))
+        print "precomputed in {:10.3f} seconds".format(time.time() - startTime)
     if 0 in [len(x) for x in order]:
         return set()
     g = cloneempty(g2)
 
     s = set()
     try:
-        nodesearch(g, g2, [keys[i] for i in idx], ['0'], s, cds, order, set())
-        # nodesearch0(g, g2, [gg.keys()[i] for i in idx], ['0'], s, cds)
+        nodesearch(g, g2, [keys[i] for i in idx], [0], s, cds, order, set())
     except ValueError, e:
         print e
         s.add(0)
-    return s
-
-
-def backtrack_more2(g2, rate=2, capsize=None):
-    '''
-    computes all g1 that are in the equivalence class for g2
-    '''
-    if bfu.isSclique(g2):
-        print 'Superclique - any SCC with GCD = 1 fits'
-        return set([-1])
-
-    f = [(addaVpath, delaVpath, maskaVpath)]
-    c = [ok2addaVpath]
-
-    def predictive_check(g, g2, pool, checks_ok, key):
-        s = set()
-        for u in pool:
-            if not checks_ok(key, u, g, g2, rate=rate):
-                continue
-            s.add(u)
-        return s
-
-    @memo2  # memoize the search
-    def nodesearch(g, g2, order, inlist, s, cds, pool, pc):
-        if order:
-            if bfu.undersample(g, rate) == g2:
-                s.add(g2num(g))
-                if capsize and len(s) > capsize:
-                    raise ValueError('Too many elements')
-                s.update(supergraphs_in_eq(g, g2, rate=rate))
-                return g
-
-            key = order[0]
-            if pc:
-                tocheck = [x for x in pc if x in cds[len(inlist) - 1][inlist[0]]]
-            else:
-                tocheck = cds[len(inlist) - 1][inlist[0]]
-
-            if len(order) > 1:
-                kk = order[1]
-                pc = predictive_check(g, g2, pool[len(inlist)],
-                                      c[edge_function_idx(kk)], kk)
-            else:
-                pc = set()
-
-            adder, remover, masker = f[edge_function_idx(key)]
-            checks_ok = c[edge_function_idx(key)]
-
-            for n in tocheck:
-                if not checks_ok(key, n, g, g2, rate=rate):
-                    continue
-                masked = np.prod(masker(g, key, n))
-                if masked:
-                    nodesearch(g, g2, order[1:], [n] + inlist, s, cds, pool, pc)
-                else:
-                    mask = adder(g, key, n)
-                    nodesearch(g, g2, order[1:], [n] + inlist, s, cds, pool, pc)
-                    remover(g, key, n, mask)
-
-        elif bfu.undersample(g, rate) == g2:
-            s.add(g2num(g))
-            if capsize and len(s) > capsize:
-                raise ValueError('Too many elements')
-            return g
-
-    # find all directed g1's not conflicting with g2
-
-    startTime = int(round(time.time() * 1000))
-    ln = [x for x in itertools.permutations(g2.keys(), rate)] + \
-         [(n, n) for n in g2]
-    gg = {x: ln for x in gk.edgelist(g2)}
-    keys = gg.keys()
-    cds, order, idx = conformanceDS(g2, gg, gg.keys(), f=f, c=c)
-    endTime = int(round(time.time() * 1000))
-    print "precomputed in {:10} seconds".format(round((endTime - startTime) / 1000., 3))
-    if 0 in [len(x) for x in order]:
-        return set()
-    g = cloneempty(g2)
-
-    s = set()
-    try:
-        nodesearch(g, g2, [keys[i] for i in idx], ['0'], s, cds, order, set())
-    except ValueError, e:
-        print e
-        s.add(0)
-    return s
-
-
-def unionpool(idx, cds):
-    s = set()
-    for u in cds[idx]:
-        for v in cds[idx][u]:
-            s = s.union(cds[idx][u][v])
     return s
 
 
@@ -1565,18 +1047,6 @@ def conformanceDS(g2, gg, order, f=[], c=[]):
     return prune_sort_CDS(CDS, pool)
 
 
-def prune_modify_CDS(cds, pool):
-    ds = {}
-    ds[0] = {}
-    ds[0]['0'] = pool[0]
-    for i in range(1, len(pool)):
-        ds[i] = {}
-        for j in cds[i].keys():
-            for e in pool[i - 1].intersection(cds[i][j].keys()):
-                ds[i][e] = pool[i].intersection(cds[i][j][e])
-    return ds, pool, range(len(pool))
-
-
 def prune_sort_CDS(cds, pool):
 
     idx = np.argsort([len(x) for x in pool])
@@ -1584,7 +1054,7 @@ def prune_sort_CDS(cds, pool):
 
     ds = {}
     ds[0] = {}
-    ds[0]['0'] = pool[idx[0]]
+    ds[0][0] = pool[idx[0]]
 
     for i in range(1, len(idx)):
         ds[i] = {}
@@ -1610,20 +1080,6 @@ def invertCDSelement(d_i):
     return d
 
 
-def conformant(cds, inlist):
-
-    if inlist[len(inlist) - 2] in cds[len(inlist) - 1][0]:
-        s = cds[len(inlist) - 1][0][inlist[len(inlist) - 2]]
-    else:
-        return set()
-    for i in range(1, len(inlist) - 1):
-        if inlist[len(inlist) - i - 2] in cds[len(inlist) - 1][i]:
-            s = s.intersection(cds[len(inlist) - 1][i][inlist[len(inlist) - i - 2]])
-        else:
-            return set()
-    return s
-
-
 def length_d_paths(G, s, d):
     """
     Iterate over nodes in G reachable from s in exactly d steps
@@ -1634,7 +1090,7 @@ def length_d_paths(G, s, d):
             return
 
         for u in G[s]:
-            if G[s][u] == set([(2, 0)]) or u in path:
+            if G[s][u] == 2 or u in path:
                 continue
             for v in recurse(G, u, d - 1, path + [u]):
                 yield v
@@ -1651,29 +1107,29 @@ def edge_increment_ok(s, m, e, g, g2):
     """
     # bidirected edges
     for u in g[s]:
-        if u != m and not (m in g2[u] and (2, 0) in g2[u][m]):
+        if u != m and not (m in g2[u] and g2[u][m] in (2, 3)):
             return False
 
     # directed edges
     if s == e:
-        if not (m in g2[m] and (0, 1) in g2[m][m]):
+        if not (m in g2[m] and g2[m][m] in (1, 3)):
             return False
-        if not (s in g2[s] and (0, 1) in g2[s][s]):
+        if not (s in g2[s] and g2[s][s] in (1, 3)):
             return False
     for u in g[m]:
-        if not (u in g2[s] and (0, 1) in g2[s][u]):
+        if not (u in g2[s] and g2[s][u] in (1, 3)):
             return False
         # bidirected edges
-        if u != e and not (e in g2[u] and (2, 0) in g2[u][e]):
+        if u != e and not (e in g2[u] and g2[u][e] in (2, 3)):
             return False
     for u in g[e]:
-        if not (u in g2[m] and (0, 1) in g2[m][u]):
+        if not (u in g2[m] and g2[m][u] in (1, 3)):
             return False
 
     for u in g:
-        if s in g[u] and not (m in g2[u] and (0, 1) in g2[u][m]):
+        if s in g[u] and not (m in g2[u] and g2[u][m] in (1, 3)):
             return False
-        if m in g[u] and not (e in g2[u] and (0, 1) in g2[u][e]):
+        if m in g[u] and not (e in g2[u] and g2[u][e] in (1, 3)):
             return False
 
     return True
@@ -1695,7 +1151,7 @@ def length_d_loopy_paths(G, s, dt, p):
 
             mask = add2edges(g, (p[-d - 2], p[-d - 1]), s)
             for u in g2[s]:
-                if g2[s][u] == set([(2, 0)]):
+                if g2[s][u] == 2:
                     continue
                 for v in recurse(g, g2, u, d - 1, path + [u]):
                     yield v

@@ -1,4 +1,4 @@
-from gunfolds.tools.testgraphs import *
+from gunfolds.data.testgraphs import *
 from itertools import combinations, permutations, izip, izip_longest
 import scipy
 
@@ -13,19 +13,6 @@ def walk(G, s, S=set()):
             Q.add(v)
             P[v] = u
     return P
-
-
-def traverse(G, s, qtype=set):
-    S, Q = set(), qtype()
-    Q.add(s)
-    while Q:
-        u = Q.pop()
-        if u in S:
-            continue
-        S.add(u)
-        for v in G[u]:
-            Q.add(v)
-        yield u
 
 
 def dfs_topsort(G):
@@ -71,8 +58,8 @@ def cloneBfree(G):
     for v in G:
         D[v] = {}
         for u in G[v]:
-            if not (len(G[v][u].intersection(set([(0, 1)]))) == 0):
-                D[v][u] = set([(0, 1)])
+            if G[v][u] in (1,3):
+                D[v][u] = 1
     return D
 
 

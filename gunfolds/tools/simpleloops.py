@@ -4,6 +4,7 @@ import networkx
 from numpy import argsort
 
 
+
 def simple_loops(g, u):
     """
     iterator over the list of simple loops of graph g at the undersample rate u

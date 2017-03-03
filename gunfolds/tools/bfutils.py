@@ -2,47 +2,47 @@ from gunfolds.tools.conversions import g2num, ug2num, num2CG
 import gunfolds.tools.zickle as zkl
 import gunfolds.tools.graphkit as gk
 import itertools
-from numpy.random import randint
 import numpy as np
 import scipy
-from itertools import permutations
-
 
 #### Undersampling functions
 
-def isSclique(G):
+def is_sclique(G):
+    """ Tests if the graph is a superclique (all possible connections) """
     n = len(G)
-    for v in G:
-        if sum([(0, 1) in G[v][w] for w in G[v]]) < n:
-            return False
-        if sum([(2, 0) in G[v][w] for w in G[v]]) < n - 1:
+    row_sum = 3 * (n-1) + 1 # rows will have all connections plus a self loop
+    for vertex in G:
+        if G[vertex].get(vertex) != 1 or sum(G[vertex].values()) != row_sum:
             return False
     return True
 
 
 def directed_inc(G, D):
+    """ helper function for determining directed edges in an undersampled
+        graph given a previously undersampled graph """
     G_un = {}
     # directed edges
-    for v in D:
-        G_un[v] = {}
-        for w in D[v]:
-            if G[w] and (0, 1) in D[v][w]:
-                for e in G[w]:
-                    G_un[v][e] = set([(0, 1)])
+    for vert1 in D:
+        G_un[vert1] = {}
+        for vert2 in D[vert1]:
+            if G[vert2] and D[vert1][vert2] in (1,3):
+                for e in G[vert2]:
+                    G_un[vert1][e] = 1
     return G_un
 
 
 def bidirected_inc(G, D):
-    # bidirected edges
-    for w in G:
+    """ helper function for determining bidirected edges in an undersampled
+        graph given a previously undersampled graph """
+    for vert1 in G:
         # transfer old bidirected edges
-        for l in D[w]:
-            if (2, 0) in D[w][l]:
-                G[w].setdefault(l, set()).add((2, 0))
+        for vert2 in D[vert1]:
+            if D[vert1][vert2] in (2,3):
+                G[vert1][vert2] = 2 if G[vert1].get(vert2, 2) == 2 else 3
         # new bidirected edges
-        l = [e for e in D[w] if (0, 1) in D[w][e]]
-        for pair in permutations(l, 2):
-            G[pair[0]].setdefault(pair[1], set()).add((2, 0))
+        edges = [ e for e in D[vert1] if D[vert1][e] in (1,3) ]
+        for pair in itertools.permutations(edges, 2):
+            G[pair[0]][pair[1]] = 2 if G[pair[0]].get(pair[1], 2) == 2 else 3
     return G
 
 
@@ -57,42 +57,41 @@ def increment_u(G_star, G_u):
 def pure_directed_inc(G, D):
     G_un = {}
     # directed edges
-    for v in D:
-        G_un[v] = {}
-        for w in D[v]:
-            if G[w]:
-                for e in G[w]:
-                    G_un[v][e] = set([(0, 1)])
+    for vert1 in D:
+        G_un[vert1] = {}
+        for prev_vert in D[vert1]:
+            for vert2 in G[prev_vert]:
+                G_un[vert1][vert2] = 1
     return G_un
 
 
-def increment(g):
+def increment(G):
     '''
-    undersample g by 2
-    only works for g1 to g2 directed
+    undersample G by 2
+    only works for G1 to G2 directed
     '''
-    r = {n: {} for n in g}
+    G2 = {n: {} for n in G}
 
-    for n in g:
-        for h in g[n]:
-            for e in g[h]:
-                if not e in r[n]:
-                    r[n][e] = set([(0, 1)])
+    for vert1 in G:
+        for h in G[vert1]:
+            for e in G[h]:
+                if not e in G2[vert1]:
+                    G2[vert1][e] = 1
 
-    for n in g:
-        for pair in itertools.combinations(g[n], 2):
+    for vert1 in G:
+        for pair in itertools.combinations(G[vert1], 2):
 
-            if pair[1] in r[pair[0]]:
-                r[pair[0]][pair[1]].add((2, 0))
+            if pair[1] in G2[pair[0]]:
+                G2[pair[0]][pair[1]] = 3
             else:
-                r[pair[0]][pair[1]] = set([(2, 0)])
+                G2[pair[0]][pair[1]] = 2
 
-            if pair[0] in r[pair[1]]:
-                r[pair[1]][pair[0]].add((2, 0))
+            if pair[0] in G2[pair[1]]:
+                G2[pair[1]][pair[0]] = 3
             else:
-                r[pair[1]][pair[0]] = set([(2, 0)])
+                G2[pair[1]][pair[0]] = 2
 
-    return r
+    return G2
 
 
 def dincrement_u(G_star, G_u):
@@ -109,10 +108,11 @@ def undersample(G, u):
 
 
 def all_undersamples(G_star):
+    """ return a list of all undersampled graphs (excluding superclique) """
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
-        if isSclique(g):
+        if is_sclique(g):
             return glist  # superclique convergence
         # this will (may be) capture DAGs and oscillations
         if g in glist:
@@ -122,6 +122,7 @@ def all_undersamples(G_star):
 
 
 def call_undersamples(G_star):
+    """ return a list of all undersampled graphs (including superclique) """
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
@@ -131,14 +132,17 @@ def call_undersamples(G_star):
     return glist
 
 
-def compact_call_undersamples(G_star, steps=None):
+def compact_call_undersamples(G_star):
+    """ return a list of all undersampled graphs (including superclique)
+        in binary encoded format """
     glist = [ug2num(G_star)]
     lastgraph = G_star
     while True:
         g = increment_u(G_star, lastgraph)
-        if ug2num(g) in glist:
+        n = ug2num(g)
+        if n in glist:
             return glist
-        glist.append(ug2num(g))
+        glist.append(n)
         lastgraph = g
     return glist
 
@@ -156,74 +160,13 @@ def cc_undersamples(G_star, steps=1):
     return glist[-1]
 
 
-
-
-#### Adjacency matrix functions
-
-def graph2adj(G):
-    n = len(G)
-    A = scipy.zeros((n, n), dtype=np.int8)
-    for v in G:
-        A[int(v) - 1, [int(w)-1 for w in G[v] if (0, 1) in G[v][w]]] = 1
-    return A
-
-
-def graph2badj(G):
-    n = len(G)
-    A = scipy.zeros((n, n), dtype=np.int8)
-    for v in G:
-        A[int(v) - 1, [int(w)-1 for w in G[v] if (2, 0) in G[v][w]]] = 1
-    return A
-
-
-def adjs2graph(A, B):
-    names = [str(i) for i in range(1, A.shape[0] + 1)]
-    G = {}
-    for name in names:
-        G[name] = {}
-    for i in range(A.shape[0]):
-        for name in map(str, np.where(A[i,:] == 1)[0]+1):
-            G[str(i + 1)][name] = set([(0, 1)])
-
-    for i in range(B.shape[0]):
-        for j in range(B.shape[1]):
-            if B[i, j]:
-                if str(j + 1) in G[str(i+1)]:
-                    G[str(i + 1)][str(j+1)].add((2, 0))
-                else:
-                    G[str(i + 1)][str(j+1)] = set([(2, 0)])
-    return G
-
-
-def g2vec(g):
-    A = graph2adj(g)
-    B = graph2badj(g)
-    return np.r_[A.flatten(), B[np.triu_indices(B.shape[0])]]
-
-
-def vec2adj(v, n):
-    A = np.zeros((n, n))
-    B = np.zeros((n, n))
-    A[:] = v[:n ** 2].reshape(n, n)
-    B[np.triu_indices(n)] = v[n ** 2:]
-    B = B + B.T
-    return A, B
-
-
-def vec2g(v, n):
-    A, B = vec2adj(v, n)
-    return adjs2graph(A, B)
-
-
-
-
 #### Misc graph functions
 
 def overshoot(G_star, H):
     glist = [G_star]
     while True:
         g = increment_u(G_star, glist[-1])
-        if isSclique(g):
+        if is_sclique(g):
             return False
         if gk.isedgesubset(H, g):
             return True
@@ -372,9 +315,16 @@ def savegraphs(l, fname):
 
 
 # talking about extra edges on top of the ring
-
+    
 
 def dens2edgenum(d, n=10):
+    """
+    Convert density into the number of extra edges needed for a ring
+    graph to achieve that density
+    Arguments:
+    - `d`: density
+    - `n`: number of nodes in the graph
+    """
     return int(d * n**2)-n
 
 
@@ -382,16 +332,7 @@ def edgenum2dens(e, n=10):
     return np.double(e + n)/n**2
 
 
-def randH(n, d1, d2):
-    g = gk.ringmore(n, d1)
-    pairs = [x for x in itertools.combinations(g.keys(), 2)]
-    for p in np.random.permutation(pairs)[:d2]:
-        g[p[0]].setdefault(p[1], set()).add((2, 0))
-        g[p[1]].setdefault(p[0], set()).add((2, 0))
-    return g
-
-
-def checkconflict(H, G_test, au=None):
+def check_conflict(H, G_test, au=None):
     if not au:
         allundersamples = call_undersamples(G_test)
     else:
@@ -402,7 +343,7 @@ def checkconflict(H, G_test, au=None):
     return True
 
 
-def checkconflict_(Hnum, G_test, au=None):
+def check_conflict_(Hnum, G_test, au=None):
     if not au:
         allundersamples = call_undersamples(G_test)
     else:
@@ -415,7 +356,7 @@ def checkconflict_(Hnum, G_test, au=None):
     return True
 
 
-def checkequality(H, G_test, au=None):
+def check_equality(H, G_test, au=None):
     if not au:
         allundersamples = call_undersamples(G_test)
     else:

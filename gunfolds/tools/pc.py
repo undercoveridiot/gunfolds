@@ -9,6 +9,8 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.stats import zscore, norm
 import statsmodels.api as sm
 
+
+
 def independent(y, X, pval=0.05):
     X  = sm.add_constant(X)
     est  = sm.OLS(y, X).fit()
@@ -111,8 +113,8 @@ def dpc(data, pval=0.05):
     data = np.asarray(np.r_[data[:, :-1], data[:, 1:]])
 
     def tetrad_cind_(y, x, condset=[], alpha=0.01, shift=0):
-        y = data[n+int(y)-1,:]
-        x = data[shift+int(x)-1,:]
+        y = data[n+y-1,:]
+        x = data[shift+x-1,:]
         if condset:
             X  = data[condset,:]
             ry, rx = residuals_(y, x, X)
@@ -121,14 +123,14 @@ def dpc(data, pval=0.05):
         return independent_(ry, rx, alpha = alpha)
 
     def cind_(y,x, condset=[], pval=pval, shift=0):
-        yd = data[n+int(y)-1,:].T
-        X  = data[[shift+int(x)-1]+condset,:].T
+        yd = data[n+y-1,:].T
+        X  = data[[shift+x-1]+condset,:].T
         return independent(yd, X, pval=pval)
 
     def cindependent(y, x, counter, parents=[], pval=pval):
         for S in [j for j in combinations(parents, counter)]:
-            # if cind_(y, x, condset=list(S), pval=pval):
-            if tetrad_cind_(x, y, condset=list(S), alpha=pval):
+            if cind_(y, x, condset=list(S), pval=pval):
+            #if tetrad_cind_(x, y, condset=list(S), alpha=pval):
                 return True
         return False
 
@@ -138,7 +140,7 @@ def dpc(data, pval=0.05):
 
     def prune(elist, mask, g):
         for e in mask:
-            g[e[0]][e[1]].remove((0, 1))
+            g[e[0]][e[1]] -= 1
             elist.remove(e)
         gk.clean_leaf_nodes(g)
 
@@ -149,20 +151,20 @@ def dpc(data, pval=0.05):
     for counter in range(n):
         to_remove = []
         for e in el:
-            ppp = [int(k)-1 for k in gtr[e[1]] if k != e[0]]
+            ppp = [k-1 for k in gtr[e[1]] if k != e[0]]
             if counter <= len(ppp):
                 if cindependent(e[1], e[0], counter, parents=ppp, pval=pval):
                     to_remove.append(e)
                     gtr[e[1]].pop(e[0], None)
         prune(el, to_remove, g)
 
-    bel = [map(lambda k: str(k+1), x) for x in combinations(range(n), 2)]
+    bel = [map(lambda k: k+1, x) for x in combinations(range(n), 2)]
     for e in bel:
         ppp = list(set(gtr[e[0]].keys()) | set(gtr[e[1]].keys()))
-        ppp = map(lambda x: int(x)-1, ppp)
+        ppp = map(lambda x: x-1, ppp)
         if bindependent(e[0], e[1], parents=ppp, pval=pval):
-            g[e[0]][e[1]].remove((2, 0))
-            g[e[1]][e[0]].remove((2, 0))
+            g[e[0]][e[1]] -= 2
+            g[e[1]][e[0]] -= 2
     gk.clean_leaf_nodes(g)
 
     return g
