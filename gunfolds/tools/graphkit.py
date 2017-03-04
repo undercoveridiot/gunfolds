@@ -278,17 +278,3 @@ def isedgesubset(g2star, g2):
             else:
                 return False
     return True
-
-
-def old2new(g):
-    """
-    Convert the old, string-based, graph data structure to one based
-    on numerical encoding
-    """
-    c = {((0, 1),): 1, ((2, 0),): 2, ((0, 1), (2, 0)): 3}
-    gg = {}
-    for w in g:
-        gg[int(w)] = {}
-        for v in g[w]:
-            gg[int(w)][int(v)] = c[tuple(g[w][v])]
-    return gg
