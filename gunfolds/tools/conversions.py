@@ -115,6 +115,18 @@ def dict_format_converter(H):
                 H_new[int(vert_a)][int(vert_b)] = edge_val
     return H_new
 
+def g2ian(g):
+    return dict_format_converter(g)
+
+def ian2g(g):
+    c = {1: {(0, 1)}, 2: {(2, 0)}, 3: {(0, 1), (2, 0)}}
+    gg = {}
+    for w in g:
+        gg[str(w)] = {}
+        for v in g[w]:
+            gg[str(w)][str(v)] = c[g[w][v]]
+    return gg
+    
 
 #### Adjacency matrix functions
 
