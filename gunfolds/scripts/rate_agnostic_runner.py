@@ -10,8 +10,8 @@ import time
 import socket
 import scipy
 
-KEY = 'ral_async'
-UMAX = 4
+KEY = 'rasl_il_u2'
+UMAX = 2
 INPNUM = 1  # number of randomized starts per graph
 CAPSIZE = 1000  # stop traversing after growing equivalence class tothis size
 REPEATS = 100
@@ -66,9 +66,10 @@ def ra_wrapper(fold, n=10, k=10):
             gs = bfutils.call_undersamples(g)
             for u in range(1, min([len(gs), UMAX])):
                 g2 = bfutils.undersample(g, u)
-                print fold, ': ', traversal.density(g), ':',
+                print fold,': ',traversal.density(g),':', traversal.density(g2),':',
                 startTime = int(round(time.time() * 1000))
-                s = ur.liteqclass(g2, verbose=False, capsize=CAPSIZE)
+                #s = ur.liteqclass(g2, verbose=False, capsize=CAPSIZE)
+                s = ur.eqclass(g2)
                 endTime = int(round(time.time() * 1000))
                 print len(s), u
                 l[u] = {'eq': s, 'ms': endTime - startTime}
@@ -133,8 +134,8 @@ def fan_wrapper(fold, n=10, k=10):
                 scipy.random.seed()
                 try:
                     startTime = int(round(time.time() * 1000))
-                    s = traversal.v2g22g1(g2, capsize=CAPSIZE)
-                    # s = traversal.backtrack_more2(g2, rate=2, capsize=CAPSIZE)
+                    #s = traversal.v2g22g1(g2, capsize=CAPSIZE)
+                    s = traversal.backtrack_more2(g2, rate=2, capsize=CAPSIZE)
                     endTime = int(round(time.time() * 1000))
                     print "{:2}: {:8} : {:4}  {:10} seconds".\
                         format(fold, round(gdens, 3), len(s),
@@ -183,7 +184,7 @@ if __name__ == '__main__':
         z = {}
         # pool=Pool(processes=PNUM)
         for dens in densities[nodes]:
-            print "{:2}: {:8} : {:10}  {:10}".format('id', 'density', 'eq class', 'time')
+            print "{:2}: {:8} : {:10} : {:10}  {:10}".format('id', 'densityi(G)', 'density(H)', 'eq class', 'time')
             e = bfutils.dens2edgenum(dens, n=nodes)
 
             multiprocess([[i, nodes, e] for i in range(REPEATS)], PNUM)

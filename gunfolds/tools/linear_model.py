@@ -60,20 +60,11 @@ def bnf2CG(fname):
 
 def npG2SVAR(G):
     n = len(G)
-    A = [[0]*n]*n
-    B = [[0]*n]*n
-    for i in range(n):
-        B[i][i] = 1
-
-    for v in G:
-        for w in G[v]:
-            if G[v][w] in (1,3):
-                A[w-1][v-1] = 1
-            if G[v][w] in (2,3):
-                B[w-1][v-1] = 1
-    A = np.asarray(A)
+    A = graph2adj(G)
+    B = np.tril(bfutils.graph2badj(G))
+    np.fill_diagonal(B,1)
     B = symchol(B)
-    return A, B
+    return A,B
 
 def x2M(x, A, B, aidx, bidx):
     A[aidx] = x[:len(aidx[0])]
@@ -268,7 +259,7 @@ def drawsamplesLG(A, nstd=0.1, samples=100):
 def getAgraph(n, mp=2, st=0.5, verbose=True):
     keeptrying = True
     while keeptrying:
-        G = gk.rnd_CG(n, maxindegree=mp, force_connected=True)
+        G = gk.rnd_cg(n, maxindegree=mp, force_connected=True)
         try:
             A = transitionMarix2(G, minstrength=st)
             keeptrying = False
@@ -280,11 +271,11 @@ def getAgraph(n, mp=2, st=0.5, verbose=True):
             'transition': A,
             'converges':  len(bfutils.call_undersamples(G))}
 
-def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
+def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned', permute=False):
     keeptrying = True
     plusedges = bfutils.dens2edgenum(density, n)
     while keeptrying:
-        G = gk.ringmore(n, plusedges)
+        G = gk.ringmore(n, plusedges, permute=permute)
         try:
             A = transitionMatrix4(G, minstrength=st, distribution=dist)
             try:
@@ -307,19 +298,20 @@ def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
 # -------------------------------------------------------------------
 
 def scoreAGraph(G, data, x0 = None):
-    A, B = npG2SVAR(G)
-    K = scipy.sum(abs(A)+abs(B))
+    A,B = npG2SVAR(G)
     a_idx = np.where(A != 0)
     b_idx = np.where(B != 0)
+    K = scipy.sum(len(a_idx[0])+len(b_idx[0])/2)
+
     if x0:
         o = optimize.fmin_bfgs(nllf, x0, args=(A, B, data, a_idx, b_idx),
                                disp=False, full_output=True)
     else:
-        o = optimize.fmin_bfgs(nllf, scipy.randn(K),
+        o = optimize.fmin_bfgs(nllf, scipy.randn(len(a_idx[0])+len(b_idx[0])),
                                args=(np.double(A), np.double(B),
                                      data, a_idx, b_idx),
                                disp=False, full_output=True)
-    return 2*o(1) + K*np.log(T) #VARbic(o[1],K,data.shape[1])
+    return 2*o[1] + K*np.log(data.shape[1]) #VARbic(o[1],K,data.shape[1])
 
 def estimateG(G, YY, XX, YX, T, x0=None):
     A, B = npG2SVAR(G)
@@ -401,5 +393,17 @@ def data2VARgraph(data, pval=0.05):
         for j in range(n):
             if np.abs(A[j, i]) > pval:
                 g[i+1][j+1] = 1
-
     return g
+
+def data2VARgraph_model(data, pval=0.05):
+    model = VAR(data.T)
+    r = model.fit(1)
+    A = r.coefs[0,:,:]
+    n = A.shape[0]
+    g = {str(i):{} for i in range(1,n+1)}
+
+    for i in range(n):
+        for j in range(n):
+            if np.abs(A[j,i]) > pval:
+                g[str(i+1)][str(j+1)] = set([(0,1)])
+    return g, r

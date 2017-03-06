@@ -10,7 +10,7 @@ import scipy
 import socket
 import time
 
-UMAX = 6
+UMAX = 1
 INPNUM = 1  # number of randomized starts per graph
 CAPSIZE = 1000  # stop traversing after growing equivalence class tothis size
 REPEATS = 100

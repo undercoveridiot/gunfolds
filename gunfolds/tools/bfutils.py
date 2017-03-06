@@ -46,14 +46,6 @@ def bidirected_inc(G, D):
     return G
 
 
-def increment_u(G_star, G_u):
-    # directed edges
-    G_un = directed_inc(G_star, G_u)
-    # bidirected edges
-    G_un = bidirected_inc(G_un, G_u)
-    return G_un
-
-
 def pure_directed_inc(G, D):
     G_un = {}
     # directed edges
@@ -97,6 +89,14 @@ def increment(G):
 def dincrement_u(G_star, G_u):
     # directed edges
     G_un = pure_directed_inc(G_star, G_u)
+    return G_un
+
+
+def increment_u(G_star, G_u):
+    # directed edges
+    G_un = directed_inc(G_star, G_u)
+    # bidirected edges
+    G_un = bidirected_inc(G_un, G_u)
     return G_un
 
 
@@ -293,7 +293,7 @@ def iall(i, nodes):
 def cc_all(i, nodes, steps):
     # print i
     g = num2CG(i, nodes)
-    return cc_undersamples(g, steps=steps)
+    return i, cc_undersamples(g, steps=steps)
 
 
 def make_rect(l):

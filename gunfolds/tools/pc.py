@@ -128,10 +128,10 @@ def dpc(data, pval=0.05):
         return independent(yd, X, pval=pval)
 
     def cindependent(y, x, counter, parents=[], pval=pval):
-        for S in [j for j in combinations(parents, counter)]:
-            # if cind_(y, x, condset=list(S), pval=pval):
-            if tetrad_cind_(x, y, condset=list(S), alpha=pval):
+        for S in [j for j in combinations(parents,counter)]:
+            if cind_(y, x, condset=list(S), pval=pval):
                 return True
+            #if tetrad_cind_(x, y, condset=list(S), alpha=pval): return True
         return False
 
     def bindependent(y, x, parents=[], pval=pval):
