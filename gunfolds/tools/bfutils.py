@@ -74,12 +74,12 @@ def increment(G):
         for pair in itertools.combinations(G[vert1], 2):
 
             if pair[1] in G2[pair[0]]:
-                G2[pair[0]][pair[1]] = 3
+                G2[pair[0]][pair[1]] |= 2
             else:
                 G2[pair[0]][pair[1]] = 2
 
             if pair[0] in G2[pair[1]]:
-                G2[pair[1]][pair[0]] = 3
+                G2[pair[1]][pair[0]] |= 2
             else:
                 G2[pair[1]][pair[0]] = 2
 
@@ -315,9 +315,16 @@ def savegraphs(l, fname):
 
 
 # talking about extra edges on top of the ring
-
+    
 
 def dens2edgenum(d, n=10):
+    """
+    Convert density into the number of extra edges needed for a ring
+    graph to achieve that density
+    Arguments:
+    - `d`: density
+    - `n`: number of nodes in the graph
+    """
     return int(d * n**2)-n
 
 

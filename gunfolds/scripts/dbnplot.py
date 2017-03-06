@@ -1,10 +1,11 @@
-""" This is a use-case of the tools in the tools directory. The example defines
-    a graph and shows how to generate a figure that shows the graph at different
-    undersampling rates. Running the file in python (python dbnplot.py) generates
-    a figure in figures folder: shipfig.pdf
+""" This is a use-case of the tools in the tools directory. The
+    example defines a graph and shows how to generate a figure that
+    shows the graph at different undersampling rates. Running the file
+    in python (python dbnplot.py) generates a figure in figures
+    folder: shipfig.pdf
 """
 import numpy as np
-import os
+import os, sys
 from random import random
 import gunfolds.tools.zickle as zkl
 import gunfolds.tools.dbn2latex as d2l
@@ -31,7 +32,7 @@ if __name__ == '__main__':
          10: {1: 1, 5: 1, 9: 1}}
 
     # output file
-    foo = open('figures/shipfig_figure.tex', 'wb')
+    foo = open('gunfolds/figures/shipfig_figure.tex', 'wb')
     sys.stdout = foo
 
     # generation of the output

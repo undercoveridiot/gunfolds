@@ -1,24 +1,29 @@
 """ This module contains graph format conversion functions """
-import gmpy as gmp
+from __future__ import print_function
 import igraph
 import networkx as nx
 import numpy as np
 import scipy
+import sys
 
 
 def g2num(g):
-    """ Convert a graph into a binary format """
+    """ Convert a graph into a long int """
     n = len(g)
-    n2 = n ** 2 + n
-    num = 0
+    n2 = n * n + n
+    num = ['0']*n*n
     for v in range(1, n + 1):
+        idx = (v-1)*n
         for w in g[v]:
-            num |= (1 << (n2 - v * n - w))
-    return num
+            num[idx + (w-1)] = '1'
 
+    return int(''.join(num),2)
 
 def ug2num(g):
-    """ Convert non-empty edges into a tuple of (directed, bidriected) in binary format """
+    """
+    Convert non-empty edges into a tuple of (directed, bidriected) in
+    binary format
+    """
     n = len(g)
     n2 = n ** 2 + n
     num = 0
@@ -64,19 +69,14 @@ def num2CG(num, n):
     """num2CG - converts a number  whose binary representaion encodes edge
     presence/absence into a compressed graph representaion
 
-    """
-    n2 = n * n
-    G = {i + 1: {} for i in xrange(n)}
-    if num == 0:
-        return G
-    bl = gmp.bit_length(num)
-    idx = [n2 - i - 1 for i in xrange(bl) if num & (1 << i)]
-    idx = np.unravel_index(idx, (n, n))
-    x = idx[0] + 1
-    y = idx[1] + 1
-    for i in xrange(len(x)):
-        G[x[i]][y[i]] = 1
-    return G
+    """    
+    s = bin(num)[2:].zfill(n*n)
+    g = {i+1:{} for i in range(n)}
+    for v in g:
+        for w in range(n):
+            if s[(v-1)*n:(v-1)*n+n][w] == '1':
+                g[v][w+1] = 1
+    return g
 
 
 def dict_format_converter(H):
@@ -111,6 +111,18 @@ def dict_format_converter(H):
             if edge_val:
                 H_new[int(vert_a)][int(vert_b)] = edge_val
     return H_new
+
+def g2ian(g):
+    return dict_format_converter(g)
+
+def ian2g(g):
+    c = {1: {(0, 1)}, 2: {(2, 0)}, 3: {(0, 1), (2, 0)}}
+    gg = {}
+    for w in g:
+        gg[str(w)] = {}
+        for v in g[w]:
+            gg[str(w)][str(v)] = c[g[w][v]]
+    return gg
 
 
 #### Adjacency matrix functions
@@ -153,14 +165,14 @@ def adjs2graph(directed, bidirected):
 def g2vec(g):
     A = graph2adj(g)
     B = graph2badj(g)
-    return np.r_[A.flatten(), B[np.triu_indices(B.shape[0])]]
+    return np.r_[A.flatten(), B[np.triu_indices(B.shape[0], k=1)]]
 
 
 def vec2adj(v, n):
     A = np.zeros((n, n))
     B = np.zeros((n, n))
     A[:] = v[:n ** 2].reshape(n, n)
-    B[np.triu_indices(n)] = v[n ** 2:]
+    B[np.triu_indices(n, k=1)] = v[n ** 2:]
     B = B + B.T
     return A, B
 
@@ -168,6 +180,18 @@ def vec2adj(v, n):
 def vec2g(v, n):
     A, B = vec2adj(v, n)
     return adjs2graph(A, B)
+
+
+def g2clingo(g, file=sys.stdout):
+    n = len(g)
+    print('node(1..'+str(n)+').', file=file)
+    for v in g:
+        for w in g[v]:
+            if g[v][w] == 1: print('edgeu('+str(v)+','+str(w)+').', file=file)
+            if g[v][w] == 2: print('confu('+str(v)+','+str(w)+').', file=file)
+            if g[v][w] == 3:
+                print('edgeu('+str(v)+','+str(w)+').', file=file)
+                print('confu('+str(v)+','+str(w)+').', file=file)
 
 
 def g2ig(g):
