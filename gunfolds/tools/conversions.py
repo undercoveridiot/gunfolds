@@ -6,17 +6,18 @@ import numpy as np
 import scipy
 import sys
 
+
 def g2num(g):
-    """ Convert a graph into a binary format """
+    """ Convert a graph into a long int """
     n = len(g)
     n2 = n * n + n
     num = ['0']*n*n
     for v in range(1, n + 1):
+        idx = (v-1)*n
         for w in g[v]:
-            num[n2 - v * n - w] = '1'
+            num[idx + (w-1)] = '1'
 
     return int(''.join(num),2)
-
 
 def ug2num(g):
     """
@@ -68,19 +69,14 @@ def num2CG(num, n):
     """num2CG - converts a number  whose binary representaion encodes edge
     presence/absence into a compressed graph representaion
 
-    """
-    n2 = n * n
-    G = {i + 1: {} for i in xrange(n)}
-    if num == 0:
-        return G
-    bl = len(bin(num))-2
-    idx = [n2 - i - 1 for i in xrange(bl) if num & (1 << i)]
-    idx = np.unravel_index(idx, (n, n))
-    x = idx[0] + 1
-    y = idx[1] + 1
-    for i in xrange(len(x)):
-        G[x[i]][y[i]] = 1
-    return G
+    """    
+    s = bin(num)[2:].zfill(n*n)
+    g = {i+1:{} for i in range(n)}
+    for v in g:
+        for w in range(n):
+            if s[(v-1)*n:(v-1)*n+n][w] == '1':
+                g[v][w+1] = 1
+    return g
 
 
 def dict_format_converter(H):
