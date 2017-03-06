@@ -82,12 +82,12 @@ def increment(G):
         for pair in itertools.combinations(G[vert1], 2):
 
             if pair[1] in G2[pair[0]]:
-                G2[pair[0]][pair[1]] = 3
+                G2[pair[0]][pair[1]] |= 2
             else:
                 G2[pair[0]][pair[1]] = 2
 
             if pair[0] in G2[pair[1]]:
-                G2[pair[1]][pair[0]] = 3
+                G2[pair[1]][pair[0]] |= 2
             else:
                 G2[pair[1]][pair[0]] = 2
 
