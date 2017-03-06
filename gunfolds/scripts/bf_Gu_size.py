@@ -52,20 +52,24 @@ if __name__ == '__main__':
     print template.format(*('        u', ' all_uniq', '   unique', '  seen_Gu', ' converge',  ' uconverge'))
     cumset = set()
     clen = 0
-    for s in xrange(23):
+    for s in xrange(100):
 
-        results = pool.map(functools.partial(wrapper_u, steps=s),
-                           range(2 ** (nodes ** 2)))
+        results=pool.map(functools.partial(wrapper_u, steps=s),
+                         range(2**(nodes**2)))
 
-        converged = len([e for e in results if e == []])
+        converged = len([e for e in results if e[1]==[]])
         notconverged = len(results) - converged
 
-        results = filter(None, results)
+        if notconverged < 100 and notconverged > 0:
+            survivors = [e for e in results if e[1]]
+        if notconverged == 0: break
+        results = filter(lambda (x): x[1] != [], results)
+
         r = set(results)
         d = r.difference(cumset)
         cumset = cumset.union(r)
 
-        cl = 2 ** (nodes ** 2) - len(results) - clen
+        cl = 2**(nodes**2) - len(results) - clen
         clen += cl
 
         print template.format(*(s, len(r), len(d), len(cumset),

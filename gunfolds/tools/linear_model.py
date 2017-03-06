@@ -1,6 +1,6 @@
 from gunfolds.tools import ecj
 from gunfolds.tools import bfutils
-from gunfolds.tools import  graphkit as gk
+from gunfolds.tools import graphkit as gk
 import numpy as np
 from progressbar import ProgressBar, Percentage
 import scipy
@@ -58,23 +58,11 @@ def bnf2CG(fname):
 
 def npG2SVAR(G):
     n = len(G)
-    A = [[0]*n]*n
-    B = [[0]*n]*n
-    for i in range(n):
-        B[i][i] = 1
-
-    for v in G:
-        if G[v]:
-            directed = [w for w in G[v] if (0, 1) in G[v][w]]
-            bidirected = [w for w in G[v] if (2, 0) in G[v][w]]
-            for w in   directed:
-                A[int(w)-1][int(v)-1] = 1
-            for w in bidirected:
-                B[int(w)-1][int(v)-1] = 1
-
-    A = np.asarray(A)
+    A = bfutils.graph2adj(G)
+    B = np.tril(bfutils.graph2badj(G))
+    np.fill_diagonal(B,1)
     B = symchol(B)
-    return A, B
+    return A,B
 
 def x2M(x, A, B, aidx, bidx):
     A[aidx] = x[:len(aidx[0])]
@@ -269,7 +257,7 @@ def drawsamplesLG(A, nstd=0.1, samples=100):
 def getAgraph(n, mp=2, st=0.5, verbose=True):
     keeptrying = True
     while keeptrying:
-        G = gk.rnd_CG(n, maxindegree=mp, force_connected=True)
+        G = gk.rnd_cg(n, maxindegree=mp, force_connected=True)
         try:
             A = transitionMarix2(G, minstrength=st)
             keeptrying = False
@@ -281,11 +269,11 @@ def getAgraph(n, mp=2, st=0.5, verbose=True):
             'transition': A,
             'converges':  len(bfutils.call_undersamples(G))}
 
-def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
+def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned', permute=False):
     keeptrying = True
     plusedges = bfutils.dens2edgenum(density, n)
     while keeptrying:
-        G = gk.ringmore(n, plusedges)
+        G = gk.ringmore(n, plusedges, permute=permute)
         try:
             A = transitionMatrix4(G, minstrength=st, distribution=dist)
             try:
@@ -308,19 +296,20 @@ def getAring(n, density=0.1, st=0.5, verbose=True, dist='flatsigned'):
 # -------------------------------------------------------------------
 
 def scoreAGraph(G, data, x0 = None):
-    A, B = npG2SVAR(G)
-    K = scipy.sum(abs(A)+abs(B))
+    A,B = npG2SVAR(G)
     a_idx = np.where(A != 0)
     b_idx = np.where(B != 0)
+    K = scipy.sum(len(a_idx[0])+len(b_idx[0])/2)
+
     if x0:
         o = optimize.fmin_bfgs(nllf, x0, args=(A, B, data, a_idx, b_idx),
                                disp=False, full_output=True)
     else:
-        o = optimize.fmin_bfgs(nllf, scipy.randn(K),
+        o = optimize.fmin_bfgs(nllf, scipy.randn(len(a_idx[0])+len(b_idx[0])),
                                args=(np.double(A), np.double(B),
                                      data, a_idx, b_idx),
                                disp=False, full_output=True)
-    return 2*o(1) + K*np.log(T) #VARbic(o[1],K,data.shape[1])
+    return 2*o[1] + K*np.log(data.shape[1]) #VARbic(o[1],K,data.shape[1])
 
 def estimateG(G, YY, XX, YX, T, x0=None):
     A, B = npG2SVAR(G)
@@ -404,10 +393,10 @@ def intAB2graph(A, B):
                     g[str(i+1)][str(j+1)] = set([(2, 0)])
     return g
 
-def data2graph(data,x0=None):
-    A, B = data2AB(data, x0=x0)
-    Ab, Bb = AB2intAB(A, B)
-    return intAB2graph(Ab, Bb)
+def data2graph(data,x0=None, th=0.09):
+    A,B = data2AB(data,x0=x0)
+    Ab,Bb = AB2intAB(A,B,th=th)
+    return intAB2graph(Ab,Bb)
 
 def data2VARgraph(data, pval=0.05):
     model = VAR(data.T)
@@ -418,7 +407,19 @@ def data2VARgraph(data, pval=0.05):
 
     for i in range(n):
         for j in range(n):
-            if np.abs(A[j, i]) > pval:
-                g[str(i+1)][str(j+1)] = set([(0, 1)])
-
+            if np.abs(A[j,i]) > pval:
+                g[str(i+1)][str(j+1)] = set([(0,1)])
     return g
+
+def data2VARgraph_model(data, pval=0.05):
+    model = VAR(data.T)
+    r = model.fit(1)
+    A = r.coefs[0,:,:]
+    n = A.shape[0]
+    g = {str(i):{} for i in range(1,n+1)}
+
+    for i in range(n):
+        for j in range(n):
+            if np.abs(A[j,i]) > pval:
+                g[str(i+1)][str(j+1)] = set([(0,1)])
+    return g, r

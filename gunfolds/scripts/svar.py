@@ -7,6 +7,7 @@ from gunfolds.tools import graphkit as gk
 from gunfolds.tools import linear_model as lm
 from gunfolds.tools import pc
 from gunfolds.tools import traversal as trv
+from gunfolds.tools import unknownrate as ur
 from gunfolds.tools import zickle as zkl
 import itertools
 from multiprocessing import Pool
@@ -22,15 +23,16 @@ import time
 
 NOISE_STD = '0.1'
 DEPTH = 2
+URATE=3
 DIST = 'beta'
 BURNIN = 100
 SAMPLESIZE = 2000
 PARALLEL = True
-POSTFIX = '_H'
-EST = 'pc'
+POSTFIX='_rasl_u'+str(URATE)
+EST = 'svar'
 INPNUM = 1  # number of randomized starts per graph
 CAPSIZE = 100  # stop traversing after growing equivalence class tothis size
-REPEATS = 100
+REPEATS = 20
 PNUM = get_process_count(INPNUM)
 
 
@@ -67,23 +69,20 @@ def hamming_neighbors(v, step):
 
 
 def find_nearest_reachable(g2, max_depth=4):
-    s = trv.v2g22g1(g2, capsize=CAPSIZE, verbose=False)
-    # s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
+    s = ur.liteqclass(g2, capsize=CAPSIZE, verbose=False)   
     if s:
         return s
     step = 1
     n = len(g2)
     v = bfu.g2vec(g2)
     while True:
-        l = hamming_neighbors(v, step)
-        pbar = ProgressBar(
-            widgets=['neighbors checked @ step ' + str(step) + ': ', Percentage(), ' '], maxval=len(l)).start()
+        l = hamming_neighbors(v,step)
+        pbar = ProgressBar(widgets=['neighbors checked @ step '+str(step)+': ', Percentage(), ' '], maxval=len(l)).start()
         c = 0
         for e in l:
-            g = bfu.vec2g(e, n)
+            g = bfu.vec2g(e,n)
             if not gk.scc_unreachable(g):
-                # s = trv.edge_backtrack2g1_directed(g2, capsize=CAPSIZE)
-                s = trv.v2g22g1(g, capsize=CAPSIZE, verbose=False)
+                s = ur.liteqclass(g, capsize=CAPSIZE, verbose=False)
             else:
                 s = set()
             if s:
@@ -96,9 +95,9 @@ def find_nearest_reachable(g2, max_depth=4):
         step += 1
 
 
-def wrapper(fold, n=10, dens=0.1):
+def wrapper(fold, n=10, dens=0.1, urate=URATE):
     scipy.random.seed()
-    rate = 2
+    rate = urate
 
     r = None
     s = set()
@@ -130,9 +129,9 @@ def wrapper(fold, n=10, dens=0.1):
             # raise ValueError
         startTime = int(round(time.time() * 1000))
         if EST == 'pc':
-            g2 = pc.dpc(data[:, ::2], pval=0.0001)
+            g2 = pc.dpc(data[:, ::rate], pval=0.0001)
         elif EST == 'svar':
-            g2 = lm.data2graph(data[:, ::2])
+            g2 = lm.data2graph(data[:, ::rate])
         if trv.density(g2) < 0.7:
             print gk.OCE(g2, true_g2)
             # s = examine_bidirected_flips(g2, depth=DEPTH)
@@ -198,18 +197,19 @@ if __name__ == '__main__':
 
     print 'processes: ', PNUM, INPNUM
 
-    densities = {6: [0.25, 0.3, 0.35],
+    densities = {5: [0.25, 0.3, 0.35],
+                 6: [0.25, 0.3, 0.35],
                  8: [.15, .2, 0.25, 0.3],
-                 10: [0.3],
-                 15: [0.1],
-                 20: [0.1],
-                 25: [0.1],
-                 30: [0.1],
-                 35: [0.1]}
+                 10:[0.3],
+                 15:[0.1],
+                 20:[0.1],
+                 25:[0.1],
+                 30:[0.1],
+                 35:[0.1]}
 
     wrp = wrapper
 
-    for nodes in [10]:
+    for nodes in [6]:
         z = {}
         pool = Pool(processes=PNUM)
         for dens in densities[nodes]:

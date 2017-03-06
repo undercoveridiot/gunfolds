@@ -119,11 +119,13 @@ def scale_free(n, alpha=0.7, beta=0.25,
     return g
 
 
-def ring(n):
+def ring(n, permute=False):
     g = {}
-    for i in range(1, n):
-        g[str(i)] = {str(i + 1): set([(0, 1)])}
-    g[str(n)] = {'1': set([(0, 1)])}
+    names = [str(x+1) for x in range(n)]
+    if permute: names = np.random.permutation(names) 
+    for i in range(n-1):
+        g[names[i]] = {names[i+1]: set([(0,1)])}
+    g[names[n-1]] = {names[0]: set([(0,1)])}
     return g
 
 
@@ -158,8 +160,8 @@ def ringarcs(g, n):
     return g
 
 
-def ringmore(n, m):
-    return ringarcs(ring(n), m)
+def ringmore(n, m, permute=False):
+    return ringarcs(ring(n,permute=permute), m)
 
 
 def digonly(H):
