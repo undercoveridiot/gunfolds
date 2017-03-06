@@ -107,11 +107,14 @@ def randH(n, d1, d2):
     return g
 
 
-def ring(n):
+def ring(n, permute=False):
     g = {}
-    for i in range(1, n):
-        g[i] = {i + 1: 1}
-    g[n] = {1: 1}
+    names = [x+1 for x in range(n)]
+    if permute:
+        names = np.random.permutation(names) 
+    for i in range(n-1):
+        g[names[i]] = {names[i+1]: 1}
+    g[names[n-1]] = {names[0]: 1}
     return g
 
 
@@ -146,8 +149,8 @@ def ringarcs(g, n):
     return g
 
 
-def ringmore(n, m):
-    return ringarcs(ring(n), m)
+def ringmore(n, m, permute=False):
+    return ringarcs(ring(n,permute=permute), m)
 
 
 def digonly(H):

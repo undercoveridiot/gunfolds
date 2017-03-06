@@ -12,6 +12,7 @@ import gunfolds.tools.dbn2latex as d2l
 
 def listplot(fname, mname='JJ', stl='', width=5):
     l = zkl.load(fname)
+    l = l[:17*10]
     y = min(width, len(l))
     x = np.int(np.ceil(len(l) / float(y)))
     d2l.matrix_list(l, y, x, R=2, w_gap=1, h_gap=2, mname=mname, stl=stl)
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     g = {1: {2: 1}, 2: {1: 1, 3: 1}, 3: {4: 1}, 4: {1: 1}}
 
     # d2l.matrix_unfold(l[0],2,1,R=5, w_gap=1, h_gap=2, mname='TT1')
-    listplot('list.zkl', width=5)
+    listplot('list.zkl', width=17)
 
     sys.stdout = sys.__stdout__ # remember to reset sys.stdout!
     foo.flush()
