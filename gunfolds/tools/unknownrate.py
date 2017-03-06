@@ -379,10 +379,10 @@ def liteqclass(H, verbose=True, capsize=100, asl=None, nprocs=0):
             shutdown()
             break
 
-        if verbose:
-            print("# Graphs: {}".format(len(dsr)))
         # feed dsr back into workers
         if dsr:
+            if verbose:
+                print("# Graphs: {}".format(len(dsr)))
             for gnum, sloops in dsr.iteritems():
                 on_queue += 1
                 work_queue.put((gnum, sloops))
