@@ -274,7 +274,7 @@ def isedgesubset(g2star, g2):
             if h in g2[n]:
                 # Everything is a subset of 3 (both edge types)
                 if g2[n][h] != 3:
-                    # Either they both should have a directed edge, or 
+                    # Either they both should have a directed edge, or
                     # both should have a bidirected edge
                     if g2star[n][h] != g2[n][h]:
                         return False

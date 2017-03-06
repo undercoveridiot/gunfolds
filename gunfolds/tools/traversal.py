@@ -16,7 +16,7 @@ import time
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
     """
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i + n]
 
 
@@ -45,7 +45,6 @@ def try_till_d_path(g, d, gt, order=None):
 
 
 def try_till_path(g, gt):
-    d = len(g) - 1
     gx = graph2nx(g)
     sccl = [x for x in strongly_connected_components(gx)]
     # take the largest
@@ -53,7 +52,6 @@ def try_till_path(g, gt):
     idx = np.argsort(ln)
     d = len(sccl[idx[-1]]) - 1
     sccl = [sccl[i] for i in idx[::-1]]
-    order = [item for sublist in sccl for item in sublist]
     k = []
     while not k:
         if d < 5:
@@ -846,7 +844,7 @@ def density(g):
 
 
 def udensity(g):
-    return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2)/np.double(len(g)**2 + len(g)*(len(g)-1)/2)
+    return (len(gk.edgelist(g))+len(gk.bedgelist(g))/2) / np.double(len(g)**2 + len(g)*(len(g)-1)/2)
 
 
 def esig(l, n):

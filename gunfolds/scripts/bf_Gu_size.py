@@ -3,7 +3,7 @@ import functools
 from gunfolds.tools.bfutils import *
 import sys
 
-nodes = 5  # number of nodes in the graph
+nodes = 4  # number of nodes in the graph
 PNUM = 75  # number of processes to use
 
 template = "{0:9}{1:9}{2:9}{3:9}{4:9}{5:10}"
