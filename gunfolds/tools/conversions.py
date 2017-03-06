@@ -14,7 +14,8 @@ def g2num(g):
     for v in range(1, n + 1):
         for w in g[v]:
             num[n2 - v * n - w] = '1'
-    return int(''.join(['0','b']+num),2)
+
+    return int(''.join(num),2)
 
 
 def ug2num(g):
@@ -126,7 +127,7 @@ def ian2g(g):
         for v in g[w]:
             gg[str(w)][str(v)] = c[g[w][v]]
     return gg
-    
+
 
 #### Adjacency matrix functions
 
